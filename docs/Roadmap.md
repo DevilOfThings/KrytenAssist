@@ -1,98 +1,113 @@
+# Kryten Assist Roadmap
+
+Current Version
+---------------
+v0.1.0
+
+Current Phase
+-------------
+Phase 2 – API Maturity
+
+Current Prompt
+--------------
+Prompt 010 – Engineering Review
+
 ### Phase 1 – API Foundation (Current)
 
-✔ Prompt 001 Domain
-
-✔ Prompt 002 Application
-
-✔ Prompt 003 Infrastructure
-
-✔ Prompt 004 Dependency Injection
-
-✔ Prompt 005 POST Endpoint
-
-✔ Prompt 006 GET Endpoint
-
+✔ Prompt 001 – Domain
+✔ Prompt 002 – Application
+✔ Prompt 003 – Infrastructure
+✔ Prompt 004 – Dependency Injection
+✔ Prompt 005 – POST Endpoint
+✔ Prompt 006 – GET Endpoint
 ### Phase 2 – API Maturity
-Prompt 007
-Prompt 007 – API Organisation & GET by Id
-- Move endpoint mappings into PromptCardEndpoints.cs
-- Add GET /api/promptcards/{id}
-- Use route groups
-- Improve Swagger metadata
-
-Prompt 008
-Update PromptCard
-- PUT endpoint
-
-Prompt 009
-Delete PromptCard
-- DELETE endpoint
+✔ Prompt 007 – API Organisation & GET by Id
+✔ Prompt 008 – Update PromptCard (PUT)
+✔ Prompt 009 – Delete PromptCard (DELETE)
 
 Prompt 010
-Validation
-- FluentValidation
-- Proper HTTP 400 responses
+Engineering Review
 
 Prompt 011
-Error Handling
-- ProblemDetails
-- Exception handling
-- Logging
+Validation
 
-### Phase 3 – Persistence 
+- FluentValidation
+- ProblemDetails
+- HTTP 400 responses
+
 Prompt 012
-SQLite
+Logging & Error Handling
+
+- Global exception handling
+- Structured logging
 
 Prompt 013
-Entity Framework Core
+Integration Tests
+
+Phase 3 – Persistence
 
 Prompt 014
-Repository implementation
+SQLite Repository
 
 Prompt 015
-Database migrations
+Entity Framework Core
+
+Prompt 016
+Database Migrations
 
 ## Phase 4 – User Interfaces
-Prompt 016
-React
-
 Prompt 017
-React Prompt List
+React Client
 
 Prompt 018
-React Create Prompt
+Prompt Browser
 
 Prompt 019
-Avalonia
+Prompt Editor
 
 Prompt 020
-Avalonia Prompt Editor
+Avalonia Client
+
+Prompt 021
+Offline Support
 
 ## Phase 5 – AI Features
-Prompt 021
+Prompt 022
 Prompt Templates
 
-Prompt 022
+Prompt 023
 Prompt Categories
 
-Prompt 023
+Prompt 024
 Prompt Search
 
-Prompt 024
+Prompt 025
 Embedding Service
 
-Prompt 025
+Prompt 026
 Semantic Search
 
-Prompt 026
+Prompt 027
 OpenAI Integration
 
-Prompt 027
+Prompt 028
 AI Conversations
 
-Prompt 028
+Prompt 029
 Memory
 
-Prompt 029
+Prompt 030
 Plugins / Tools
+
+
+Milestone Achieved
+
+✔ Complete CRUD API
+✔ Clean Architecture established
+✔ Swagger verified
+✔ AI Playbook established
+✔ Session Handovers established
+
+
+
 
