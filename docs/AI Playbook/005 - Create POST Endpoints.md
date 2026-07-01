@@ -114,3 +114,4 @@ Lessons Learnt
 - ASP.NET Core automatically resolves services and binds request models in Minimal API handlers.
 - Passing the request CancellationToken into the use case follows ASP.NET Core best practices and prepares the application for long-running operations.
 - Returning 201 Created clearly communicates successful resource creation and aligns with REST conventions.
+- Swagger JSON parsing errors can be caused by smart quotes inserted by the browser or operating system. The API was correct; the request JSON was invalid before it reached the endpoint.
