@@ -12,6 +12,7 @@ public static class DependencyInjection
         services.AddSingleton<IPromptCardRepository, InMemoryPromptCardRepository>();
 
         services.AddScoped<CreatePromptCard>();
+        services.AddScoped<UpdatePromptCard>();
 
         return services;
     }

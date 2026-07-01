@@ -46,6 +46,21 @@ public static class PromptCardEndpoints
             })
             .WithName("GetPromptCardById")
             .WithSummary("Gets a prompt card by id.");
+        
+        group.MapPut("/{id:guid}", async (
+                Guid id,
+                UpdatePromptCardRequest request,
+                UpdatePromptCard updatePromptCard,
+                CancellationToken cancellationToken) =>
+            {
+                var response = await updatePromptCard.ExecuteAsync(id, request, cancellationToken);
+
+                return response is null
+                    ? Results.NotFound()
+                    : Results.Ok(response);
+            })
+            .WithName("UpdatePromptCard")
+            .WithSummary("Updates an existing prompt card.");
 
         return app;
     }
