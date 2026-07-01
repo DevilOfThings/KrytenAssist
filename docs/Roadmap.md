@@ -4,10 +4,10 @@ Prompt 002 ✓ Application
 
 Prompt 003 ✓ Infrastructure
 
-Prompt 004
+Prompt 004 ✓
 Dependency Injection
 
-Prompt 005
+Prompt 005 ✓
 POST Endpoint
 
 Prompt 006
