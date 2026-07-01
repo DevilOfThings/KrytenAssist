@@ -62,6 +62,20 @@ public static class PromptCardEndpoints
             .WithName("UpdatePromptCard")
             .WithSummary("Updates an existing prompt card.");
 
+        group.MapDelete("/{id:guid}", async (
+                Guid id,
+                DeletePromptCard deletePromptCard,
+                CancellationToken cancellationToken) =>
+            {
+                var response = await deletePromptCard.ExecuteAsync(id, cancellationToken);
+
+                return response.Deleted
+                    ? Results.NoContent()
+                    : Results.NotFound();
+            })
+            .WithName("DeletePromptCard")
+            .WithSummary("Deletes an existing prompt card.");
+        
         return app;
     }
 }

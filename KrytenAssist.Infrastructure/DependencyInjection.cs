@@ -13,6 +13,7 @@ public static class DependencyInjection
 
         services.AddScoped<CreatePromptCard>();
         services.AddScoped<UpdatePromptCard>();
+        services.AddScoped<DeletePromptCard>();
 
         return services;
     }
