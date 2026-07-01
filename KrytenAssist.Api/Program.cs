@@ -1,6 +1,7 @@
 using KrytenAssist.Application.PromptCards;
 using KrytenAssist.Infrastructure;
 using KrytenAssist.Application.Abstractions.Persistence;
+using KrytenAssist.Api.Endpoints;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddInfrastructure();
@@ -14,24 +15,7 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-app.MapPost("/api/promptcards", async (
-    CreatePromptCardRequest request,
-    CreatePromptCard createPromptCard,
-    CancellationToken cancellationToken) =>
-{
-    var response = await createPromptCard.ExecuteAsync(request, cancellationToken);
-
-    return Results.Created($"/api/promptcards/{response.Id}", response);
-});
-
-app.MapGet("/api/promptcards", async (
-    IPromptCardRepository repository,
-    CancellationToken cancellationToken) =>
-{
-    var promptCards = await repository.GetAllAsync(cancellationToken);
-
-    return Results.Ok(promptCards);
-});
+app.MapPromptCardEndpoints();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

@@ -1,0 +1,52 @@
+using KrytenAssist.Application.Abstractions.Persistence;
+using KrytenAssist.Application.PromptCards;
+
+namespace KrytenAssist.Api.Endpoints;
+
+public static class PromptCardEndpoints
+{
+    public static IEndpointRouteBuilder MapPromptCardEndpoints(this IEndpointRouteBuilder app)
+    {
+        var group = app.MapGroup("/api/promptcards")
+            .WithTags("PromptCards");
+
+        group.MapPost("/", async (
+                CreatePromptCardRequest request,
+                CreatePromptCard createPromptCard,
+                CancellationToken cancellationToken) =>
+            {
+                var response = await createPromptCard.ExecuteAsync(request, cancellationToken);
+
+                return Results.Created($"/api/promptcards/{response.Id}", response);
+            })
+            .WithName("CreatePromptCard")
+            .WithSummary("Creates a new prompt card.");
+
+        group.MapGet("/", async (
+                IPromptCardRepository repository,
+                CancellationToken cancellationToken) =>
+            {
+                var promptCards = await repository.GetAllAsync(cancellationToken);
+
+                return Results.Ok(promptCards);
+            })
+            .WithName("GetPromptCards")
+            .WithSummary("Gets all prompt cards.");
+
+        group.MapGet("/{id:guid}", async (
+                Guid id,
+                IPromptCardRepository repository,
+                CancellationToken cancellationToken) =>
+            {
+                var promptCard = await repository.GetByIdAsync(id, cancellationToken);
+
+                return promptCard is null
+                    ? Results.NotFound()
+                    : Results.Ok(promptCard);
+            })
+            .WithName("GetPromptCardById")
+            .WithSummary("Gets a prompt card by id.");
+
+        return app;
+    }
+}

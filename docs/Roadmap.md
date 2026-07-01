@@ -14,7 +14,7 @@
 
 ### Phase 2 – API Maturity
 Prompt 007
-API Organisation
+Prompt 007 – API Organisation & GET by Id
 - Move endpoint mappings into PromptCardEndpoints.cs
 - Add GET /api/promptcards/{id}
 - Use route groups
@@ -51,3 +51,48 @@ Repository implementation
 
 Prompt 015
 Database migrations
+
+## Phase 4 – User Interfaces
+Prompt 016
+React
+
+Prompt 017
+React Prompt List
+
+Prompt 018
+React Create Prompt
+
+Prompt 019
+Avalonia
+
+Prompt 020
+Avalonia Prompt Editor
+
+## Phase 5 – AI Features
+Prompt 021
+Prompt Templates
+
+Prompt 022
+Prompt Categories
+
+Prompt 023
+Prompt Search
+
+Prompt 024
+Embedding Service
+
+Prompt 025
+Semantic Search
+
+Prompt 026
+OpenAI Integration
+
+Prompt 027
+AI Conversations
+
+Prompt 028
+Memory
+
+Prompt 029
+Plugins / Tools
+
