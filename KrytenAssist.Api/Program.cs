@@ -1,4 +1,7 @@
+using KrytenAssist.Infrastructure;
+
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddInfrastructure();
 
 // Add services to the container.
 
