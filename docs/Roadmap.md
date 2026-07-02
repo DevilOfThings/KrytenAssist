@@ -10,7 +10,7 @@ Phase 2 – API Maturity
 
 Current Prompt
 --------------
-Prompt 010 – Engineering Review
+Prompt 012 – Logging & Error Validation
 
 ### Phase 1 – API Foundation (Current)
 

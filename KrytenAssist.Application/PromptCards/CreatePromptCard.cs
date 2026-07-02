@@ -17,22 +17,7 @@ public sealed class CreatePromptCard
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-
-        if (string.IsNullOrWhiteSpace(request.Title))
-        {
-            throw new ArgumentException("Title is required.", nameof(request));
-        }
-
-        if (string.IsNullOrWhiteSpace(request.Category))
-        {
-            throw new ArgumentException("Category is required.", nameof(request));
-        }
-
-        if (string.IsNullOrWhiteSpace(request.PromptText))
-        {
-            throw new ArgumentException("Prompt text is required.", nameof(request));
-        }
-
+        
         var now = DateTimeOffset.UtcNow;
 
         var promptCard = new PromptCard

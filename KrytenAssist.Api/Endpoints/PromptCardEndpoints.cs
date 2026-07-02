@@ -1,3 +1,4 @@
+using FluentValidation;
 using KrytenAssist.Application.Abstractions.Persistence;
 using KrytenAssist.Application.PromptCards;
 
@@ -9,12 +10,22 @@ public static class PromptCardEndpoints
     {
         var group = app.MapGroup("/api/promptcards")
             .WithTags("PromptCards");
+        
 
         group.MapPost("/", async (
                 CreatePromptCardRequest request,
+                IValidator<CreatePromptCardRequest> validator,
                 CreatePromptCard createPromptCard,
-                CancellationToken cancellationToken) =>
+                CancellationToken cancellationToken
+                ) =>
             {
+                var validationResult = await validator.ValidateAsync(request, cancellationToken);
+                
+                if (!validationResult.IsValid)
+                {
+                    return Results.ValidationProblem(validationResult.ToDictionary());
+                }
+
                 var response = await createPromptCard.ExecuteAsync(request, cancellationToken);
 
                 return Results.Created($"/api/promptcards/{response.Id}", response);
@@ -50,9 +61,17 @@ public static class PromptCardEndpoints
         group.MapPut("/{id:guid}", async (
                 Guid id,
                 UpdatePromptCardRequest request,
+                IValidator<UpdatePromptCardRequest> validator,
                 UpdatePromptCard updatePromptCard,
                 CancellationToken cancellationToken) =>
             {
+                var validationResult = await validator.ValidateAsync(request, cancellationToken);
+
+                if (!validationResult.IsValid)
+                {
+                    return Results.ValidationProblem(validationResult.ToDictionary());
+                }
+                
                 var response = await updatePromptCard.ExecuteAsync(id, request, cancellationToken);
 
                 return response is null
