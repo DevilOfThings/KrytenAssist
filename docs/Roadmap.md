@@ -10,7 +10,7 @@ Phase 2 – API Maturity
 
 Current Prompt
 --------------
-Prompt 012 – Logging & Error Validation
+Prompt 013 – Logging & Error Handling
 
 ### Phase 1 – API Foundation (Current)
 
@@ -24,79 +24,80 @@ Prompt 012 – Logging & Error Validation
 ✔ Prompt 007 – API Organisation & GET by Id
 ✔ Prompt 008 – Update PromptCard (PUT)
 ✔ Prompt 009 – Delete PromptCard (DELETE)
-
-Prompt 010
-Engineering Review
-
-Prompt 011
-Validation
-
+✔ Prompt 010 - Engineering Review
+✔ Prompt 011 - Validation
 - FluentValidation
 - ProblemDetails
 - HTTP 400 responses
 
-Prompt 012
-Logging & Error Handling
+Prompt 012 – Application Dependency Injection Cleanup ✅
+- Added AddApplication()
+- Moved Application service registrations into Application
+- Registered validators using assembly scanning
+- Simplified Infrastructure DI
+- Program.cs now calls AddApplication() and AddInfrastructure()
+
+Prompt 013 – Logging & Error Handling
 
 - Global exception handling
 - Structured logging
 
-Prompt 013
+Prompt 014
 Integration Tests
 
 Phase 3 – Persistence
 
-Prompt 014
+Prompt 015
 SQLite Repository
 
-Prompt 015
+Prompt 016
 Entity Framework Core
 
-Prompt 016
+Prompt 017
 Database Migrations
 
 ## Phase 4 – User Interfaces
-Prompt 017
+Prompt 018
 React Client
 
-Prompt 018
+Prompt 019
 Prompt Browser
 
-Prompt 019
+Prompt 020
 Prompt Editor
 
-Prompt 020
+Prompt 021
 Avalonia Client
 
-Prompt 021
+Prompt 022
 Offline Support
 
 ## Phase 5 – AI Features
-Prompt 022
+Prompt 023
 Prompt Templates
 
-Prompt 023
+Prompt 024
 Prompt Categories
 
-Prompt 024
+Prompt 025
 Prompt Search
 
-Prompt 025
+Prompt 026
 Embedding Service
 
-Prompt 026
+Prompt 027
 Semantic Search
 
-Prompt 027
+Prompt 028
 OpenAI Integration
 
-Prompt 028
+Prompt 029
 AI Conversations
 
-Prompt 029
+Prompt 030
 Memory
 
-Prompt 030
+Prompt 031
 Plugins / Tools
 
 
