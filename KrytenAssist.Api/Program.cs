@@ -1,6 +1,8 @@
 using KrytenAssist.Infrastructure;
 using KrytenAssist.Api.Endpoints;
 using KrytenAssist.Application;
+using KrytenAssist.Api;
+using KrytenAssist.Api.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddApplication();
@@ -15,6 +17,7 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+app.UseGlobalExceptionHandling();
 app.MapPromptCardEndpoints();
 
 // Configure the HTTP request pipeline.

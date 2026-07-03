@@ -10,7 +10,7 @@ Phase 2 – API Maturity
 
 Current Prompt
 --------------
-Prompt 013 – Logging & Error Handling
+Prompt 014 – Integration Tests 
 
 ### Phase 1 – API Foundation (Current)
 
@@ -37,8 +37,7 @@ Prompt 012 – Application Dependency Injection Cleanup ✅
 - Simplified Infrastructure DI
 - Program.cs now calls AddApplication() and AddInfrastructure()
 
-Prompt 013 – Logging & Error Handling
-
+Prompt 013 – Logging & Error Handling  ✅ 
 - Global exception handling
 - Structured logging
 
