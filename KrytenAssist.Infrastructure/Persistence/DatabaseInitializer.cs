@@ -18,6 +18,6 @@ public sealed class DatabaseInitializer
             .Options;
 
         using var dbContext = new KrytenAssistDbContext(options);
-        dbContext.Database.EnsureCreated();
+        dbContext.Database.Migrate();
     }
 }
