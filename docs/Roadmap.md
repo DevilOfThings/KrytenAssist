@@ -10,7 +10,7 @@ Phase 3 – Persistence
 
 Current Prompt
 --------------
-Prompt 017 Database Migrations
+Prompt 018 React Client
 
 ### Phase 1 – API Foundation (Current)
 
@@ -55,7 +55,7 @@ Phase 3 – Persistence
 Prompt 015 – SQLite Repository ✅
 
 Prompt 016 – Entity Framework Core ✅
-Prompt 017 – Database Migrations
+Prompt 017 – Database Migrations ✅
 
 ## Phase 4 – User Interfaces
 Prompt 018
@@ -110,6 +110,7 @@ Milestone Achieved
 ✔ AI Playbook established
 ✔ Session Handovers established
 ✔ Entity Framework Core persistence
+✔ Database migrations established
 
 
 
