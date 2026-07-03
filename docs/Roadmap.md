@@ -11,7 +11,7 @@ Phase 2 – API Maturity
 
 Current Prompt
 --------------
-Prompt 014 – Integration Tests 
+Prompt 015 – SQLite Repository
 
 ### Phase 1 – API Foundation (Current)
 
@@ -43,9 +43,13 @@ Prompt 013 – Logging & Error Handling  ✅
 - Structured logging
 
 
-Prompt 014 ✅
-
-Integration Tests
+Prompt 014 – Integration Tests ✅
+- Added API integration test project
+- Added reusable WebApplicationFactory
+- Organised tests by feature
+- Added shared test data helpers
+- Added CRUD endpoint integration tests
+- Established automated API regression testing
 
 Phase 3 – Persistence
 
