@@ -6,7 +6,7 @@ using KrytenAssist.Api.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddApplication();
-builder.Services.AddInfrastructure();
+builder.Services.AddInfrastructure(builder.Configuration);
 
 
 // Add services to the container.

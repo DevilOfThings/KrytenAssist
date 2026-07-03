@@ -1,5 +1,4 @@
 # Kryten Assist Roadmap
-✅
  
 Current Version
 ---------------
@@ -7,11 +6,11 @@ v0.1.0
 
 Current Phase
 -------------
-Phase 2 – API Maturity
+Phase 3 – Persistence
 
 Current Prompt
 --------------
-Prompt 015 – SQLite Repository
+Prompt 016 Entity Framework Core
 
 ### Phase 1 – API Foundation (Current)
 
@@ -53,14 +52,10 @@ Prompt 014 – Integration Tests ✅
 
 Phase 3 – Persistence
 
-Prompt 015
-SQLite Repository
+Prompt 015 – SQLite Repository ✅
 
-Prompt 016
-Entity Framework Core
-
-Prompt 017
-Database Migrations
+Prompt 016 – Entity Framework Core
+Prompt 017 – Database Migrations
 
 ## Phase 4 – User Interfaces
 Prompt 018
@@ -114,6 +109,10 @@ Milestone Achieved
 ✔ Swagger verified
 ✔ AI Playbook established
 ✔ Session Handovers established
+✔ Persistent SQLite Repository
+
+
+
 
 
 
