@@ -1,5 +1,6 @@
 # Kryten Assist Roadmap
-
+✅
+ 
 Current Version
 ---------------
 v0.1.0
@@ -41,7 +42,9 @@ Prompt 013 – Logging & Error Handling  ✅
 - Global exception handling
 - Structured logging
 
-Prompt 014
+
+Prompt 014 ✅
+
 Integration Tests
 
 Phase 3 – Persistence
