@@ -2,6 +2,7 @@ using KrytenAssist.Application.Abstractions.Persistence;
 using KrytenAssist.Infrastructure.Persistence;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 
 namespace KrytenAssist.Infrastructure;
 
@@ -11,12 +12,12 @@ public static class DependencyInjection
     {
         var connectionString = configuration.GetConnectionString("PromptCards")
             ?? throw new InvalidOperationException("Connection string 'PromptCards' was not found.");
-
+        services.AddDbContext<KrytenAssistDbContext>(options =>
+            options.UseSqlite(connectionString));
         var databaseInitializer = new DatabaseInitializer(connectionString);
         databaseInitializer.Initialise();
 
-        services.AddSingleton<IPromptCardRepository>(_ =>
-            new SqlitePromptCardRepository(connectionString));
+        services.AddScoped<IPromptCardRepository, SqlitePromptCardRepository>();
         return services;
     }
 }

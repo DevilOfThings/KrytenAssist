@@ -10,7 +10,7 @@ Phase 3 – Persistence
 
 Current Prompt
 --------------
-Prompt 016 Entity Framework Core
+Prompt 017 Database Migrations
 
 ### Phase 1 – API Foundation (Current)
 
@@ -54,7 +54,7 @@ Phase 3 – Persistence
 
 Prompt 015 – SQLite Repository ✅
 
-Prompt 016 – Entity Framework Core
+Prompt 016 – Entity Framework Core ✅
 Prompt 017 – Database Migrations
 
 ## Phase 4 – User Interfaces
@@ -109,7 +109,7 @@ Milestone Achieved
 ✔ Swagger verified
 ✔ AI Playbook established
 ✔ Session Handovers established
-✔ Persistent SQLite Repository
+✔ Entity Framework Core persistence
 
 
 

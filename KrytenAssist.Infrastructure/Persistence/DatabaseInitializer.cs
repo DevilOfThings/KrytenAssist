@@ -1,4 +1,4 @@
-using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 
 namespace KrytenAssist.Infrastructure.Persistence;
 
@@ -13,24 +13,11 @@ public sealed class DatabaseInitializer
 
     public void Initialise()
     {
-        using var connection = new SqliteConnection(_connectionString);
-        connection.Open();
+        var options = new DbContextOptionsBuilder<KrytenAssistDbContext>()
+            .UseSqlite(_connectionString)
+            .Options;
 
-        using var command = connection.CreateCommand();
-        command.CommandText = """
-                               CREATE TABLE IF NOT EXISTS PromptCards
-                               (
-                                   Id TEXT PRIMARY KEY,
-                                   Title TEXT NOT NULL,
-                                   Category TEXT NOT NULL,
-                                   Description TEXT NULL,
-                                   PromptText TEXT NOT NULL,
-                                   Tags TEXT NOT NULL,
-                                   CreatedAt TEXT NOT NULL,
-                                   UpdatedAt TEXT NOT NULL
-                               );
-                               """;
-
-        command.ExecuteNonQuery();
+        using var dbContext = new KrytenAssistDbContext(options);
+        dbContext.Database.EnsureCreated();
     }
 }
