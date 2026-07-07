@@ -2,24 +2,26 @@ import { useEffect, useState, useMemo } from 'react';
 import { getPromptCards } from '../../api/promptCardsApi';
 import type { PromptCard } from './PromptCard';
 import PromptCardItem from './PromptCardItem';
+import PromptCardForm from './PromptCardForm';
 
 function PromptCardList() {
     const [promptCards, setPromptCards] = useState<PromptCard[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>();
 
-    useEffect(() => {
-        async function loadPromptCards() {
-            try {
-                const data = await getPromptCards();
-                setPromptCards(data);
-            } catch {
-                setError('Unable to load Prompt Cards.');
-            } finally {
-                setLoading(false);
-            }
+    async function loadPromptCards() {
+        setLoading(true);
+        try {
+            const data = await getPromptCards();
+            setPromptCards(data);
+        } catch {
+            setError('Unable to load Prompt Cards.');
+        } finally {
+            setLoading(false);
         }
+    }
 
+    useEffect(() => {
         void loadPromptCards();
     }, []);
 
@@ -45,68 +47,59 @@ function PromptCardList() {
         });
     }, [promptCards, searchTerm, selectedCategory]);
 
-    if (loading) {
-        return (
-            <section>
-                <h2>Prompt Browser</h2>
-                <p>Loading prompt cards...</p>
-            </section>
-        );
-    }
-
-    if (error) {
-        return (
-            <section>
-                <h2>Prompt Browser</h2>
-                <p>{error}</p>
-            </section>
-        );
-    }
-
     return (
         <section>
+            <PromptCardForm onPromptCardCreated={loadPromptCards} />
             <header>
                 <h2>Prompt Browser</h2>
                 <p>{promptCards.length} prompt card{promptCards.length === 1 ? '' : 's'} found.</p>
             </header>
 
-            <div className="filter-bar">
-                <input
-                    type="search"
-                    placeholder="Search prompt cards..."
-                    value={searchTerm}
-                    onChange={event => setSearchTerm(event.target.value)}
-                />
+            {loading && <p>Loading prompt cards...</p>}
 
-                <select
-                    value={selectedCategory}
-                    onChange={event => setSelectedCategory(event.target.value)}
-                >
-                    <option value="">All Categories</option>
-                    {categories.map(category => (
-                        <option key={category} value={category}>
-                            {category}
-                        </option>
-                    ))}
-                </select>
-            </div>
+            {!loading && error && <p>{error}</p>}
 
-            {promptCards.length === 0 && (
-                <p>No Prompt Cards found.</p>
-            )}
+            {!loading && !error && (
+                <>
+                    <div className="filter-bar">
+                        <input
+                            type="search"
+                            placeholder="Search prompt cards..."
+                            value={searchTerm}
+                            onChange={event => setSearchTerm(event.target.value)}
+                        />
 
-            {promptCards.length > 0 && filteredPromptCards.length === 0 && (
-                <p>No prompt cards match your search or filter.</p>
-            )}
+                        <select
+                            value={selectedCategory}
+                            onChange={event => setSelectedCategory(event.target.value)}
+                        >
+                            <option value="">All Categories</option>
+                            {categories.map(category => (
+                                <option key={category} value={category}>
+                                    {category}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
 
-            {filteredPromptCards.length > 0 && (
-                <ul>
-                    {filteredPromptCards.map(card => (
-                        <li key={card.id}>
-                            <PromptCardItem promptCard={card} />
-                        </li>
-                    ))}
-                </ul>
+                    {promptCards.length === 0 && (
+                        <p>No Prompt Cards found.</p>
+                    )}
+
+                    {promptCards.length > 0 && filteredPromptCards.length === 0 && (
+                        <p>No prompt cards match your search or filter.</p>
+                    )}
+
+                    {filteredPromptCards.length > 0 && (
+                        <ul>
+                            {filteredPromptCards.map(card => (
+                                <li key={card.id}>
+                                    <PromptCardItem promptCard={card} />
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </>
             )}
         </section>
     );

@@ -10,7 +10,7 @@ Phase 4 – User Interfaces
 
 Current Prompt
 --------------
-Prompt 020 Prompt Editor
+Prompt 021 Avalonia Client
 
 ### Phase 1 – API Foundation (Current)
 
@@ -75,8 +75,14 @@ Prompt 019 – Prompt Browser ✅
 - Added no-results messaging
 - Verified npm build, dotnet build and tests
 
-Prompt 020
-Prompt Editor
+Prompt 020 – Prompt Editor ✅
+- Added PromptCard editor form
+- Integrated React form with the PromptCards API
+- Cleared the form after successful create
+- Added success and error feedback
+- Refreshed the Prompt Browser automatically after create
+- Improved Prompt Editor styling
+- Verified npm build, dotnet build and tests
 
 Prompt 021
 Avalonia Client
@@ -145,6 +151,7 @@ Milestone Achieved
 ✔ Interview Prep / Career Assistant roadmap added
 ✔ React client established
 ✔ Prompt Browser completed
+✔ Prompt Editor completed
 
 
 
