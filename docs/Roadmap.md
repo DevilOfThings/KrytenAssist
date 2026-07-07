@@ -101,6 +101,26 @@ Memory
 Prompt 031
 Plugins / Tools
 
+## Phase 6 – Career Assistant
+
+Prompt 032
+Job Opportunity Domain
+
+Prompt 033
+Job Opportunity API
+
+Prompt 034
+Interview Prep Notes
+
+Prompt 035
+Interview Question Bank
+
+Prompt 036
+Mock Interview Sessions
+
+Prompt 037
+React Interview Prep UI
+
 
 Milestone Achieved
 
@@ -111,6 +131,7 @@ Milestone Achieved
 ✔ Session Handovers established
 ✔ Entity Framework Core persistence
 ✔ Database migrations established
+✔ Interview Prep / Career Assistant roadmap added
 
 
 
