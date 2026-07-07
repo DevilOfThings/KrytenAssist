@@ -6,11 +6,11 @@ v0.1.0
 
 Current Phase
 -------------
-Phase 3 – Persistence
+Phase 4 – User Interfaces
 
 Current Prompt
 --------------
-Prompt 018 React Client
+Prompt 019 Prompt Browser
 
 ### Phase 1 – API Foundation (Current)
 
@@ -58,8 +58,12 @@ Prompt 016 – Entity Framework Core ✅
 Prompt 017 – Database Migrations ✅
 
 ## Phase 4 – User Interfaces
-Prompt 018
-React Client
+Prompt 018 – React Client ✅
+- Created the first React client
+- Connected the React client to the PromptCards API
+- Displayed PromptCards returned from the backend
+- Verified empty-state handling when no PromptCards exist
+- Confirmed build and API tests still pass
 
 Prompt 019
 Prompt Browser
@@ -132,6 +136,7 @@ Milestone Achieved
 ✔ Entity Framework Core persistence
 ✔ Database migrations established
 ✔ Interview Prep / Career Assistant roadmap added
+✔ React client established
 
 
 
