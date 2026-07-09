@@ -10,11 +10,13 @@ Phase 4 – User Interfaces
 
 Current Prompt
 --------------
-Prompt 021 – Avalonia Client ✅
-- Created the first Avalonia desktop client project
-- Added the Avalonia project to the solution
-- Displayed a basic Kryten Assist shell window
-- Verified dotnet build and API tests still pass
+Prompt 022 – Avalonia Offline Prompt Store ✅
+- Added an offline PromptCard model
+- Introduced IPromptCardStore and JsonPromptCardStore
+- Implemented MVVM with MainWindowViewModel
+- Registered desktop services with dependency injection
+- Bound the Avalonia UI to offline prompt cards
+- Verified build, application startup and offline storage
 
 ### Phase 1 – API Foundation (Current)
 
@@ -88,13 +90,21 @@ Prompt 020 – Prompt Editor ✅
 - Improved Prompt Editor styling
 - Verified npm build, dotnet build and tests
 
-Prompt 021
-Avalonia Client
+Prompt 021 – Avalonia Client ✅
+- Created the first Avalonia desktop client project
+- Added the Avalonia project to the solution
+- Displayed a basic Kryten Assist shell window
+- Verified dotnet build and API tests still pass
 
-Prompt 022
-Offline Support
+Prompt 022 – Avalonia Offline Prompt Store ✅
+- Added an offline PromptCard model
+- Introduced IPromptCardStore and JsonPromptCardStore
+- Implemented MVVM with MainWindowViewModel
+- Registered desktop services with dependency injection
+- Bound the Avalonia UI to offline prompt cards
+- Verified build, application startup and offline storage
 
-## Phase 5 – AI Features
+## Phase 5 – Avalonia AI Features
 Prompt 023
 Prompt Templates
 
@@ -157,6 +167,9 @@ Milestone Achieved
 ✔ Prompt Browser completed
 ✔ Prompt Editor completed
 ✔ Avalonia desktop client foundation established
+✔ Avalonia offline architecture established
+✔ MVVM introduced into the desktop client
+✔ Offline JSON prompt store implemented
 
 
 
