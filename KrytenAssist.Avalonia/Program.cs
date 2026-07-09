@@ -19,6 +19,8 @@ class Program
     {
         Services = BuildServices();
 
+        _ = Services.GetRequiredService<IEmbeddingService>();
+
         BuildAvaloniaApp()
             .StartWithClassicDesktopLifetime(args);
     }
@@ -29,6 +31,7 @@ class Program
 
         services.AddSingleton<IPromptCardStore, JsonPromptCardStore>();
         services.AddTransient<MainWindowViewModel>();
+        services.AddSingleton<IEmbeddingService, DeterministicEmbeddingService>();
 
         return services.BuildServiceProvider();
     }

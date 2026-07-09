@@ -10,11 +10,12 @@ Phase 4 – User Interfaces
 
 Current Prompt
 --------------
-Prompt 025 – Avalonia Offline Prompt Search ✅
-- Added live offline prompt search
-- Added filtered prompt collection for the UI
-- Implemented case-insensitive search across title, category, description, prompt text and tags
-- Added no-results messaging
+Prompt 026 – Avalonia Embedding Service ✅
+- Added EmbeddingVector model
+- Added IEmbeddingService abstraction
+- Added deterministic offline embedding implementation
+- Registered embedding service with dependency injection
+- Introduced stable deterministic hashing for embedding generation
 - Verified `dotnet build` and `dotnet test`
 
 ### Phase 1 – API Foundation (Current)
@@ -125,8 +126,13 @@ Prompt 025 – Avalonia Offline Prompt Search ✅
 - Added no-results messaging
 - Verified build and tests
 
-Prompt 026
-Embedding Service
+Prompt 026 – Avalonia Embedding Service ✅
+- Added EmbeddingVector model
+- Added IEmbeddingService abstraction
+- Added deterministic offline embedding implementation
+- Registered embedding service with dependency injection
+- Introduced stable deterministic hashing for embedding generation
+- Verified build and tests
 
 Prompt 027
 Semantic Search
@@ -184,3 +190,4 @@ Milestone Achieved
 ✔ Offline prompt template editor completed
 ✔ Prompt category discovery and reuse implemented
 ✔ Offline prompt search implemented
+✔ Offline embedding service foundation established
