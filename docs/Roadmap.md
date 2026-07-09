@@ -10,13 +10,12 @@ Phase 4 – User Interfaces
 
 Current Prompt
 --------------
-Prompt 022 – Avalonia Offline Prompt Store ✅
-- Added an offline PromptCard model
-- Introduced IPromptCardStore and JsonPromptCardStore
-- Implemented MVVM with MainWindowViewModel
-- Registered desktop services with dependency injection
-- Bound the Avalonia UI to offline prompt cards
-- Verified build, application startup and offline storage
+Prompt 023 – Avalonia Prompt Template Editor ✅
+- Added an offline prompt template editor
+- Added MVVM-based prompt creation
+- Persisted templates to the local JSON prompt store
+- Refreshed the prompt list after saving
+- Verified `dotnet build` and `dotnet test`
 
 ### Phase 1 – API Foundation (Current)
 
@@ -105,11 +104,14 @@ Prompt 022 – Avalonia Offline Prompt Store ✅
 - Verified build, application startup and offline storage
 
 ## Phase 5 – Avalonia AI Features
-Prompt 023
-Prompt Templates
+Prompt 023 – Avalonia Prompt Template Editor ✅
+- Added offline prompt template editor
+- Added MVVM command-based save
+- Persisted templates to JSON storage
+- Refreshed prompt list automatically
+- Verified build and tests
 
-Prompt 024
-Prompt Categories
+Prompt 024 – Prompt Categories
 
 Prompt 025
 Prompt Search

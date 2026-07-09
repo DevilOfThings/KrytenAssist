@@ -8,17 +8,50 @@
         x:Class="KrytenAssist.Avalonia.MainWindow"
         Title="KrytenAssist.Avalonia"
         x:DataType="viewModels:MainWindowViewModel">
-    <Grid RowDefinitions="Auto,*" Margin="24" RowSpacing="16">
+    <Grid RowDefinitions="Auto,Auto,*" Margin="24" RowSpacing="16">
         <StackPanel Grid.Row="0" Spacing="4">
             <TextBlock Text="Kryten Assist"
                        FontSize="28"
                        FontWeight="Bold" />
-            <TextBlock Text="Offline prompt cards"
+            <TextBlock Text="Offline prompt templates"
                        FontSize="14"
                        Opacity="0.7" />
         </StackPanel>
 
         <Border Grid.Row="1"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="12">
+            <StackPanel Spacing="8">
+                <TextBlock Text="Create prompt template"
+                           FontSize="18"
+                           FontWeight="SemiBold" />
+
+                <TextBox PlaceholderText="Title"
+                         Text="{Binding NewTitle}" />
+
+                <TextBox PlaceholderText="Category"
+                         Text="{Binding NewCategory}" />
+
+                <TextBox PlaceholderText="Description"
+                         Text="{Binding NewDescription}" />
+
+                <TextBox PlaceholderText="Prompt text"
+                         Text="{Binding NewPromptText}"
+                         AcceptsReturn="True"
+                         MinHeight="100"
+                         TextWrapping="Wrap" />
+
+                <TextBox PlaceholderText="Tags, comma separated"
+                         Text="{Binding NewTags}" />
+
+                <Button Content="Save"
+                        HorizontalAlignment="Left"
+                        Command="{Binding SaveCommand}" />
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="2"
                 BorderThickness="1"
                 CornerRadius="8"
                 Padding="12">
