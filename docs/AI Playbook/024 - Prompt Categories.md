@@ -178,6 +178,8 @@ Implemented outcomes:
 - Continued supporting manual entry of new categories.
 - Refreshed both prompts and categories after saving.
 - Confirmed categories persisted correctly after restarting the application.
+- Confirmed category chip selection is implemented entirely through MVVM command binding with no code-behind event handlers.
+- Verified the implementation works correctly despite the Avalonia XAML designer reporting an `AVLN2000` compiled binding warning.
 - Confirmed the application builds and runs successfully.
 
 Files updated:
@@ -203,4 +205,5 @@ Future prompts can build on this foundation by introducing category management, 
 - Keep category discovery as a derived ViewModel concern rather than a stored entity.
 - Selectable chips provide a cleaner user experience than an editable ComboBox for lightweight selection.
 - Maintain MVVM by handling chip selection through commands rather than code-behind.
+- Avalonia compiled bindings can report `AVLN2000` design-time warnings for command bindings inside `ItemsControl` templates even when the application builds and runs correctly. Verify both the `DataContext` and runtime behaviour before treating the warning as a functional issue.
 - Continue evolving the desktop client through small, independently verifiable improvements.

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
@@ -13,8 +14,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 {
     private readonly IPromptCardStore _promptCardStore;
     private string _newCategory = string.Empty;
+    private string _searchText = string.Empty;
     
     public ObservableCollection<string> Categories { get; } = [];
+    
+    public bool HasNoSearchResults =>
+        !string.IsNullOrWhiteSpace(SearchText) &&
+        FilteredPromptCards.Count == 0;
 
     public MainWindowViewModel(IPromptCardStore promptCardStore)
     {
@@ -56,7 +62,25 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public string NewTags { get; set; } = string.Empty;
 
+    public string SearchText
+    {
+        get => _searchText;
+        set
+        {
+            if (_searchText == value)
+            {
+                return;
+            }
+
+            _searchText = value;
+            OnPropertyChanged(nameof(SearchText));
+            RefreshFilteredPromptCards();
+        }
+    }
+
     public ObservableCollection<PromptCardModel> PromptCards { get; } = new();
+
+    public ObservableCollection<PromptCardModel> FilteredPromptCards { get; } = new();
 
     public async Task LoadAsync()
     {
@@ -70,6 +94,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
         
         RefreshCategories();
+        RefreshFilteredPromptCards();
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -154,5 +179,32 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         {
             Categories.Add(category);
         }
+    }
+    
+    private void RefreshFilteredPromptCards()
+    {
+        FilteredPromptCards.Clear();
+
+        IEnumerable<PromptCardModel> prompts = PromptCards;
+
+        if (!string.IsNullOrWhiteSpace(SearchText))
+        {
+            var search = SearchText.Trim();
+
+            prompts = PromptCards.Where(prompt =>
+                prompt.Title.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                prompt.Category.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                (!string.IsNullOrWhiteSpace(prompt.Description) &&
+                 prompt.Description.Contains(search, StringComparison.OrdinalIgnoreCase)) ||
+                prompt.PromptText.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                prompt.Tags.Any(tag => tag.Contains(search, StringComparison.OrdinalIgnoreCase)));
+        }
+
+        foreach (var prompt in prompts)
+        {
+            FilteredPromptCards.Add(prompt);
+        }
+        
+        OnPropertyChanged(nameof(HasNoSearchResults));
     }
 }

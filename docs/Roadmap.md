@@ -10,11 +10,11 @@ Phase 4 – User Interfaces
 
 Current Prompt
 --------------
-Prompt 024 – Avalonia Prompt Categories ✅
-- Added automatic category discovery from saved prompt templates
-- Added reusable category suggestions in the prompt editor
-- Allowed one-click category selection while retaining manual entry
-- Refreshed categories automatically after saving templates
+Prompt 025 – Avalonia Offline Prompt Search ✅
+- Added live offline prompt search
+- Added filtered prompt collection for the UI
+- Implemented case-insensitive search across title, category, description, prompt text and tags
+- Added no-results messaging
 - Verified `dotnet build` and `dotnet test`
 
 ### Phase 1 – API Foundation (Current)
@@ -118,8 +118,12 @@ Prompt 024 – Prompt Categories ✅
 - Refreshed categories after saving prompt templates
 - Verified build and tests
 
-Prompt 025
-Prompt Search
+Prompt 025 – Avalonia Offline Prompt Search ✅
+- Added live offline prompt search
+- Added filtered prompt collection
+- Implemented case-insensitive search across title, category, description, prompt text and tags
+- Added no-results messaging
+- Verified build and tests
 
 Prompt 026
 Embedding Service
@@ -179,10 +183,4 @@ Milestone Achieved
 ✔ Offline JSON prompt store implemented
 ✔ Offline prompt template editor completed
 ✔ Prompt category discovery and reuse implemented
-
-
-
-
-
-
-
+✔ Offline prompt search implemented

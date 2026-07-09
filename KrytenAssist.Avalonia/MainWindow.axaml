@@ -78,27 +78,35 @@
                 BorderThickness="1"
                 CornerRadius="8"
                 Padding="12">
-            <ItemsControl ItemsSource="{Binding PromptCards}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate DataType="models:PromptCardModel">
-                        <Border Padding="12"
-                                Margin="0,0,0,8"
-                                BorderThickness="1"
-                                CornerRadius="6">
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="{Binding Title}"
-                                           FontSize="18"
-                                           FontWeight="SemiBold" />
-                                <TextBlock Text="{Binding Category}"
-                                           FontSize="12"
-                                           Opacity="0.7" />
-                                <TextBlock Text="{Binding Description}"
-                                           TextWrapping="Wrap" />
-                            </StackPanel>
-                        </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+            <StackPanel Spacing="12">
+                <TextBox PlaceholderText="Search prompts..."
+                         Text="{Binding SearchText}" />
+                <TextBlock Text="No prompts found."
+                           IsVisible="{Binding HasNoSearchResults}"
+                           HorizontalAlignment="Center"
+                           Margin="0,12,0,0"/>
+                <ItemsControl ItemsSource="{Binding FilteredPromptCards}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="models:PromptCardModel">
+                            <Border Padding="12"
+                                    Margin="0,0,0,8"
+                                    BorderThickness="1"
+                                    CornerRadius="6">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{Binding Title}"
+                                               FontSize="18"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Text="{Binding Category}"
+                                               FontSize="12"
+                                               Opacity="0.7" />
+                                    <TextBlock Text="{Binding Description}"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
         </Border>
     </Grid>
 </Window>
