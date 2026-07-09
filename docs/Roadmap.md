@@ -6,17 +6,15 @@ v0.1.0
 
 Current Phase
 -------------
-Phase 4 – User Interfaces
+Phase 5 – Avalonia AI Features
 
 Current Prompt
 --------------
-Prompt 026 – Avalonia Embedding Service ✅
-- Added EmbeddingVector model
-- Added IEmbeddingService abstraction
-- Added deterministic offline embedding implementation
-- Registered embedding service with dependency injection
-- Introduced stable deterministic hashing for embedding generation
-- Verified `dotnet build` and `dotnet test`
+Prompt 028 – OpenAI Embedding Provider
+- Replace the deterministic embedding service
+- Introduce an OpenAI embedding provider abstraction
+- Preserve the existing semantic search pipeline
+- Keep deterministic embeddings available for offline development
 
 ### Phase 1 – API Foundation (Current)
 
@@ -134,11 +132,19 @@ Prompt 026 – Avalonia Embedding Service ✅
 - Introduced stable deterministic hashing for embedding generation
 - Verified build and tests
 
-Prompt 027
-Semantic Search
+Prompt 027 – Avalonia Offline Semantic Search ✅
+- Added offline semantic ranking
+- Added cosine similarity service
+- Preserved keyword search
+- Ranked keyword matches by semantic similarity
+- Kept the implementation fully offline
+- Verified build and tests
 
-Prompt 028
-OpenAI Integration
+Prompt 028 – OpenAI Embedding Provider
+- Replace the deterministic embedding service
+- Introduce an OpenAI embedding provider
+- Add configuration for embedding models
+- Preserve offline development support
 
 Prompt 029
 AI Conversations
@@ -191,3 +197,5 @@ Milestone Achieved
 ✔ Prompt category discovery and reuse implemented
 ✔ Offline prompt search implemented
 ✔ Offline embedding service foundation established
+✔ Offline semantic search implemented
+✔ Hybrid keyword and semantic search architecture established

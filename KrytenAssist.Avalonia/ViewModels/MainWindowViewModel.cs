@@ -22,9 +22,18 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         !string.IsNullOrWhiteSpace(SearchText) &&
         FilteredPromptCards.Count == 0;
 
-    public MainWindowViewModel(IPromptCardStore promptCardStore)
+    private readonly IEmbeddingService _embeddingService;
+    private readonly CosineSimilarityService _cosineSimilarityService;
+
+    public MainWindowViewModel(
+        IPromptCardStore promptCardStore,
+        IEmbeddingService embeddingService,
+        CosineSimilarityService cosineSimilarityService)
     {
         _promptCardStore = promptCardStore;
+        _embeddingService = embeddingService;
+        _cosineSimilarityService = cosineSimilarityService;
+        
         SaveCommand = new AsyncCommand(SaveAsync);
         
         SelectCategoryCommand = new RelayCommand(parameter =>
@@ -74,7 +83,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
             _searchText = value;
             OnPropertyChanged(nameof(SearchText));
-            RefreshFilteredPromptCards();
+            _ = RefreshFilteredPromptCardsAsync();
         }
     }
 
@@ -94,7 +103,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
         
         RefreshCategories();
-        RefreshFilteredPromptCards();
+        await RefreshFilteredPromptCardsAsync();
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -181,30 +190,70 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
     }
     
-    private void RefreshFilteredPromptCards()
+    private async Task RefreshFilteredPromptCardsAsync()
     {
         FilteredPromptCards.Clear();
 
-        IEnumerable<PromptCardModel> prompts = PromptCards;
+        var search = SearchText.Trim();
 
-        if (!string.IsNullOrWhiteSpace(SearchText))
+        var prompts = PromptCards
+            .Where(prompt => MatchesKeywordSearch(prompt, search))
+            .ToList();
+
+        if (!string.IsNullOrWhiteSpace(search))
         {
-            var search = SearchText.Trim();
+            var rankedPrompts = new List<(PromptCardModel Prompt, double Similarity)>();
 
-            prompts = PromptCards.Where(prompt =>
-                prompt.Title.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-                prompt.Category.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-                (!string.IsNullOrWhiteSpace(prompt.Description) &&
-                 prompt.Description.Contains(search, StringComparison.OrdinalIgnoreCase)) ||
-                prompt.PromptText.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-                prompt.Tags.Any(tag => tag.Contains(search, StringComparison.OrdinalIgnoreCase)));
+            foreach (var prompt in prompts)
+            {
+                var similarity = await CalculateSimilarityAsync(prompt, search);
+                rankedPrompts.Add((prompt, similarity));
+            }
+
+            prompts = rankedPrompts
+                .OrderByDescending(result => result.Similarity)
+                .Select(result => result.Prompt)
+                .ToList();
         }
 
         foreach (var prompt in prompts)
         {
             FilteredPromptCards.Add(prompt);
         }
-        
+
         OnPropertyChanged(nameof(HasNoSearchResults));
+    }
+    
+    private static string BuildSearchableText(PromptCardModel prompt)
+    {
+        return string.Join(' ',
+            prompt.Title,
+            prompt.Category,
+            prompt.Description,
+            prompt.PromptText,
+            string.Join(' ', prompt.Tags));
+    }
+    
+    private static bool MatchesKeywordSearch(PromptCardModel prompt, string searchText)
+    {
+        if (string.IsNullOrWhiteSpace(searchText))
+        {
+            return true;
+        }
+
+        var searchableText = BuildSearchableText(prompt);
+
+        return searchableText.Contains(searchText, StringComparison.OrdinalIgnoreCase);
+    }
+    private async Task<double> CalculateSimilarityAsync(
+        PromptCardModel prompt,
+        string searchText)
+    {
+        var queryEmbedding = await _embeddingService.GenerateEmbeddingAsync(searchText);
+
+        var promptEmbedding = await _embeddingService.GenerateEmbeddingAsync(
+            BuildSearchableText(prompt));
+
+        return _cosineSimilarityService.Calculate(queryEmbedding, promptEmbedding);
     }
 }

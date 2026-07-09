@@ -32,6 +32,7 @@ class Program
         services.AddSingleton<IPromptCardStore, JsonPromptCardStore>();
         services.AddTransient<MainWindowViewModel>();
         services.AddSingleton<IEmbeddingService, DeterministicEmbeddingService>();
+        services.AddSingleton<CosineSimilarityService>();
 
         return services.BuildServiceProvider();
     }
