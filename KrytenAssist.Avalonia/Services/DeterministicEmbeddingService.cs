@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using KrytenAssist.Avalonia.Models;
 
@@ -8,8 +9,11 @@ public sealed class DeterministicEmbeddingService : IEmbeddingService
 {
     private const int VectorSize = 32;
 
-    public Task<EmbeddingVector> GenerateEmbeddingAsync(string text)
+    public Task<EmbeddingVector> GenerateEmbeddingAsync(
+        string text,
+        CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var values = new double[VectorSize];
 
         if (!string.IsNullOrWhiteSpace(text))

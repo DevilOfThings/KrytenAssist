@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+using System.Threading;
 using KrytenAssist.Avalonia.Models;
 using KrytenAssist.Avalonia.Services;
 using System.Windows.Input;
 using System.ComponentModel;
+using System.Diagnostics;
 
 namespace KrytenAssist.Avalonia.ViewModels;
 
@@ -15,8 +17,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private readonly IPromptCardStore _promptCardStore;
     private string _newCategory = string.Empty;
     private string _searchText = string.Empty;
+    private CancellationTokenSource? _searchDebounceCancellation;
+    private static readonly TimeSpan SearchDebounceDelay = TimeSpan.FromMilliseconds(400);
     
     public ObservableCollection<string> Categories { get; } = [];
+    private readonly Dictionary<string, EmbeddingVector> _embeddingCache = new();
     
     public bool HasNoSearchResults =>
         !string.IsNullOrWhiteSpace(SearchText) &&
@@ -24,6 +29,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     private readonly IEmbeddingService _embeddingService;
     private readonly CosineSimilarityService _cosineSimilarityService;
+    private readonly IEmbeddingServiceStatus? _embeddingServiceStatus;
+    private string? _embeddingStatusMessage;
 
     public MainWindowViewModel(
         IPromptCardStore promptCardStore,
@@ -32,6 +39,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         _promptCardStore = promptCardStore;
         _embeddingService = embeddingService;
+        _embeddingServiceStatus = embeddingService as IEmbeddingServiceStatus;
+
+        if (_embeddingServiceStatus is not null)
+        {
+            _embeddingServiceStatus.StatusChanged += OnEmbeddingServiceStatusChanged;
+            _embeddingStatusMessage = _embeddingServiceStatus.StatusMessage;
+        }
         _cosineSimilarityService = cosineSimilarityService;
         
         SaveCommand = new AsyncCommand(SaveAsync);
@@ -83,7 +97,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
             _searchText = value;
             OnPropertyChanged(nameof(SearchText));
-            _ = RefreshFilteredPromptCardsAsync();
+            _ = DebounceSearchAsync();
         }
     }
 
@@ -91,11 +105,36 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public ObservableCollection<PromptCardModel> FilteredPromptCards { get; } = new();
 
+    public string? EmbeddingStatusMessage
+    {
+        get => _embeddingStatusMessage;
+        private set
+        {
+            if (_embeddingStatusMessage == value)
+            {
+                return;
+            }
+
+            _embeddingStatusMessage = value;
+            OnPropertyChanged(nameof(EmbeddingStatusMessage));
+            OnPropertyChanged(nameof(HasEmbeddingStatusMessage));
+        }
+    }
+
+    public bool HasEmbeddingStatusMessage =>
+        !string.IsNullOrWhiteSpace(EmbeddingStatusMessage);
+    
+    private void OnEmbeddingServiceStatusChanged(object? sender, EventArgs e)
+    {
+        EmbeddingStatusMessage = _embeddingServiceStatus?.StatusMessage;
+    }
+    
     public async Task LoadAsync()
     {
         var promptCards = await _promptCardStore.GetAllAsync();
 
         PromptCards.Clear();
+        _embeddingCache.Clear();
 
         foreach (var promptCard in promptCards)
         {
@@ -153,6 +192,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         promptCards.Add(promptCard);
 
         await _promptCardStore.SaveAllAsync(promptCards);
+        _embeddingCache.Clear();
 
         await LoadAsync();
     }
@@ -176,6 +216,25 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
     }
     
+    private async Task DebounceSearchAsync()
+    {
+        _searchDebounceCancellation?.Cancel();
+        _searchDebounceCancellation?.Dispose();
+
+        _searchDebounceCancellation = new CancellationTokenSource();
+        var cancellationToken = _searchDebounceCancellation.Token;
+
+        try
+        {
+            await Task.Delay(SearchDebounceDelay, cancellationToken);
+            await RefreshFilteredPromptCardsAsync(cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            // A newer search superseded this one.
+        }
+    }
+    
     private void RefreshCategories()
     {
         Categories.Clear();
@@ -190,38 +249,56 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
     }
     
-    private async Task RefreshFilteredPromptCardsAsync()
+    private async Task RefreshFilteredPromptCardsAsync(
+        CancellationToken cancellationToken = default)
     {
-        FilteredPromptCards.Clear();
 
-        var search = SearchText.Trim();
+    var search = SearchText.Trim();
 
-        var prompts = PromptCards
-            .Where(prompt => MatchesKeywordSearch(prompt, search))
-            .ToList();
+    var prompts = PromptCards
+        .Where(prompt => MatchesKeywordSearch(prompt, search))
+        .ToList();
 
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            var rankedPrompts = new List<(PromptCardModel Prompt, double Similarity)>();
+    if (!string.IsNullOrWhiteSpace(search))
+    {
+        var queryEmbedding = await _embeddingService.GenerateEmbeddingAsync(
+            search,
+            cancellationToken);
 
-            foreach (var prompt in prompts)
-            {
-                var similarity = await CalculateSimilarityAsync(prompt, search);
-                rankedPrompts.Add((prompt, similarity));
-            }
-
-            prompts = rankedPrompts
-                .OrderByDescending(result => result.Similarity)
-                .Select(result => result.Prompt)
-                .ToList();
-        }
+        var rankedPrompts = new List<(PromptCardModel Prompt, double Similarity)>();
 
         foreach (var prompt in prompts)
         {
-            FilteredPromptCards.Add(prompt);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var promptEmbedding = await GetPromptEmbeddingAsync(
+                prompt,
+                cancellationToken);
+
+            var similarity = _cosineSimilarityService.Calculate(
+                queryEmbedding,
+                promptEmbedding);
+
+            rankedPrompts.Add((prompt, similarity));
         }
 
-        OnPropertyChanged(nameof(HasNoSearchResults));
+        prompts = rankedPrompts
+            .OrderByDescending(result => result.Similarity)
+            .Select(result => result.Prompt)
+            .ToList();
+    }
+
+    cancellationToken.ThrowIfCancellationRequested();
+
+    FilteredPromptCards.Clear();
+
+    foreach (var prompt in prompts)
+    {
+        FilteredPromptCards.Add(prompt);
+    }
+
+    OnPropertyChanged(nameof(HasNoSearchResults));
+
     }
     
     private static string BuildSearchableText(PromptCardModel prompt)
@@ -245,15 +322,25 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         return searchableText.Contains(searchText, StringComparison.OrdinalIgnoreCase);
     }
-    private async Task<double> CalculateSimilarityAsync(
+    private async Task<EmbeddingVector> GetPromptEmbeddingAsync(
         PromptCardModel prompt,
-        string searchText)
+        CancellationToken cancellationToken)
     {
-        var queryEmbedding = await _embeddingService.GenerateEmbeddingAsync(searchText);
+        var searchableText = BuildSearchableText(prompt);
 
-        var promptEmbedding = await _embeddingService.GenerateEmbeddingAsync(
-            BuildSearchableText(prompt));
+        if (_embeddingCache.TryGetValue(searchableText, out var cachedEmbedding))
+        {
+            Debug.WriteLine($"Embedding cache hit: {prompt.Title}");
+            return cachedEmbedding;
+        }
 
-        return _cosineSimilarityService.Calculate(queryEmbedding, promptEmbedding);
+        Debug.WriteLine($"Embedding cache miss: {prompt.Title}");
+
+        var embedding = await _embeddingService.GenerateEmbeddingAsync(
+            searchableText,
+            cancellationToken);
+        _embeddingCache[searchableText] = embedding;
+
+        return embedding;
     }
 }

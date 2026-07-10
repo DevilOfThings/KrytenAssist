@@ -81,6 +81,13 @@
             <StackPanel Spacing="12">
                 <TextBox PlaceholderText="Search prompts..."
                          Text="{Binding SearchText}" />
+                <Border IsVisible="{Binding HasEmbeddingStatusMessage}"
+                        Padding="10"
+                        BorderThickness="1"
+                        CornerRadius="6">
+                    <TextBlock Text="{Binding EmbeddingStatusMessage}"
+                               TextWrapping="Wrap" />
+                </Border>
                 <TextBlock Text="No prompts found."
                            IsVisible="{Binding HasNoSearchResults}"
                            HorizontalAlignment="Center"

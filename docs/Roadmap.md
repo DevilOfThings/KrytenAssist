@@ -10,11 +10,10 @@ Phase 5 – Avalonia AI Features
 
 Current Prompt
 --------------
-Prompt 028 – OpenAI Embedding Provider
-- Replace the deterministic embedding service
-- Introduce an OpenAI embedding provider abstraction
-- Preserve the existing semantic search pipeline
-- Keep deterministic embeddings available for offline development
+Prompt 029 – AI Conversations
+- Introduce the first AI conversation capability
+- Build on the completed embedding infrastructure
+- Preserve the offline-first architecture
 
 ### Phase 1 – API Foundation (Current)
 
@@ -140,11 +139,17 @@ Prompt 027 – Avalonia Offline Semantic Search ✅
 - Kept the implementation fully offline
 - Verified build and tests
 
-Prompt 028 – OpenAI Embedding Provider
-- Replace the deterministic embedding service
-- Introduce an OpenAI embedding provider
-- Add configuration for embedding models
-- Preserve offline development support
+Prompt 028 – OpenAI Embedding Provider ✅
+- Added configuration-driven embedding provider selection
+- Added OpenAI embedding provider implementation
+- Added startup configuration validation for API keys
+- Added debounced semantic search
+- Added cancellation support throughout the search pipeline
+- Added in-memory embedding cache
+- Added resilient runtime fallback to deterministic embeddings
+- Added provider status reporting in the UI
+- Preserved offline-first development
+- Verified build and tests
 
 Prompt 029
 AI Conversations
@@ -199,3 +204,7 @@ Milestone Achieved
 ✔ Offline embedding service foundation established
 ✔ Offline semantic search implemented
 ✔ Hybrid keyword and semantic search architecture established
+✔ OpenAI embedding provider integrated
+✔ Runtime AI provider resilience implemented
+✔ Semantic search optimised with debouncing, cancellation and caching
+✔ Offline-first AI architecture preserved

@@ -3,6 +3,9 @@ using System;
 using KrytenAssist.Avalonia.Services;
 using KrytenAssist.Avalonia.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
+using KrytenAssist.Avalonia.Options;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 
 
 namespace KrytenAssist.Avalonia;
@@ -29,9 +32,29 @@ class Program
     {
         var services = new ServiceCollection();
 
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(AppContext.BaseDirectory)
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
+            .Build();
+
+        services.Configure<EmbeddingOptions>(configuration.GetSection("Embedding"));
+
         services.AddSingleton<IPromptCardStore, JsonPromptCardStore>();
         services.AddTransient<MainWindowViewModel>();
-        services.AddSingleton<IEmbeddingService, DeterministicEmbeddingService>();
+        
+        services.AddSingleton<OpenAIEmbeddingService>();
+        services.AddSingleton<DeterministicEmbeddingService>();
+        services.AddSingleton<ResilientEmbeddingService>();
+
+        services.AddSingleton<IEmbeddingService>(provider =>
+        {
+            var options = provider.GetRequiredService<IOptions<EmbeddingOptions>>().Value;
+
+            return options.Provider.Equals("OpenAI", StringComparison.OrdinalIgnoreCase)
+                ? provider.GetRequiredService<ResilientEmbeddingService>()
+                : provider.GetRequiredService<DeterministicEmbeddingService>();
+        });
+        
         services.AddSingleton<CosineSimilarityService>();
 
         return services.BuildServiceProvider();
