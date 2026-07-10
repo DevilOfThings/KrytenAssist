@@ -205,6 +205,8 @@
 
                     <Button Content="Cancel"
                             Command="{Binding CancelConversationCommand}" />
+                    <Button Content="Clear"
+                            Command="{Binding ClearConversationCommand}" />
 
                     <TextBlock Text="Thinking..."
                                VerticalAlignment="Center"

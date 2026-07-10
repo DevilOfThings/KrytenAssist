@@ -34,9 +34,19 @@ public sealed class OpenAIConversationService : IConversationService
     {
         List<ChatMessage> messages =
         [
-            new SystemChatMessage(request.SystemPrompt),
-            new UserChatMessage(request.UserMessage)
+            new SystemChatMessage(request.SystemPrompt)
         ];
+
+        foreach (var message in request.Messages)
+        {
+            messages.Add(message.Role switch
+            {
+                ConversationRole.System => new SystemChatMessage(message.Content),
+                ConversationRole.User => new UserChatMessage(message.Content),
+                ConversationRole.Assistant => new AssistantChatMessage(message.Content),
+                _ => throw new InvalidOperationException($"Unsupported conversation role: {message.Role}")
+            });
+        }
 
         var response = await _chatClient.CompleteChatAsync(
             messages,

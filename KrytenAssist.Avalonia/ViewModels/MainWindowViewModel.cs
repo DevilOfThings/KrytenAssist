@@ -32,6 +32,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private readonly IEmbeddingService _embeddingService;
     private readonly CosineSimilarityService _cosineSimilarityService;
     private readonly IConversationService _conversationService;
+    private readonly IConversationMemory _conversationMemory;
     private readonly string _conversationSystemPrompt;
     private CancellationTokenSource? _conversationCancellationTokenSource;
     private string _conversationInput = string.Empty;
@@ -45,6 +46,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         IEmbeddingService embeddingService,
         CosineSimilarityService cosineSimilarityService,
         IConversationService conversationService,
+        IConversationMemory conversationMemory,
         IOptions<ConversationOptions> conversationOptions)
     {
         _promptCardStore = promptCardStore;
@@ -58,6 +60,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
         _cosineSimilarityService = cosineSimilarityService;
         _conversationService = conversationService;
+        _conversationMemory = conversationMemory;
         _conversationSystemPrompt = conversationOptions.Value.SystemPrompt;
         
         SaveCommand = new AsyncCommand(SaveAsync);
@@ -74,12 +77,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         CancelConversationCommand = new RelayCommand(_ =>
             _conversationCancellationTokenSource?.Cancel());
+        
+        ClearConversationCommand = new RelayCommand(_ => ClearConversation());
     }
 
     public ICommand SaveCommand { get; }
     public ICommand SelectCategoryCommand { get; }
     public ICommand SendMessageCommand { get; }
-
+    public ICommand ClearConversationCommand { get; }
     public ICommand CancelConversationCommand { get; }
     
     public string NewTitle { get; set; } = string.Empty;
@@ -225,12 +230,22 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         try
         {
-            // Pass _conversationCancellationTokenSource.Token into _conversationService.SendAsync(...).
+            // Build conversation history with memory
+            var requestMessages = _conversationMemory
+                .GetRecentMessages()
+                .ToList();
+
+            requestMessages.Add(new ConversationMessage
+            {
+                Role = ConversationRole.User,
+                Content = userMessage
+            });
+
             var response = await _conversationService.SendAsync(
                 new ConversationRequest
                 {
                     SystemPrompt = _conversationSystemPrompt,
-                    UserMessage = userMessage
+                    Messages = requestMessages
                 },
                 _conversationCancellationTokenSource.Token);
 
@@ -239,6 +254,18 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 Role = ConversationRole.Assistant,
                 Content = response.Content
             });
+
+            _conversationMemory.AddTurn(
+                new ConversationMessage
+                {
+                    Role = ConversationRole.User,
+                    Content = userMessage
+                },
+                new ConversationMessage
+                {
+                    Role = ConversationRole.Assistant,
+                    Content = response.Content
+                });
         }
         catch (OperationCanceledException)
         {
@@ -470,5 +497,21 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         _embeddingCache[searchableText] = embedding;
 
         return embedding;
+    }
+    
+    private void ClearConversation()
+    {
+        if (IsConversationBusy)
+        {
+            _conversationCancellationTokenSource?.Cancel();
+        }
+
+        ConversationHistory.Clear();
+
+        _conversationMemory.Clear();
+
+        ConversationErrorMessage = null;
+
+        ConversationInput = string.Empty;
     }
 }

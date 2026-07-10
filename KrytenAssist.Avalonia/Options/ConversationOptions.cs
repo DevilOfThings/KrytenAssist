@@ -7,5 +7,7 @@ public sealed class ConversationOptions
 
     public string SystemPrompt { get; init; } =
         "You are Kryten Assist. Provide concise, accurate and practical help.";
+
+    public int MaxContextMessages { get; init; } = 12;
 }
 

@@ -10,9 +10,9 @@ Phase 5 – Avalonia AI Features
 
 Current Prompt
 --------------
-Prompt 030 – Memory
-- Introduce conversational memory
-- Build on the completed AI conversation infrastructure
+Prompt 031 – Plugins / Tools
+- Introduce the first provider-independent tool architecture
+- Allow the AI to invoke application capabilities
 - Preserve the offline-first architecture
 
 ### Phase 1 – API Foundation (Current)
@@ -161,13 +161,30 @@ Prompt 029 – AI Conversations ✅
 - Preserved stateless conversations ready for Prompt 030 memory
 - Verified build and manual conversation workflow
 
-Prompt 030
-Memory
+Prompt 030 – Memory ✅
+- Added provider-independent conversation memory abstraction
+- Added bounded in-memory conversation memory
+- Added configurable conversation context size
+- Added provider-independent conversation request model
+- Included previous successful conversation turns in subsequent AI requests
+- Added Clear Conversation command and UI
+- Ensured failed and cancelled requests are not committed to memory
+- Verified conversational memory using the live OpenAI API
+
 
 Prompt 031
 Plugins / Tools
 
 Prompt 031a
+Runtime Context Injection
+- Inject current runtime context into every AI conversation
+- Supply the current date, time and local time zone to the AI provider
+- Introduce a provider-independent runtime context abstraction
+- Separate runtime context from conversational memory
+- Prepare the architecture for future context providers such as calendar, current project, open documents, weather and system information
+- Preserve provider independence and the offline-first architecture
+
+Prompt 031b
 Avalonia Desktop UX Refinements
 - Introduce a two-pane desktop workspace optimised for tablet-sized displays
 - Move prompt creation into an overlay/dialog launched from a 'New Prompt' action

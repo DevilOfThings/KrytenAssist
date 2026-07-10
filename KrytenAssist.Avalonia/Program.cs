@@ -59,6 +59,7 @@ class Program
         
         services.AddSingleton<CosineSimilarityService>();
         services.AddSingleton<IConversationService, OpenAIConversationService>();
+        services.AddSingleton<IConversationMemory, InMemoryConversationMemory>();
 
         return services.BuildServiceProvider();
     }
