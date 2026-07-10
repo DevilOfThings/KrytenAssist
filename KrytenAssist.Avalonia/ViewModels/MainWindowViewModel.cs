@@ -9,6 +9,8 @@ using KrytenAssist.Avalonia.Services;
 using System.Windows.Input;
 using System.ComponentModel;
 using System.Diagnostics;
+using KrytenAssist.Avalonia.Options;
+using Microsoft.Extensions.Options;
 
 namespace KrytenAssist.Avalonia.ViewModels;
 
@@ -29,13 +31,21 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     private readonly IEmbeddingService _embeddingService;
     private readonly CosineSimilarityService _cosineSimilarityService;
+    private readonly IConversationService _conversationService;
+    private readonly string _conversationSystemPrompt;
+    private CancellationTokenSource? _conversationCancellationTokenSource;
+    private string _conversationInput = string.Empty;
+    private bool _isConversationBusy;
+    private string? _conversationErrorMessage;
     private readonly IEmbeddingServiceStatus? _embeddingServiceStatus;
     private string? _embeddingStatusMessage;
 
     public MainWindowViewModel(
         IPromptCardStore promptCardStore,
         IEmbeddingService embeddingService,
-        CosineSimilarityService cosineSimilarityService)
+        CosineSimilarityService cosineSimilarityService,
+        IConversationService conversationService,
+        IOptions<ConversationOptions> conversationOptions)
     {
         _promptCardStore = promptCardStore;
         _embeddingService = embeddingService;
@@ -47,6 +57,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             _embeddingStatusMessage = _embeddingServiceStatus.StatusMessage;
         }
         _cosineSimilarityService = cosineSimilarityService;
+        _conversationService = conversationService;
+        _conversationSystemPrompt = conversationOptions.Value.SystemPrompt;
         
         SaveCommand = new AsyncCommand(SaveAsync);
         
@@ -57,10 +69,18 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 NewCategory = category;
             }
         });
+        
+        SendMessageCommand = new AsyncCommand(SendMessageAsync);
+
+        CancelConversationCommand = new RelayCommand(_ =>
+            _conversationCancellationTokenSource?.Cancel());
     }
 
     public ICommand SaveCommand { get; }
     public ICommand SelectCategoryCommand { get; }
+    public ICommand SendMessageCommand { get; }
+
+    public ICommand CancelConversationCommand { get; }
     
     public string NewTitle { get; set; } = string.Empty;
 
@@ -105,6 +125,57 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public ObservableCollection<PromptCardModel> FilteredPromptCards { get; } = new();
 
+    public ObservableCollection<ConversationMessage> ConversationHistory { get; } = new();
+
+    public string ConversationInput
+    {
+        get => _conversationInput;
+        set
+        {
+            if (_conversationInput == value)
+            {
+                return;
+            }
+
+            _conversationInput = value;
+            OnPropertyChanged(nameof(ConversationInput));
+        }
+    }
+
+    public bool IsConversationBusy
+    {
+        get => _isConversationBusy;
+        private set
+        {
+            if (_isConversationBusy == value)
+            {
+                return;
+            }
+
+            _isConversationBusy = value;
+            OnPropertyChanged(nameof(IsConversationBusy));
+        }
+    }
+
+    public string? ConversationErrorMessage
+    {
+        get => _conversationErrorMessage;
+        private set
+        {
+            if (_conversationErrorMessage == value)
+            {
+                return;
+            }
+
+            _conversationErrorMessage = value;
+            OnPropertyChanged(nameof(ConversationErrorMessage));
+            OnPropertyChanged(nameof(HasConversationError));
+        }
+    }
+
+    public bool HasConversationError =>
+        !string.IsNullOrWhiteSpace(ConversationErrorMessage);
+
     public string? EmbeddingStatusMessage
     {
         get => _embeddingStatusMessage;
@@ -128,7 +199,64 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         EmbeddingStatusMessage = _embeddingServiceStatus?.StatusMessage;
     }
-    
+   
+    private async Task SendMessageAsync()
+    {
+        if (IsConversationBusy || string.IsNullOrWhiteSpace(ConversationInput))
+        {
+            return;
+        }
+
+        var userMessage = ConversationInput.Trim();
+
+        // Before calling _conversationService.SendAsync(...), create a new CancellationTokenSource and assign it to _conversationCancellationTokenSource.
+        _conversationCancellationTokenSource?.Dispose();
+        _conversationCancellationTokenSource = new CancellationTokenSource();
+
+        ConversationErrorMessage = null;
+        IsConversationBusy = true;
+        ConversationInput = string.Empty;
+
+        ConversationHistory.Add(new ConversationMessage
+        {
+            Role = ConversationRole.User,
+            Content = userMessage
+        });
+
+        try
+        {
+            // Pass _conversationCancellationTokenSource.Token into _conversationService.SendAsync(...).
+            var response = await _conversationService.SendAsync(
+                new ConversationRequest
+                {
+                    SystemPrompt = _conversationSystemPrompt,
+                    UserMessage = userMessage
+                },
+                _conversationCancellationTokenSource.Token);
+
+            ConversationHistory.Add(new ConversationMessage
+            {
+                Role = ConversationRole.Assistant,
+                Content = response.Content
+            });
+        }
+        catch (OperationCanceledException)
+        {
+            ConversationInput = userMessage;
+        }
+        catch (Exception exception)
+        {
+            ConversationInput = userMessage;
+            ConversationErrorMessage = exception.Message;
+        }
+        finally
+        {
+            IsConversationBusy = false;
+            // In the finally block, dispose _conversationCancellationTokenSource and set it to null.
+            _conversationCancellationTokenSource.Dispose();
+            _conversationCancellationTokenSource = null;
+        }
+    }
     public async Task LoadAsync()
     {
         var promptCards = await _promptCardStore.GetAllAsync();

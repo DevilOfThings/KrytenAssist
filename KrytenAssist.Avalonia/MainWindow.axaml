@@ -4,116 +4,213 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:models="using:KrytenAssist.Avalonia.Models"
         xmlns:viewModels="clr-namespace:KrytenAssist.Avalonia.ViewModels"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        mc:Ignorable="d"
+        d:DesignWidth="1100"
+        d:DesignHeight="700"
         x:Class="KrytenAssist.Avalonia.MainWindow"
         Title="KrytenAssist.Avalonia"
+        Width="1100"
+        Height="700"
+        MinWidth="900"
+        MinHeight="600"
+        MaxWidth="1100"
         x:DataType="viewModels:MainWindowViewModel">
-    <Grid RowDefinitions="Auto,Auto,*" Margin="24" RowSpacing="16">
-        <StackPanel Grid.Row="0" Spacing="4">
+    <Grid RowDefinitions="Auto,*"
+          ColumnDefinitions="3*,2*"
+          Margin="24"
+          RowSpacing="16"
+          ColumnSpacing="16">
+
+        <StackPanel Grid.Row="0"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="2"
+                    Spacing="4">
             <TextBlock Text="Kryten Assist"
                        FontSize="28"
                        FontWeight="Bold" />
-            <TextBlock Text="Offline prompt templates"
+            <TextBlock Text="Offline prompt templates and AI conversation"
                        FontSize="14"
                        Opacity="0.7" />
         </StackPanel>
 
+        <Grid Grid.Row="1"
+              Grid.Column="0"
+              RowDefinitions="Auto,*"
+              RowSpacing="16">
+
+            <Border Grid.Row="0"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="12">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Create prompt template"
+                               FontSize="18"
+                               FontWeight="SemiBold" />
+
+                    <TextBox PlaceholderText="Title"
+                             Text="{Binding NewTitle}" />
+
+                    <TextBox PlaceholderText="Category"
+                             Text="{Binding NewCategory}" />
+
+                    <TextBlock Text="Category suggestions"
+                               FontSize="12"
+                               Opacity="0.7" />
+
+                    <ItemsControl x:Name="CategorySuggestions"
+                                  ItemsSource="{Binding Categories}"
+                                  Tag="{Binding SelectCategoryCommand}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                                <Button Content="{Binding}"
+                                        Command="{Binding #CategorySuggestions.Tag}"
+                                        CommandParameter="{Binding}"
+                                        Margin="0,0,8,8"
+                                        Padding="8,4" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBox PlaceholderText="Description"
+                             Text="{Binding NewDescription}" />
+
+                    <TextBox PlaceholderText="Prompt text"
+                             Text="{Binding NewPromptText}"
+                             AcceptsReturn="True"
+                             MinHeight="100"
+                             TextWrapping="Wrap" />
+
+                    <TextBox PlaceholderText="Tags, comma separated"
+                             Text="{Binding NewTags}" />
+
+                    <Button Content="Save"
+                            HorizontalAlignment="Left"
+                            Command="{Binding SaveCommand}" />
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Row="1"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="12">
+                <Grid RowDefinitions="Auto,Auto,Auto,*"
+                      RowSpacing="12">
+                    <TextBox Grid.Row="0"
+                             PlaceholderText="Search prompts..."
+                             Text="{Binding SearchText}" />
+
+                    <Border Grid.Row="1"
+                            IsVisible="{Binding HasEmbeddingStatusMessage}"
+                            Padding="10"
+                            BorderThickness="1"
+                            CornerRadius="6">
+                        <TextBlock Text="{Binding EmbeddingStatusMessage}"
+                                   TextWrapping="Wrap" />
+                    </Border>
+
+                    <TextBlock Grid.Row="2"
+                               Text="No prompts found."
+                               IsVisible="{Binding HasNoSearchResults}"
+                               HorizontalAlignment="Center"
+                               Margin="0,12,0,0" />
+
+                    <ScrollViewer Grid.Row="3"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <ItemsControl ItemsSource="{Binding FilteredPromptCards}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="models:PromptCardModel">
+                                    <Border Padding="12"
+                                            Margin="0,0,0,8"
+                                            BorderThickness="1"
+                                            CornerRadius="6">
+                                        <StackPanel Spacing="4">
+                                            <TextBlock Text="{Binding Title}"
+                                                       FontSize="18"
+                                                       FontWeight="SemiBold" />
+                                            <TextBlock Text="{Binding Category}"
+                                                       FontSize="12"
+                                                       Opacity="0.7" />
+                                            <TextBlock Text="{Binding Description}"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
+
         <Border Grid.Row="1"
+                Grid.Column="1"
                 BorderThickness="1"
                 CornerRadius="8"
                 Padding="12">
-            <StackPanel Spacing="8">
-                <TextBlock Text="Create prompt template"
+            <Grid RowDefinitions="Auto,*,Auto,Auto,Auto"
+                  RowSpacing="12">
+                <TextBlock Grid.Row="0"
+                           Text="AI Conversation"
                            FontSize="18"
                            FontWeight="SemiBold" />
 
-                <TextBox PlaceholderText="Title"
-                         Text="{Binding NewTitle}" />
+                <ScrollViewer Grid.Row="1"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <ListBox ItemsSource="{Binding ConversationHistory}"
+                             BorderThickness="0"
+                             Background="Transparent">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate DataType="models:ConversationMessage">
+                                <Border BorderThickness="1"
+                                        CornerRadius="6"
+                                        Padding="8"
+                                        Margin="0,0,0,8">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Role}"
+                                                   FontWeight="Bold"
+                                                   FontSize="12" />
+                                        <TextBlock Text="{Binding Content}"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </ScrollViewer>
 
-                <TextBox PlaceholderText="Category"
-                         Text="{Binding NewCategory}" />
+                <TextBlock Grid.Row="2"
+                           Text="{Binding ConversationErrorMessage}"
+                           IsVisible="{Binding HasConversationError}"
+                           TextWrapping="Wrap" />
 
-                <TextBlock Text="Category suggestions"
-                           FontSize="12"
-                           Opacity="0.7" />
-
-                <ItemsControl x:Name="CategorySuggestions"
-                              ItemsSource="{Binding Categories}"
-                              Tag="{Binding SelectCategoryCommand}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="x:String">
-                            <Button Content="{Binding}"
-                                    Command="{Binding #CategorySuggestions.Tag}"
-                                    CommandParameter="{Binding}"
-                                    Margin="0,0,8,8"
-                                    Padding="8,4" />
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-
-                <TextBox PlaceholderText="Description"
-                         Text="{Binding NewDescription}" />
-
-                <TextBox PlaceholderText="Prompt text"
-                         Text="{Binding NewPromptText}"
+                <TextBox Grid.Row="3"
                          AcceptsReturn="True"
-                         MinHeight="100"
-                         TextWrapping="Wrap" />
+                         MinHeight="80"
+                         TextWrapping="Wrap"
+                         PlaceholderText="Ask Kryten..."
+                         Text="{Binding ConversationInput, UpdateSourceTrigger=PropertyChanged}" />
 
-                <TextBox PlaceholderText="Tags, comma separated"
-                         Text="{Binding NewTags}" />
+                <StackPanel Grid.Row="4"
+                            Orientation="Horizontal"
+                            Spacing="8">
+                    <Button Content="Send"
+                            Command="{Binding SendMessageCommand}" />
 
-                <Button Content="Save"
-                        HorizontalAlignment="Left"
-                        Command="{Binding SaveCommand}" />
-            </StackPanel>
-        </Border>
+                    <Button Content="Cancel"
+                            Command="{Binding CancelConversationCommand}" />
 
-        <Border Grid.Row="2"
-                BorderThickness="1"
-                CornerRadius="8"
-                Padding="12">
-            <StackPanel Spacing="12">
-                <TextBox PlaceholderText="Search prompts..."
-                         Text="{Binding SearchText}" />
-                <Border IsVisible="{Binding HasEmbeddingStatusMessage}"
-                        Padding="10"
-                        BorderThickness="1"
-                        CornerRadius="6">
-                    <TextBlock Text="{Binding EmbeddingStatusMessage}"
-                               TextWrapping="Wrap" />
-                </Border>
-                <TextBlock Text="No prompts found."
-                           IsVisible="{Binding HasNoSearchResults}"
-                           HorizontalAlignment="Center"
-                           Margin="0,12,0,0"/>
-                <ItemsControl ItemsSource="{Binding FilteredPromptCards}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="models:PromptCardModel">
-                            <Border Padding="12"
-                                    Margin="0,0,0,8"
-                                    BorderThickness="1"
-                                    CornerRadius="6">
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="{Binding Title}"
-                                               FontSize="18"
-                                               FontWeight="SemiBold" />
-                                    <TextBlock Text="{Binding Category}"
-                                               FontSize="12"
-                                               Opacity="0.7" />
-                                    <TextBlock Text="{Binding Description}"
-                                               TextWrapping="Wrap" />
-                                </StackPanel>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </StackPanel>
+                    <TextBlock Text="Thinking..."
+                               VerticalAlignment="Center"
+                               IsVisible="{Binding IsConversationBusy}" />
+                </StackPanel>
+            </Grid>
         </Border>
     </Grid>
 </Window>

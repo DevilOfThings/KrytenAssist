@@ -23,6 +23,7 @@ class Program
         Services = BuildServices();
 
         _ = Services.GetRequiredService<IEmbeddingService>();
+        _ = Services.GetRequiredService<IConversationService>();
 
         BuildAvaloniaApp()
             .StartWithClassicDesktopLifetime(args);
@@ -38,6 +39,7 @@ class Program
             .Build();
 
         services.Configure<EmbeddingOptions>(configuration.GetSection("Embedding"));
+        services.Configure<ConversationOptions>(configuration.GetSection("Conversation"));
 
         services.AddSingleton<IPromptCardStore, JsonPromptCardStore>();
         services.AddTransient<MainWindowViewModel>();
@@ -56,6 +58,7 @@ class Program
         });
         
         services.AddSingleton<CosineSimilarityService>();
+        services.AddSingleton<IConversationService, OpenAIConversationService>();
 
         return services.BuildServiceProvider();
     }

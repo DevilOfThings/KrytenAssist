@@ -10,9 +10,9 @@ Phase 5 – Avalonia AI Features
 
 Current Prompt
 --------------
-Prompt 029 – AI Conversations
-- Introduce the first AI conversation capability
-- Build on the completed embedding infrastructure
+Prompt 030 – Memory
+- Introduce conversational memory
+- Build on the completed AI conversation infrastructure
 - Preserve the offline-first architecture
 
 ### Phase 1 – API Foundation (Current)
@@ -151,14 +151,29 @@ Prompt 028 – OpenAI Embedding Provider ✅
 - Preserved offline-first development
 - Verified build and tests
 
-Prompt 029
-AI Conversations
+Prompt 029 – AI Conversations ✅
+- Added provider-independent conversation abstractions
+- Added OpenAI conversation provider
+- Added configurable system prompt support
+- Added conversation UI with send, cancel, busy and error states
+- Added conversation history display
+- Added cancellation support throughout the conversation pipeline
+- Preserved stateless conversations ready for Prompt 030 memory
+- Verified build and manual conversation workflow
 
 Prompt 030
 Memory
 
 Prompt 031
 Plugins / Tools
+
+Prompt 031a
+Avalonia Desktop UX Refinements
+- Introduce a two-pane desktop workspace optimised for tablet-sized displays
+- Move prompt creation into an overlay/dialog launched from a 'New Prompt' action
+- Maximise space for prompt browsing with independent scrolling
+- Refine conversation and prompt layouts for long-running sessions
+- Improve desktop usability and visual polish without changing core AI functionality
 
 ## Phase 6 – Career Assistant
 
