@@ -1,4 +1,3 @@
-
 namespace KrytenAssist.Avalonia.Options;
 
 public sealed class ConversationOptions
@@ -9,5 +8,6 @@ public sealed class ConversationOptions
         "You are Kryten Assist. Provide concise, accurate and practical help.";
 
     public int MaxContextMessages { get; init; } = 12;
-}
 
+    public int MaxToolIterations { get; init; } = 5;
+}

@@ -1,12 +1,12 @@
 ﻿using Avalonia;
 using System;
+using KrytenAssist.Avalonia.DependencyInjection;
 using KrytenAssist.Avalonia.Services;
 using KrytenAssist.Avalonia.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using KrytenAssist.Avalonia.Options;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
-
 
 namespace KrytenAssist.Avalonia;
 
@@ -61,6 +61,9 @@ class Program
         services.AddSingleton<IConversationService, OpenAIConversationService>();
         services.AddSingleton<IConversationMemory, InMemoryConversationMemory>();
 
+
+        services.AddKrytenTools();
+        
         return services.BuildServiceProvider();
     }
 

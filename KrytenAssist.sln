@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KrytenAssist.Api.Tests", "K
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KrytenAssist.Avalonia", "KrytenAssist.Avalonia\KrytenAssist.Avalonia.csproj", "{FDEAA2D4-FAF7-498A-BCAB-944AD6F578BE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KrytenAssist.Avalonia.Tests", "KrytenAssist.Avalonia.Tests\KrytenAssist.Avalonia.Tests.csproj", "{20B9AFC7-3C12-4731-8129-D434EBED6F35}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -103,6 +105,18 @@ Global
 		{FDEAA2D4-FAF7-498A-BCAB-944AD6F578BE}.Release|x64.Build.0 = Release|Any CPU
 		{FDEAA2D4-FAF7-498A-BCAB-944AD6F578BE}.Release|x86.ActiveCfg = Release|Any CPU
 		{FDEAA2D4-FAF7-498A-BCAB-944AD6F578BE}.Release|x86.Build.0 = Release|Any CPU
+		{20B9AFC7-3C12-4731-8129-D434EBED6F35}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{20B9AFC7-3C12-4731-8129-D434EBED6F35}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{20B9AFC7-3C12-4731-8129-D434EBED6F35}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{20B9AFC7-3C12-4731-8129-D434EBED6F35}.Debug|x64.Build.0 = Debug|Any CPU
+		{20B9AFC7-3C12-4731-8129-D434EBED6F35}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{20B9AFC7-3C12-4731-8129-D434EBED6F35}.Debug|x86.Build.0 = Debug|Any CPU
+		{20B9AFC7-3C12-4731-8129-D434EBED6F35}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{20B9AFC7-3C12-4731-8129-D434EBED6F35}.Release|Any CPU.Build.0 = Release|Any CPU
+		{20B9AFC7-3C12-4731-8129-D434EBED6F35}.Release|x64.ActiveCfg = Release|Any CPU
+		{20B9AFC7-3C12-4731-8129-D434EBED6F35}.Release|x64.Build.0 = Release|Any CPU
+		{20B9AFC7-3C12-4731-8129-D434EBED6F35}.Release|x86.ActiveCfg = Release|Any CPU
+		{20B9AFC7-3C12-4731-8129-D434EBED6F35}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

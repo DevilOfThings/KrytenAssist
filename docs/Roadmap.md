@@ -1,5 +1,5 @@
-# Kryten Assist Roadmap
- 
+## Kryten Assist Roadmap
+
 Current Version
 ---------------
 v0.1.0
@@ -10,10 +10,13 @@ Phase 5 – Avalonia AI Features
 
 Current Prompt
 --------------
-Prompt 031 – Plugins / Tools
-- Introduce the first provider-independent tool architecture
-- Allow the AI to invoke application capabilities
-- Preserve the offline-first architecture
+Prompt 031a – Runtime Context Injection
+- Inject current runtime context into every AI conversation
+- Supply the current date, time and local time zone to the AI provider
+- Introduce a provider-independent runtime context abstraction
+- Separate runtime context from conversational memory
+- Prepare the architecture for future context providers such as calendar, current project, open documents, weather and system information
+- Preserve provider independence and the offline-first architecture
 
 ### Phase 1 – API Foundation (Current)
 
@@ -172,11 +175,20 @@ Prompt 030 – Memory ✅
 - Verified conversational memory using the live OpenAI API
 
 
-Prompt 031
-Plugins / Tools
+Prompt 031 – Tools ✅
+- Introduced a provider-independent tools architecture
+- Added application-owned tool models, contracts and registry
+- Registered deterministic built-in tools through dependency injection
+- Integrated OpenAI tool calling without leaking provider SDK types
+- Executed tool requests through a provider-independent registry
+- Preserved Prompt 030 conversation memory behaviour
+- Added configurable maximum tool iterations
+- Introduced controlled tool execution, validation and error handling
+- Added comprehensive unit tests for ToolRegistry and all built-in tools
+- Verified live tool calling using the OpenAI API
+- Preserved the offline-first architecture
 
-Prompt 031a
-Runtime Context Injection
+- Prompt 031a – Runtime Context Injection
 - Inject current runtime context into every AI conversation
 - Supply the current date, time and local time zone to the AI provider
 - Introduce a provider-independent runtime context abstraction
@@ -240,3 +252,8 @@ Milestone Achieved
 ✔ Runtime AI provider resilience implemented
 ✔ Semantic search optimised with debouncing, cancellation and caching
 ✔ Offline-first AI architecture preserved
+✔ Provider-independent AI tool architecture established
+✔ Built-in desktop tools implemented
+✔ Tool registry and dependency injection framework established
+✔ OpenAI function calling integrated
+✔ Deterministic tool unit testing established

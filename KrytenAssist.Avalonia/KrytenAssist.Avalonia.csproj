@@ -23,9 +23,11 @@
   </ItemGroup>
   
   <ItemGroup>
+    <Folder Include="DependencyInjection\" />
     <Folder Include="Models\" />
     <Folder Include="Options\" />
     <Folder Include="Services\" />
+    <Folder Include="Tools\" />
     <Folder Include="ViewModels\" />
   </ItemGroup>
   
