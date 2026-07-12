@@ -15,18 +15,23 @@ public sealed class OpenAIConversationService : IConversationService
 {
     private readonly ChatClient _chatClient;
     private readonly IToolRegistry _toolRegistry;
+    private readonly IRuntimeContextProvider _runtimeContextProvider;
     
     private readonly ConversationOptions _conversationOptions;
 
     public OpenAIConversationService(
         IOptions<ConversationOptions> options,
-        IToolRegistry toolRegistry)
+        IToolRegistry toolRegistry,
+        IRuntimeContextProvider runtimeContextProvider)
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(toolRegistry);
+        ArgumentNullException.ThrowIfNull(runtimeContextProvider);
 
         _conversationOptions = options.Value;
-        
+        _toolRegistry = toolRegistry;
+        _runtimeContextProvider = runtimeContextProvider;
+
         var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
 
         if (string.IsNullOrWhiteSpace(apiKey))
@@ -38,17 +43,22 @@ public sealed class OpenAIConversationService : IConversationService
         _chatClient = new ChatClient(
             _conversationOptions.Model,
             apiKey);
-
-        _toolRegistry = toolRegistry;
     }
 
     public async Task<ConversationResponse> SendAsync(
         ConversationRequest request,
         CancellationToken cancellationToken = default)
     {
+        var runtimeContext = _runtimeContextProvider.GetRuntimeContext();
+
+        var systemPrompt = $"""
+                            {request.SystemPrompt};
+                            {runtimeContext}
+                            """;
+
         List<ChatMessage> messages =
         [
-            new SystemChatMessage(request.SystemPrompt)
+            new SystemChatMessage(systemPrompt)
         ];
 
         foreach (var message in request.Messages)

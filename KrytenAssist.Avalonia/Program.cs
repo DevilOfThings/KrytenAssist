@@ -63,6 +63,7 @@ class Program
 
 
         services.AddKrytenTools();
+        services.AddRuntimeContext();
         
         return services.BuildServiceProvider();
     }
