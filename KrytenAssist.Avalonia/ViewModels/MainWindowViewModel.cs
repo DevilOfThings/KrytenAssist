@@ -40,6 +40,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private string? _conversationErrorMessage;
     private readonly IEmbeddingServiceStatus? _embeddingServiceStatus;
     private string? _embeddingStatusMessage;
+    private bool _isPromptEditorOpen;
 
     public MainWindowViewModel(
         IPromptCardStore promptCardStore,
@@ -63,7 +64,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         _conversationMemory = conversationMemory;
         _conversationSystemPrompt = conversationOptions.Value.SystemPrompt;
         
-        SaveCommand = new AsyncCommand(SaveAsync);
+        SaveCommand = new AsyncCommand(SaveAndClosePromptEditorAsync);
+        OpenPromptEditorCommand = new RelayCommand(_ => IsPromptEditorOpen = true);
+        ClosePromptEditorCommand = new RelayCommand(_ => IsPromptEditorOpen = false);
         
         SelectCategoryCommand = new RelayCommand(parameter =>
         {
@@ -82,6 +85,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     }
 
     public ICommand SaveCommand { get; }
+    public ICommand OpenPromptEditorCommand { get; }
+    public ICommand ClosePromptEditorCommand { get; }
     public ICommand SelectCategoryCommand { get; }
     public ICommand SendMessageCommand { get; }
     public ICommand ClearConversationCommand { get; }
@@ -109,6 +114,21 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public string NewPromptText { get; set; } = string.Empty;
 
     public string NewTags { get; set; } = string.Empty;
+
+    public bool IsPromptEditorOpen
+    {
+        get => _isPromptEditorOpen;
+        private set
+        {
+            if (_isPromptEditorOpen == value)
+            {
+                return;
+            }
+
+            _isPromptEditorOpen = value;
+            OnPropertyChanged(nameof(IsPromptEditorOpen));
+        }
+    }
 
     public string SearchText
     {
@@ -350,6 +370,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         _embeddingCache.Clear();
 
         await LoadAsync();
+    }
+
+    private async Task SaveAndClosePromptEditorAsync()
+    {
+        await SaveAsync();
+        IsPromptEditorOpen = false;
     }
     
     internal sealed class AsyncCommand : ICommand

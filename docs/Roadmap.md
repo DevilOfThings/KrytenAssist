@@ -8,14 +8,14 @@ Current Phase
 -------------
 Phase 5 – Avalonia AI Features
 
-CCurrent Prompt
+Current Prompt
 --------------
-Prompt 031b – Avalonia Desktop UX Refinements
-- Introduce a two-pane desktop workspace optimised for tablet-sized displays
-- Move prompt creation into an overlay/dialog launched from a 'New Prompt' action
-- Maximise space for prompt browsing with independent scrolling
-- Refine conversation and prompt layouts for long-running sessions
-- Improve desktop usability and visual polish without changing core AI functionality
+Prompt 031c – Avalonia Desktop Visual Polish
+- Prompt 031b desktop workspace and interaction refinements completed
+- Refine the application header and typography hierarchy
+- Introduce a subtle Kryten colour palette
+- Improve border, button, status, prompt card and conversation presentation
+- Preserve the established workspace layout and application behaviour
 
 ### Phase 1 – API Foundation (Current)
 
@@ -195,7 +195,7 @@ Prompt 031a – Runtime Context Injection ✅
 - Prepare the architecture for future context providers such as calendar, current project, open documents, weather and system information
 - Preserve provider independence and the offline-first architecture
 
-Prompt 031b – Avalonia Desktop UX Refinements
+Prompt 031b – Avalonia Desktop UX Refinements ✅
 - Introduce a two-pane desktop workspace optimised for tablet-sized displays
 - Move prompt creation into an overlay/dialog launched from a 'New Prompt' action
 - Maximise space for prompt browsing with independent scrolling

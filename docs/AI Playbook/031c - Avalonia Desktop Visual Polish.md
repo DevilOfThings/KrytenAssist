@@ -72,6 +72,49 @@ Avoid making the interface resemble a brightly coloured web application.
 Professional, restrained styling is preferred.
 
 ---
+# Kryten Brand Identity
+
+The Kryten Assist desktop client should communicate:
+
+- Professional
+- Calm
+- Technical
+- Helpful
+- Trustworthy
+
+The interface should resemble a high-quality desktop engineering tool rather than a consumer web application.
+
+When making styling decisions, prefer subtle refinement over decoration.
+
+Avoid:
+
+- bright gradients
+- excessive colour
+- large icons
+- decorative graphics
+- cartoon styling
+- excessive animations
+
+---
+
+# Consistency
+
+Where styling changes are introduced:
+
+- reuse existing resources
+- avoid duplicated styles
+- avoid hard-coded values where shared resources are appropriate
+- keep spacing and sizing consistent across similar controls
+
+Prefer shared brushes, styles and theme resources.
+
+Where a new Kryten accent colour is introduced, define it once and reuse it throughout the application.
+
+Avoid repeating identical styling across multiple controls.
+
+
+---
+
 
 # Header
 
@@ -221,6 +264,29 @@ Maintain usability in both light and dark themes if supported.
 - [ ] No behavioural changes
 - [ ] Solution builds successfully
 - [ ] Existing tests continue to pass
+- [ ] Header communicates the Kryten brand identity.
+- [ ] Colours remain restrained and professional.
+- [ ] Styling is implemented using shared resources where practical.
+- [ ] Visual changes have been manually reviewed.
+
+---
+
+# Manual Review
+
+Visual refinement requires human review.
+
+After implementation:
+
+- run the application
+- inspect the desktop layout
+- verify readability
+- verify spacing
+- verify colours
+- verify behaviour has not changed
+
+Do not continue refining the appearance automatically.
+
+Stop after one implementation pass.
 
 ---
 
