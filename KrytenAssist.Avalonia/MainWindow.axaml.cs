@@ -3,6 +3,7 @@ using Avalonia.Input;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using KrytenAssist.Avalonia.Models;
 using KrytenAssist.Avalonia.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -44,6 +45,21 @@ public partial class MainWindow : Window
         ConversationInputBox.Focus();
     }
 
+    private void UsePrompt_OnClick(object? sender, RoutedEventArgs e)
+    {
+        Dispatcher.UIThread.Post(() => ConversationInputBox.Focus());
+    }
+
+    private void PromptCard_OnDoubleTapped(object? sender, TappedEventArgs e)
+    {
+        if (DataContext is MainWindowViewModel viewModel &&
+            sender is Control { DataContext: PromptCardModel prompt } &&
+            viewModel.OpenEditPromptCommand.CanExecute(prompt))
+        {
+            viewModel.OpenEditPromptCommand.Execute(prompt);
+        }
+    }
+
     private void ConversationHistory_OnCollectionChanged(
         object? sender,
         NotifyCollectionChangedEventArgs e)
@@ -54,6 +70,12 @@ public partial class MainWindow : Window
         }
 
         var newestMessage = e.NewItems[^1];
+
+        if (newestMessage is null)
+        {
+            return;
+        }
+
         Dispatcher.UIThread.Post(() =>
         {
             ConversationList.ScrollIntoView(newestMessage);

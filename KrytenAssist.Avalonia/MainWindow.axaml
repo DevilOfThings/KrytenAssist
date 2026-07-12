@@ -54,7 +54,7 @@
                 <Border Grid.Column="0"
                         Classes="workspace-surface"
                         Padding="12">
-                    <Grid RowDefinitions="Auto,Auto,Auto,*"
+                    <Grid RowDefinitions="Auto,Auto,Auto,Auto,*"
                           RowSpacing="10">
                         <Grid Grid.Row="0"
                               ColumnDefinitions="*,Auto"
@@ -72,38 +72,55 @@
                                  PlaceholderText="Search prompts..."
                                  Text="{Binding SearchText}" />
 
-                        <TextBlock Grid.Row="2"
+                        <StackPanel Grid.Row="2"
+                                    Orientation="Horizontal"
+                                    Spacing="8">
+                            <Button Content="Use Prompt"
+                                    Classes="primary"
+                                    IsEnabled="{Binding HasSelectedPrompt}"
+                                    Command="{Binding UsePromptCommand}"
+                                    Click="UsePrompt_OnClick" />
+                            <Button Content="Delete"
+                                    Classes="danger"
+                                    IsEnabled="{Binding HasSelectedPrompt}"
+                                    Command="{Binding RequestDeletePromptCommand}" />
+                        </StackPanel>
+
+                        <TextBlock Grid.Row="3"
                                    Text="No prompts found."
                                    Classes="secondary-text"
                                    IsVisible="{Binding HasNoSearchResults}"
                                    HorizontalAlignment="Center" />
 
-                        <ScrollViewer Grid.Row="3"
-                                      VerticalScrollBarVisibility="Auto"
-                                      HorizontalScrollBarVisibility="Disabled">
-                            <ItemsControl ItemsSource="{Binding FilteredPromptCards}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate DataType="models:PromptCardModel">
-                                        <Border Padding="10"
-                                                Margin="0,0,0,6"
-                                                Classes="prompt-card">
-                                            <StackPanel Spacing="3">
-                                                <TextBlock Text="{Binding Title}"
-                                                           FontSize="16"
-                                                           FontWeight="SemiBold" />
-                                                <TextBlock Text="{Binding Category}"
-                                                           Classes="accent-text"
-                                                           FontSize="12"
-                                                           FontWeight="SemiBold" />
-                                                <TextBlock Text="{Binding Description}"
-                                                           Classes="secondary-text"
-                                                           TextWrapping="Wrap" />
-                                            </StackPanel>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </ScrollViewer>
+                        <ListBox x:Name="PromptList"
+                                 Grid.Row="4"
+                                 Classes="prompt-list"
+                                 ItemsSource="{Binding FilteredPromptCards}"
+                                 SelectedItem="{Binding SelectedPrompt, Mode=TwoWay}"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate DataType="models:PromptCardModel">
+                                    <Border Padding="10"
+                                            Margin="0,0,0,6"
+                                            Classes="prompt-card"
+                                            DoubleTapped="PromptCard_OnDoubleTapped">
+                                        <StackPanel Spacing="3">
+                                            <TextBlock Text="{Binding Title}"
+                                                       FontSize="16"
+                                                       FontWeight="SemiBold" />
+                                            <TextBlock Text="{Binding Category}"
+                                                       Classes="accent-text"
+                                                       FontSize="12"
+                                                       FontWeight="SemiBold" />
+                                            <TextBlock Text="{Binding Description}"
+                                                       Classes="secondary-text"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
                     </Grid>
                 </Border>
 
@@ -203,7 +220,7 @@
                 <Grid RowDefinitions="Auto,*,Auto"
                       RowSpacing="16">
                     <Grid ColumnDefinitions="*,Auto">
-                        <TextBlock Text="Create prompt template"
+                        <TextBlock Text="{Binding PromptEditorTitle}"
                                    Classes="section-heading"
                                    VerticalAlignment="Center" />
                     </Grid>
@@ -255,13 +272,18 @@
                             <TextBox PlaceholderText="Tags, comma separated"
                                      Text="{Binding NewTags}" />
 
+                            <TextBlock Text="{Binding PromptEditorErrorMessage}"
+                                       Classes="error-text"
+                                       IsVisible="{Binding HasPromptEditorError}"
+                                       TextWrapping="Wrap" />
+
                         </StackPanel>
                     </ScrollViewer>
 
                     <StackPanel Grid.Row="2"
                                 Orientation="Horizontal"
                                 Spacing="8">
-                        <Button Content="Save"
+                        <Button Content="{Binding PromptEditorSaveButtonText}"
                                 Classes="primary"
                                 MinWidth="72"
                                 Command="{Binding SaveCommand}" />
@@ -271,6 +293,35 @@
                                 Command="{Binding ClosePromptEditorCommand}" />
                     </StackPanel>
                 </Grid>
+            </Border>
+        </Border>
+
+        <Border IsVisible="{Binding IsDeleteConfirmationOpen}"
+                Background="{DynamicResource KrytenOverlayBrush}">
+            <Border Width="420"
+                    Classes="dialog-surface"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Padding="20">
+                <StackPanel Spacing="14">
+                    <TextBlock Text="Delete Prompt"
+                               Classes="section-heading" />
+                    <TextBlock Text="{Binding DeleteConfirmationMessage}"
+                               TextWrapping="Wrap" />
+                    <TextBlock Text="This action cannot be undone."
+                               Classes="secondary-text" />
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="8">
+                        <Button Content="Delete"
+                                Classes="danger"
+                                MinWidth="72"
+                                Command="{Binding ConfirmDeletePromptCommand}" />
+                        <Button Content="Cancel"
+                                Classes="secondary"
+                                MinWidth="72"
+                                Command="{Binding CancelDeletePromptCommand}" />
+                    </StackPanel>
+                </StackPanel>
             </Border>
         </Border>
     </Grid>

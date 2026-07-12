@@ -14,6 +14,7 @@
                     <SolidColorBrush x:Key="KrytenWindowBrush" Color="#F4F6F8" />
                     <SolidColorBrush x:Key="KrytenSurfaceBrush" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="KrytenSubtleSurfaceBrush" Color="#EEF2F5" />
+                    <SolidColorBrush x:Key="KrytenSelectedSurfaceBrush" Color="#DCE8F1" />
                     <SolidColorBrush x:Key="KrytenHeaderBrush" Color="#E8EEF3" />
                     <SolidColorBrush x:Key="KrytenBorderBrush" Color="#D4D9DF" />
                     <SolidColorBrush x:Key="KrytenSecondaryTextBrush" Color="#5E6874" />
@@ -29,6 +30,7 @@
                     <SolidColorBrush x:Key="KrytenWindowBrush" Color="#191D21" />
                     <SolidColorBrush x:Key="KrytenSurfaceBrush" Color="#23282D" />
                     <SolidColorBrush x:Key="KrytenSubtleSurfaceBrush" Color="#2C3339" />
+                    <SolidColorBrush x:Key="KrytenSelectedSurfaceBrush" Color="#314654" />
                     <SolidColorBrush x:Key="KrytenHeaderBrush" Color="#202A32" />
                     <SolidColorBrush x:Key="KrytenBorderBrush" Color="#3C454D" />
                     <SolidColorBrush x:Key="KrytenSecondaryTextBrush" Color="#AAB4BE" />
@@ -71,6 +73,28 @@
         <Style Selector="Border.prompt-card:pointerover">
             <Setter Property="Background" Value="{DynamicResource KrytenSubtleSurfaceBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource KrytenAccentBrush}" />
+        </Style>
+
+        <Style Selector="ListBoxItem:selected Border.prompt-card">
+            <Setter Property="Background" Value="{DynamicResource KrytenSelectedSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource KrytenAccentBrush}" />
+            <Setter Property="BorderThickness" Value="2" />
+        </Style>
+
+        <Style Selector="ListBox.prompt-list">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+
+        <Style Selector="ListBox.prompt-list ListBoxItem">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        </Style>
+
+        <Style Selector="ListBox.prompt-list ListBoxItem:selected">
+            <Setter Property="Background" Value="Transparent" />
         </Style>
 
         <Style Selector="Border.message-surface">
@@ -149,6 +173,12 @@
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Foreground" Value="{DynamicResource KrytenSecondaryTextBrush}" />
+        </Style>
+
+        <Style Selector="Button.danger">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{DynamicResource KrytenErrorBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource KrytenErrorBrush}" />
         </Style>
 
         <Style Selector="Button:focus">

@@ -10,13 +10,11 @@ Phase 5 – Avalonia AI Features
 
 Current Prompt
 --------------
-Prompt 031c – Avalonia Desktop Visual Polish ✅
-- Prompt 031b desktop workspace and interaction refinements completed
-- One coherent visual-polish pass implemented and manually reviewed
-- Refine the application header and typography hierarchy
-- Introduce a subtle Kryten colour palette
-- Improve border, button, status, prompt card and conversation presentation
-- Preserve the established workspace layout and application behaviour
+Prompt 031d – Avalonia Prompt Management
+- Select and use stored prompts without sending automatically
+- Reuse the prompt editor for create and edit modes
+- Update and delete prompts while preserving offline data integrity
+- Keep prompt search, selection and dynamically derived categories current
 
 ### Phase 1 – API Foundation (Current)
 
@@ -208,6 +206,13 @@ Prompt 031c – Avalonia Desktop Visual Polish ✅
 - Introduced a restrained professional accent colour
 - Refined header, buttons, prompt cards, conversation messages and statuses
 - Preserved the Prompt 031b layout and application behaviour
+
+Prompt 031d – Avalonia Prompt Management
+- Added single prompt selection and selected-state presentation
+- Added Use Prompt without automatic sending
+- Reused the prompt editor for create and edit modes
+- Added confirmed deletion and immediate prompt/category/search refresh
+- Added prompt-management ViewModel tests
 
 ## Phase 6 – Career Assistant
 

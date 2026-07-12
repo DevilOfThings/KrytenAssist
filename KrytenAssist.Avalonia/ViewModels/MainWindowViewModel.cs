@@ -41,6 +41,15 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private readonly IEmbeddingServiceStatus? _embeddingServiceStatus;
     private string? _embeddingStatusMessage;
     private bool _isPromptEditorOpen;
+    private bool _isDeleteConfirmationOpen;
+    private PromptCardModel? _selectedPrompt;
+    private Guid? _editingPromptId;
+    private DateTime _editingPromptCreatedAt;
+    private string _newTitle = string.Empty;
+    private string _newDescription = string.Empty;
+    private string _newPromptText = string.Empty;
+    private string _newTags = string.Empty;
+    private string? _promptEditorErrorMessage;
 
     public MainWindowViewModel(
         IPromptCardStore promptCardStore,
@@ -65,8 +74,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         _conversationSystemPrompt = conversationOptions.Value.SystemPrompt;
         
         SaveCommand = new AsyncCommand(SaveAndClosePromptEditorAsync);
-        OpenPromptEditorCommand = new RelayCommand(_ => IsPromptEditorOpen = true);
-        ClosePromptEditorCommand = new RelayCommand(_ => IsPromptEditorOpen = false);
+        OpenPromptEditorCommand = new RelayCommand(_ => OpenCreatePromptEditor());
+        OpenEditPromptCommand = new RelayCommand(OpenEditPrompt);
+        ClosePromptEditorCommand = new RelayCommand(_ => ClosePromptEditor());
+        UsePromptCommand = new RelayCommand(_ => UseSelectedPrompt());
+        RequestDeletePromptCommand = new RelayCommand(_ => RequestDeleteSelectedPrompt());
+        CancelDeletePromptCommand = new RelayCommand(_ => IsDeleteConfirmationOpen = false);
+        ConfirmDeletePromptCommand = new AsyncCommand(DeleteSelectedPromptAsync);
         
         SelectCategoryCommand = new RelayCommand(parameter =>
         {
@@ -86,34 +100,109 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public ICommand SaveCommand { get; }
     public ICommand OpenPromptEditorCommand { get; }
+    public ICommand OpenEditPromptCommand { get; }
     public ICommand ClosePromptEditorCommand { get; }
+    public ICommand UsePromptCommand { get; }
+    public ICommand RequestDeletePromptCommand { get; }
+    public ICommand CancelDeletePromptCommand { get; }
+    public ICommand ConfirmDeletePromptCommand { get; }
     public ICommand SelectCategoryCommand { get; }
     public ICommand SendMessageCommand { get; }
     public ICommand ClearConversationCommand { get; }
     public ICommand CancelConversationCommand { get; }
     
-    public string NewTitle { get; set; } = string.Empty;
+    public string NewTitle
+    {
+        get => _newTitle;
+        set => SetEditorField(ref _newTitle, value, nameof(NewTitle));
+    }
 
     public string NewCategory
     {
         get => _newCategory;
+        set => SetEditorField(ref _newCategory, value, nameof(NewCategory));
+    }
+
+    public string NewDescription
+    {
+        get => _newDescription;
+        set => SetEditorField(ref _newDescription, value, nameof(NewDescription));
+    }
+
+    public string NewPromptText
+    {
+        get => _newPromptText;
+        set => SetEditorField(ref _newPromptText, value, nameof(NewPromptText));
+    }
+
+    public string NewTags
+    {
+        get => _newTags;
+        set => SetEditorField(ref _newTags, value, nameof(NewTags));
+    }
+
+    public PromptCardModel? SelectedPrompt
+    {
+        get => _selectedPrompt;
         set
         {
-            if (_newCategory == value)
+            if (ReferenceEquals(_selectedPrompt, value))
             {
                 return;
             }
 
-            _newCategory = value;
-            OnPropertyChanged(nameof(NewCategory));
+            _selectedPrompt = value;
+            OnPropertyChanged(nameof(SelectedPrompt));
+            OnPropertyChanged(nameof(HasSelectedPrompt));
+            OnPropertyChanged(nameof(DeleteConfirmationMessage));
         }
     }
 
-    public string NewDescription { get; set; } = string.Empty;
+    public bool HasSelectedPrompt => SelectedPrompt is not null;
 
-    public string NewPromptText { get; set; } = string.Empty;
+    public string PromptEditorTitle =>
+        _editingPromptId.HasValue ? "Edit Prompt" : "Create Prompt";
 
-    public string NewTags { get; set; } = string.Empty;
+    public string PromptEditorSaveButtonText =>
+        _editingPromptId.HasValue ? "Save Changes" : "Save";
+
+    public string? PromptEditorErrorMessage
+    {
+        get => _promptEditorErrorMessage;
+        private set
+        {
+            if (_promptEditorErrorMessage == value)
+            {
+                return;
+            }
+
+            _promptEditorErrorMessage = value;
+            OnPropertyChanged(nameof(PromptEditorErrorMessage));
+            OnPropertyChanged(nameof(HasPromptEditorError));
+        }
+    }
+
+    public bool HasPromptEditorError =>
+        !string.IsNullOrWhiteSpace(PromptEditorErrorMessage);
+
+    public bool IsDeleteConfirmationOpen
+    {
+        get => _isDeleteConfirmationOpen;
+        private set
+        {
+            if (_isDeleteConfirmationOpen == value)
+            {
+                return;
+            }
+
+            _isDeleteConfirmationOpen = value;
+            OnPropertyChanged(nameof(IsDeleteConfirmationOpen));
+        }
+    }
+
+    public string DeleteConfirmationMessage => SelectedPrompt is null
+        ? string.Empty
+        : $"Delete \"{SelectedPrompt.Title}\"?";
 
     public bool IsPromptEditorOpen
     {
@@ -306,6 +395,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     }
     public async Task LoadAsync()
     {
+        await LoadAsync(SelectedPrompt?.Id);
+    }
+
+    private async Task LoadAsync(Guid? selectedPromptId)
+    {
         var promptCards = await _promptCardStore.GetAllAsync();
 
         PromptCards.Clear();
@@ -317,7 +411,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
         
         RefreshCategories();
-        await RefreshFilteredPromptCardsAsync();
+        await RefreshFilteredPromptCardsAsync(selectedPromptId: selectedPromptId);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -348,34 +442,193 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     
     public async Task SaveAsync()
     {
-        var promptCard = new PromptCardModel
+        PromptEditorErrorMessage = null;
+
+        if (string.IsNullOrWhiteSpace(NewTitle) ||
+            string.IsNullOrWhiteSpace(NewPromptText))
         {
-            Id = Guid.NewGuid(),
-            Title = NewTitle,
-            Category = NewCategory,
-            Description = NewDescription,
-            PromptText = NewPromptText,
-            Tags = NewTags
-                .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                .Select(tag => tag.Trim())
-                .ToList(),
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
+            PromptEditorErrorMessage = "Title and prompt text are required.";
+            return;
+        }
 
         var promptCards = (await _promptCardStore.GetAllAsync()).ToList();
-        promptCards.Add(promptCard);
+        var now = DateTime.UtcNow;
+        PromptCardModel savedPrompt;
+
+        if (_editingPromptId.HasValue)
+        {
+            var existingIndex = promptCards.FindIndex(prompt =>
+                prompt.Id == _editingPromptId.Value);
+
+            if (existingIndex < 0)
+            {
+                PromptEditorErrorMessage = "The prompt could not be found.";
+                return;
+            }
+
+            savedPrompt = BuildPromptCard(
+                _editingPromptId.Value,
+                _editingPromptCreatedAt,
+                now);
+            promptCards[existingIndex] = savedPrompt;
+        }
+        else
+        {
+            savedPrompt = BuildPromptCard(Guid.NewGuid(), now, now);
+            promptCards.Add(savedPrompt);
+        }
 
         await _promptCardStore.SaveAllAsync(promptCards);
         _embeddingCache.Clear();
 
-        await LoadAsync();
+        await LoadAsync(savedPrompt.Id);
     }
 
     private async Task SaveAndClosePromptEditorAsync()
     {
         await SaveAsync();
+
+        if (!HasPromptEditorError)
+        {
+            ClosePromptEditor();
+        }
+    }
+
+    public async Task DeleteSelectedPromptAsync()
+    {
+        if (SelectedPrompt is null)
+        {
+            IsDeleteConfirmationOpen = false;
+            return;
+        }
+
+        var selectedPromptId = SelectedPrompt.Id;
+        var promptCards = (await _promptCardStore.GetAllAsync())
+            .Where(prompt => prompt.Id != selectedPromptId)
+            .ToList();
+
+        await _promptCardStore.SaveAllAsync(promptCards);
+        _embeddingCache.Clear();
+        IsDeleteConfirmationOpen = false;
+        SelectedPrompt = null;
+
+        await LoadAsync(selectedPromptId: null);
+    }
+
+    private void OpenCreatePromptEditor()
+    {
+        _editingPromptId = null;
+        _editingPromptCreatedAt = default;
+        ClearEditorFields();
+        NotifyEditorModeChanged();
+        IsPromptEditorOpen = true;
+    }
+
+    private void OpenEditPrompt(object? parameter)
+    {
+        var prompt = parameter as PromptCardModel ?? SelectedPrompt;
+
+        if (prompt is null)
+        {
+            return;
+        }
+
+        SelectedPrompt = prompt;
+        _editingPromptId = prompt.Id;
+        _editingPromptCreatedAt = prompt.CreatedAt;
+        NewTitle = prompt.Title;
+        NewCategory = prompt.Category;
+        NewDescription = prompt.Description ?? string.Empty;
+        NewPromptText = prompt.PromptText;
+        NewTags = string.Join(", ", prompt.Tags);
+        PromptEditorErrorMessage = null;
+        NotifyEditorModeChanged();
+        IsPromptEditorOpen = true;
+    }
+
+    private void ClosePromptEditor()
+    {
         IsPromptEditorOpen = false;
+        PromptEditorErrorMessage = null;
+    }
+
+    private void UseSelectedPrompt()
+    {
+        if (SelectedPrompt is null)
+        {
+            return;
+        }
+
+        var promptText = SelectedPrompt.PromptText;
+
+        ConversationInput = string.IsNullOrWhiteSpace(ConversationInput)
+            ? promptText
+            : $"{ConversationInput.TrimEnd()}{Environment.NewLine}{Environment.NewLine}---{Environment.NewLine}{Environment.NewLine}{promptText}";
+    }
+
+    private void RequestDeleteSelectedPrompt()
+    {
+        if (SelectedPrompt is not null)
+        {
+            IsDeleteConfirmationOpen = true;
+        }
+    }
+
+    private PromptCardModel BuildPromptCard(
+        Guid id,
+        DateTime createdAt,
+        DateTime updatedAt)
+    {
+        return new PromptCardModel
+        {
+            Id = id,
+            Title = NewTitle.Trim(),
+            Category = NewCategory.Trim(),
+            Description = NewDescription.Trim(),
+            PromptText = NewPromptText,
+            Tags = NewTags
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(tag => tag.Trim())
+                .Where(tag => tag.Length > 0)
+                .ToList(),
+            CreatedAt = createdAt,
+            UpdatedAt = updatedAt
+        };
+    }
+
+    private void ClearEditorFields()
+    {
+        NewTitle = string.Empty;
+        NewCategory = string.Empty;
+        NewDescription = string.Empty;
+        NewPromptText = string.Empty;
+        NewTags = string.Empty;
+        PromptEditorErrorMessage = null;
+    }
+
+    private void NotifyEditorModeChanged()
+    {
+        OnPropertyChanged(nameof(PromptEditorTitle));
+        OnPropertyChanged(nameof(PromptEditorSaveButtonText));
+    }
+
+    private void SetEditorField(
+        ref string field,
+        string value,
+        string propertyName)
+    {
+        if (field == value)
+        {
+            return;
+        }
+
+        field = value;
+        OnPropertyChanged(propertyName);
+
+        if (HasPromptEditorError)
+        {
+            PromptEditorErrorMessage = null;
+        }
     }
     
     internal sealed class AsyncCommand : ICommand
@@ -431,9 +684,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     }
     
     private async Task RefreshFilteredPromptCardsAsync(
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        Guid? selectedPromptId = null)
     {
 
+    selectedPromptId ??= SelectedPrompt?.Id;
     var search = SearchText.Trim();
 
     var prompts = PromptCards
@@ -477,6 +732,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         FilteredPromptCards.Add(prompt);
     }
+
+    SelectedPrompt = selectedPromptId.HasValue
+        ? FilteredPromptCards.FirstOrDefault(prompt => prompt.Id == selectedPromptId.Value)
+        : null;
 
     OnPropertyChanged(nameof(HasNoSearchResults));
 
