@@ -224,8 +224,81 @@ Mock Interview Sessions
 Prompt 037
 React Interview Prep UI
 
+---
 
-Milestone Achieved
+# Phase 7 – Personal Automation
+
+Extend Kryten Assist beyond conversations by introducing autonomous monitoring,
+scheduled tasks, historical data collection, and personal notifications.
+
+## Prompt 038 – Automation Framework
+
+Create the scheduling and background task infrastructure that allows Kryten to
+perform periodic work without user interaction.
+
+## Prompt 039 – Cruise Deal Monitoring
+
+Implement the first real-world automation.
+
+Create a Marella Cruise of the Week provider that retrieves the current offer,
+extracts the structured cruise details, and stores observations locally.
+
+No generic scraping framework should be introduced in this prompt.
+
+## Prompt 040 – Cruise Price History
+
+Persist observations over time and display historical pricing for each cruise.
+
+Allow users to see:
+
+- First observed price
+- Current price
+- Lowest price
+- Highest price
+- Number of observations
+- Price trend
+
+## Prompt 041 – Change Detection & Notifications
+
+Detect meaningful changes between observations.
+
+Notify the user when:
+
+- The Cruise of the Week changes.
+- The price changes.
+- A new promotion appears.
+- The itinerary changes.
+
+## Prompt 042 – Multi-Provider Monitoring
+
+Generalise the monitoring framework so additional providers can be added.
+
+Examples include:
+
+- Marella
+- P&O
+- MSC
+- Royal Caribbean
+- Virgin Voyages
+
+Each provider should implement a common abstraction while remaining independently testable.
+
+## Prompt 043 – Personal Watch Lists
+
+Allow users to watch specific cruises rather than only promotional offers.
+
+Users should be able to monitor:
+
+- Sailing
+- Cabin type
+- Departure month
+- Maximum price
+- Preferred ports
+- Favourite ships
+
+Historical observations should continue even when prices remain unchanged.
+
+# Milestone Achieved
 
 ✔ Complete CRUD API
 ✔ Clean Architecture established
