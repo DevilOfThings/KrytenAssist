@@ -253,21 +253,21 @@ Maintain usability in both light and dark themes if supported.
 
 # Acceptance Criteria
 
-- [ ] Compact branded application header
-- [ ] Motto displayed beneath the application title
-- [ ] Consistent accent colour
-- [ ] Consistent border styling
-- [ ] Improved button hierarchy
-- [ ] Cleaner prompt cards
-- [ ] Cleaner conversation presentation
-- [ ] Meaningful status colours
-- [ ] No behavioural changes
-- [ ] Solution builds successfully
-- [ ] Existing tests continue to pass
-- [ ] Header communicates the Kryten brand identity.
-- [ ] Colours remain restrained and professional.
-- [ ] Styling is implemented using shared resources where practical.
-- [ ] Visual changes have been manually reviewed.
+- [x] Compact branded application header
+- [x] Motto displayed beneath the application title
+- [x] Consistent accent colour
+- [x] Consistent border styling
+- [x] Improved button hierarchy
+- [x] Cleaner prompt cards
+- [x] Cleaner conversation presentation
+- [x] Meaningful status colours
+- [x] No behavioural changes
+- [x] Solution builds successfully
+- [x] Existing tests continue to pass
+- [x] Header communicates the Kryten brand identity.
+- [x] Colours remain restrained and professional.
+- [x] Styling is implemented using shared resources where practical.
+- [x] Visual changes have been manually reviewed.
 
 ---
 
@@ -292,38 +292,58 @@ Stop after one implementation pass.
 
 # Results
 
-> To be completed after implementation.
-
 ### Status
 
-_Not Started_
+✅ Complete. The visual-polish pass was implemented, built, tested and manually reviewed. Button-alignment feedback from the review was addressed through the shared button style.
+
+### Implementation Summary
+
+- Added centralized light and dark Kryten theme dictionaries.
+- Introduced a single restrained steel-blue accent for primary actions, focus indication and interactive feedback.
+- Added shared semantic styles for headers, workspace surfaces, dialogs, statuses, prompt cards, conversation messages and typography.
+- Added a compact branded header containing the application name, project motto and existing provider status.
+- Established primary, secondary and tertiary button hierarchy.
+- Centered all button content horizontally and vertically through the shared button style.
+- Refined prompt-card hierarchy and hover feedback without introducing selection behavior.
+- Improved conversation message, busy-state and error presentation.
+- Preserved the Prompt 031b layout, MVVM architecture and all existing application behavior.
 
 ### Files Created
 
--
+- `docs/Session Handovers/2026-07-12 Session 014.md`
 
 ### Files Updated
 
--
+- `KrytenAssist.Avalonia/App.axaml`
+- `KrytenAssist.Avalonia/MainWindow.axaml`
+- `docs/Roadmap.md`
+- `docs/AI Playbook/031c - Avalonia Desktop Visual Polish.md`
 
 ### Build
 
-_Not Run_
+✅ `dotnet build KrytenAssist.sln`
 
 ### Tests
 
-_Not Run_
+- Avalonia tests: 19 passed
+- API tests: 9 passed
+- Total: 28 passed, 0 failed
 
 ### Manual Verification
 
-_Not Performed_
+✅ Completed. Visual feedback identified button-label alignment, which was corrected centrally for all button variants. No further automatic visual iteration was performed.
 
 ### Git Commit
 
-_Not Created_
+Not created.
 
 ---
 
 # Lessons Learned
 
-> To be completed after implementation.
+- Theme dictionaries allow the Kryten palette to remain restrained while preserving usable contrast in both light and dark modes.
+- Semantic style classes keep visual hierarchy centralized and avoid repeating hard-coded colours throughout the view.
+- Shared button alignment keeps labels consistently centred across every button hierarchy and surface.
+- A single muted accent is sufficient for primary actions, focus indication, category labels and restrained hover feedback.
+- Status styling should retain explicit text so busy and error information never depends on colour alone.
+- The existing prompt library does not expose selection state. Adding selection solely for styling would change the established interaction model, so this pass improves hover feedback without introducing new selection behaviour.

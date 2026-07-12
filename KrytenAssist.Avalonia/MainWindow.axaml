@@ -8,7 +8,7 @@
         d:DesignWidth="1100"
         d:DesignHeight="700"
         x:Class="KrytenAssist.Avalonia.MainWindow"
-        Title="KrytenAssist.Avalonia"
+        Title="Kryten Assist"
         Width="1100"
         Height="700"
         MinWidth="900"
@@ -19,37 +19,52 @@
               Margin="20"
               RowSpacing="12">
 
-            <Grid Grid.Row="0"
-                  ColumnDefinitions="*,Auto">
-                <StackPanel Spacing="2">
-                    <TextBlock Text="Kryten Assist"
-                               FontSize="24"
-                               FontWeight="Bold" />
-                    <TextBlock Text="Offline prompt templates and AI conversation"
-                               FontSize="13"
-                               Opacity="0.7" />
-                </StackPanel>
-            </Grid>
+            <Border Grid.Row="0"
+                    Classes="header-surface"
+                    Padding="12,9">
+                <Grid ColumnDefinitions="*,Auto"
+                      ColumnSpacing="16">
+                    <StackPanel Spacing="1">
+                        <TextBlock Text="Kryten Assist"
+                                   FontSize="22"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Text="Making Future Robin's Life Easier"
+                                   Classes="secondary-text"
+                                   FontSize="12" />
+                    </StackPanel>
+
+                    <Border Grid.Column="1"
+                            Classes="status-surface"
+                            IsVisible="{Binding HasEmbeddingStatusMessage}"
+                            MaxWidth="360"
+                            Padding="9,5"
+                            VerticalAlignment="Center">
+                        <TextBlock Text="{Binding EmbeddingStatusMessage}"
+                                   Classes="secondary-text"
+                                   FontSize="12"
+                                   TextWrapping="Wrap" />
+                    </Border>
+                </Grid>
+            </Border>
 
             <Grid Grid.Row="1"
                   ColumnDefinitions="2*,3*"
                   ColumnSpacing="12">
 
                 <Border Grid.Column="0"
-                        BorderThickness="1"
-                        CornerRadius="8"
+                        Classes="workspace-surface"
                         Padding="12">
-                    <Grid RowDefinitions="Auto,Auto,Auto,Auto,*"
+                    <Grid RowDefinitions="Auto,Auto,Auto,*"
                           RowSpacing="10">
                         <Grid Grid.Row="0"
                               ColumnDefinitions="*,Auto"
                               ColumnSpacing="8">
                             <TextBlock Text="Prompt Library"
-                                       FontSize="18"
-                                       FontWeight="SemiBold"
+                                       Classes="section-heading"
                                        VerticalAlignment="Center" />
                             <Button Grid.Column="1"
                                     Content="New Prompt"
+                                    Classes="primary"
                                     Command="{Binding OpenPromptEditorCommand}" />
                         </Grid>
 
@@ -57,21 +72,13 @@
                                  PlaceholderText="Search prompts..."
                                  Text="{Binding SearchText}" />
 
-                        <Border Grid.Row="2"
-                                IsVisible="{Binding HasEmbeddingStatusMessage}"
-                                Padding="10"
-                                BorderThickness="1"
-                                CornerRadius="6">
-                            <TextBlock Text="{Binding EmbeddingStatusMessage}"
-                                       TextWrapping="Wrap" />
-                        </Border>
-
-                        <TextBlock Grid.Row="3"
+                        <TextBlock Grid.Row="2"
                                    Text="No prompts found."
+                                   Classes="secondary-text"
                                    IsVisible="{Binding HasNoSearchResults}"
                                    HorizontalAlignment="Center" />
 
-                        <ScrollViewer Grid.Row="4"
+                        <ScrollViewer Grid.Row="3"
                                       VerticalScrollBarVisibility="Auto"
                                       HorizontalScrollBarVisibility="Disabled">
                             <ItemsControl ItemsSource="{Binding FilteredPromptCards}">
@@ -79,16 +86,17 @@
                                     <DataTemplate DataType="models:PromptCardModel">
                                         <Border Padding="10"
                                                 Margin="0,0,0,6"
-                                                BorderThickness="1"
-                                                CornerRadius="6">
+                                                Classes="prompt-card">
                                             <StackPanel Spacing="3">
                                                 <TextBlock Text="{Binding Title}"
                                                            FontSize="16"
                                                            FontWeight="SemiBold" />
                                                 <TextBlock Text="{Binding Category}"
+                                                           Classes="accent-text"
                                                            FontSize="12"
-                                                           Opacity="0.7" />
+                                                           FontWeight="SemiBold" />
                                                 <TextBlock Text="{Binding Description}"
+                                                           Classes="secondary-text"
                                                            TextWrapping="Wrap" />
                                             </StackPanel>
                                         </Border>
@@ -100,15 +108,13 @@
                 </Border>
 
                 <Border Grid.Column="1"
-                        BorderThickness="1"
-                        CornerRadius="8"
+                        Classes="workspace-surface"
                         Padding="12">
                     <Grid RowDefinitions="Auto,*,Auto,Auto,Auto"
                           RowSpacing="12">
                         <TextBlock Grid.Row="0"
                                    Text="AI Conversation"
-                                   FontSize="18"
-                                   FontWeight="SemiBold" />
+                                   Classes="section-heading" />
 
                         <ListBox x:Name="ConversationList"
                                  Grid.Row="1"
@@ -120,12 +126,13 @@
                             <ListBox.ItemTemplate>
                                 <DataTemplate DataType="models:ConversationMessage">
                                     <Border BorderThickness="1"
-                                            CornerRadius="6"
+                                            Classes="message-surface"
                                             Padding="10"
                                             Margin="0,0,0,8">
                                         <StackPanel Spacing="4">
                                             <TextBlock Text="{Binding Role}"
-                                                       FontWeight="Bold"
+                                                       Classes="accent-text"
+                                                       FontWeight="SemiBold"
                                                        FontSize="12" />
                                             <TextBlock Text="{Binding Content}"
                                                        TextWrapping="Wrap" />
@@ -137,6 +144,7 @@
 
                         <TextBlock Grid.Row="2"
                                    Text="{Binding ConversationErrorMessage}"
+                                   Classes="error-text"
                                    IsVisible="{Binding HasConversationError}"
                                    TextWrapping="Wrap" />
 
@@ -155,21 +163,29 @@
                               ColumnDefinitions="Auto,Auto,Auto,*,Auto"
                               ColumnSpacing="8">
                             <Button Content="Send"
+                                    Classes="primary"
                                     MinWidth="72"
                                     Command="{Binding SendMessageCommand}" />
 
                             <Button Grid.Column="1"
                                     Content="Cancel"
+                                    Classes="secondary"
                                     MinWidth="72"
                                     Command="{Binding CancelConversationCommand}" />
                             <Button Grid.Column="2"
                                     Content="Clear Conversation"
+                                    Classes="tertiary"
                                     Command="{Binding ClearConversationCommand}" />
 
-                            <TextBlock Grid.Column="4"
-                                       Text="Thinking..."
-                                       VerticalAlignment="Center"
-                                       IsVisible="{Binding IsConversationBusy}" />
+                            <Border Grid.Column="4"
+                                    Classes="status-surface"
+                                    Padding="8,4"
+                                    VerticalAlignment="Center"
+                                    IsVisible="{Binding IsConversationBusy}">
+                                <TextBlock Text="Thinking..."
+                                           Classes="busy-text"
+                                           FontSize="12" />
+                            </Border>
                         </Grid>
                     </Grid>
                 </Border>
@@ -177,22 +193,18 @@
         </Grid>
 
         <Border IsVisible="{Binding IsPromptEditorOpen}"
-                Background="#99000000">
+                Background="{DynamicResource KrytenOverlayBrush}">
             <Border Width="620"
                     MaxHeight="560"
+                    Classes="dialog-surface"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
-                    BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
-                    BorderThickness="1"
-                    CornerRadius="8"
                     Padding="20">
                 <Grid RowDefinitions="Auto,*,Auto"
                       RowSpacing="16">
                     <Grid ColumnDefinitions="*,Auto">
                         <TextBlock Text="Create prompt template"
-                                   FontSize="20"
-                                   FontWeight="SemiBold"
+                                   Classes="section-heading"
                                    VerticalAlignment="Center" />
                     </Grid>
 
@@ -207,8 +219,9 @@
                                      Text="{Binding NewCategory}" />
 
                             <TextBlock Text="Category suggestions"
+                                       Classes="secondary-text"
                                        FontSize="12"
-                                       Opacity="0.7" />
+                                       />
 
                             <ItemsControl x:Name="CategorySuggestions"
                                           ItemsSource="{Binding Categories}"
@@ -221,6 +234,7 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="x:String">
                                         <Button Content="{Binding}"
+                                                Classes="secondary"
                                                 Command="{Binding #CategorySuggestions.Tag}"
                                                 CommandParameter="{Binding}"
                                                 Margin="0,0,8,8"
@@ -248,9 +262,11 @@
                                 Orientation="Horizontal"
                                 Spacing="8">
                         <Button Content="Save"
+                                Classes="primary"
                                 MinWidth="72"
                                 Command="{Binding SaveCommand}" />
                         <Button Content="Cancel"
+                                Classes="secondary"
                                 MinWidth="72"
                                 Command="{Binding ClosePromptEditorCommand}" />
                     </StackPanel>

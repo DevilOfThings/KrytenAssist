@@ -2,9 +2,163 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="KrytenAssist.Avalonia.App"
              RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="KrytenAccentBrush" Color="#315B7D" />
+                    <SolidColorBrush x:Key="KrytenAccentHoverBrush" Color="#274A67" />
+                    <SolidColorBrush x:Key="KrytenAccentPressedBrush" Color="#203D55" />
+                    <SolidColorBrush x:Key="KrytenAccentForegroundBrush" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="KrytenWindowBrush" Color="#F4F6F8" />
+                    <SolidColorBrush x:Key="KrytenSurfaceBrush" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="KrytenSubtleSurfaceBrush" Color="#EEF2F5" />
+                    <SolidColorBrush x:Key="KrytenHeaderBrush" Color="#E8EEF3" />
+                    <SolidColorBrush x:Key="KrytenBorderBrush" Color="#D4D9DF" />
+                    <SolidColorBrush x:Key="KrytenSecondaryTextBrush" Color="#5E6874" />
+                    <SolidColorBrush x:Key="KrytenBusyBrush" Color="#8A6200" />
+                    <SolidColorBrush x:Key="KrytenErrorBrush" Color="#B42318" />
+                    <SolidColorBrush x:Key="KrytenOverlayBrush" Color="#99000000" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="KrytenAccentBrush" Color="#4D7EA3" />
+                    <SolidColorBrush x:Key="KrytenAccentHoverBrush" Color="#5A8DB3" />
+                    <SolidColorBrush x:Key="KrytenAccentPressedBrush" Color="#3E6B8C" />
+                    <SolidColorBrush x:Key="KrytenAccentForegroundBrush" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="KrytenWindowBrush" Color="#191D21" />
+                    <SolidColorBrush x:Key="KrytenSurfaceBrush" Color="#23282D" />
+                    <SolidColorBrush x:Key="KrytenSubtleSurfaceBrush" Color="#2C3339" />
+                    <SolidColorBrush x:Key="KrytenHeaderBrush" Color="#202A32" />
+                    <SolidColorBrush x:Key="KrytenBorderBrush" Color="#3C454D" />
+                    <SolidColorBrush x:Key="KrytenSecondaryTextBrush" Color="#AAB4BE" />
+                    <SolidColorBrush x:Key="KrytenBusyBrush" Color="#E2B94F" />
+                    <SolidColorBrush x:Key="KrytenErrorBrush" Color="#FF8A80" />
+                    <SolidColorBrush x:Key="KrytenOverlayBrush" Color="#B3000000" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
 
     <Application.Styles>
         <FluentTheme />
+
+        <Style Selector="Window">
+            <Setter Property="Background" Value="{DynamicResource KrytenWindowBrush}" />
+        </Style>
+
+        <Style Selector="Border.header-surface">
+            <Setter Property="Background" Value="{DynamicResource KrytenHeaderBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource KrytenBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+        </Style>
+
+        <Style Selector="Border.workspace-surface">
+            <Setter Property="Background" Value="{DynamicResource KrytenSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource KrytenBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+        </Style>
+
+        <Style Selector="Border.prompt-card">
+            <Setter Property="Background" Value="{DynamicResource KrytenSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource KrytenBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="5" />
+        </Style>
+
+        <Style Selector="Border.prompt-card:pointerover">
+            <Setter Property="Background" Value="{DynamicResource KrytenSubtleSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource KrytenAccentBrush}" />
+        </Style>
+
+        <Style Selector="Border.message-surface">
+            <Setter Property="Background" Value="{DynamicResource KrytenSubtleSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource KrytenBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="5" />
+        </Style>
+
+        <Style Selector="Border.status-surface">
+            <Setter Property="Background" Value="{DynamicResource KrytenSubtleSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource KrytenBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="5" />
+        </Style>
+
+        <Style Selector="Border.dialog-surface">
+            <Setter Property="Background" Value="{DynamicResource KrytenSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource KrytenBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+        </Style>
+
+        <Style Selector="TextBlock.section-heading">
+            <Setter Property="FontSize" Value="17" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <Style Selector="TextBlock.secondary-text">
+            <Setter Property="Foreground" Value="{DynamicResource KrytenSecondaryTextBrush}" />
+        </Style>
+
+        <Style Selector="TextBlock.accent-text">
+            <Setter Property="Foreground" Value="{DynamicResource KrytenAccentBrush}" />
+        </Style>
+
+        <Style Selector="TextBlock.error-text">
+            <Setter Property="Foreground" Value="{DynamicResource KrytenErrorBrush}" />
+        </Style>
+
+        <Style Selector="TextBlock.busy-text">
+            <Setter Property="Foreground" Value="{DynamicResource KrytenBusyBrush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <Style Selector="Button">
+            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="{DynamicResource KrytenAccentBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource KrytenAccentBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource KrytenAccentForegroundBrush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <Style Selector="Button.primary:pointerover">
+            <Setter Property="Background" Value="{DynamicResource KrytenAccentHoverBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource KrytenAccentHoverBrush}" />
+        </Style>
+
+        <Style Selector="Button.primary:pressed">
+            <Setter Property="Background" Value="{DynamicResource KrytenAccentPressedBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource KrytenAccentPressedBrush}" />
+        </Style>
+
+        <Style Selector="Button.secondary">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{DynamicResource KrytenBorderBrush}" />
+        </Style>
+
+        <Style Selector="Button.tertiary">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="{DynamicResource KrytenSecondaryTextBrush}" />
+        </Style>
+
+        <Style Selector="Button:focus">
+            <Setter Property="BorderBrush" Value="{DynamicResource KrytenAccentBrush}" />
+            <Setter Property="BorderThickness" Value="2" />
+        </Style>
+
+        <Style Selector="TextBox:focus">
+            <Setter Property="BorderBrush" Value="{DynamicResource KrytenAccentBrush}" />
+            <Setter Property="BorderThickness" Value="2" />
+        </Style>
     </Application.Styles>
 </Application>

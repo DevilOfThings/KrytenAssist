@@ -10,8 +10,9 @@ Phase 5 – Avalonia AI Features
 
 Current Prompt
 --------------
-Prompt 031c – Avalonia Desktop Visual Polish
+Prompt 031c – Avalonia Desktop Visual Polish ✅
 - Prompt 031b desktop workspace and interaction refinements completed
+- One coherent visual-polish pass implemented and manually reviewed
 - Refine the application header and typography hierarchy
 - Introduce a subtle Kryten colour palette
 - Improve border, button, status, prompt card and conversation presentation
@@ -201,6 +202,12 @@ Prompt 031b – Avalonia Desktop UX Refinements ✅
 - Maximise space for prompt browsing with independent scrolling
 - Refine conversation and prompt layouts for long-running sessions
 - Improve desktop usability and visual polish without changing core AI functionality
+
+Prompt 031c – Avalonia Desktop Visual Polish ✅
+- Added centralized light and dark Kryten theme resources
+- Introduced a restrained professional accent colour
+- Refined header, buttons, prompt cards, conversation messages and statuses
+- Preserved the Prompt 031b layout and application behaviour
 
 ## Phase 6 – Career Assistant
 
