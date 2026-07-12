@@ -188,7 +188,7 @@ Prompt 031 – Tools ✅
 - Verified live tool calling using the OpenAI API
 - Preserved the offline-first architecture
 
-- Prompt 031a – Runtime Context Injection
+Prompt 031a – Runtime Context Injection
 - Inject current runtime context into every AI conversation
 - Supply the current date, time and local time zone to the AI provider
 - Introduce a provider-independent runtime context abstraction
