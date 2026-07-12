@@ -8,15 +8,14 @@ Current Phase
 -------------
 Phase 5 – Avalonia AI Features
 
-Current Prompt
+CCurrent Prompt
 --------------
-Prompt 031a – Runtime Context Injection
-- Inject current runtime context into every AI conversation
-- Supply the current date, time and local time zone to the AI provider
-- Introduce a provider-independent runtime context abstraction
-- Separate runtime context from conversational memory
-- Prepare the architecture for future context providers such as calendar, current project, open documents, weather and system information
-- Preserve provider independence and the offline-first architecture
+Prompt 031b – Avalonia Desktop UX Refinements
+- Introduce a two-pane desktop workspace optimised for tablet-sized displays
+- Move prompt creation into an overlay/dialog launched from a 'New Prompt' action
+- Maximise space for prompt browsing with independent scrolling
+- Refine conversation and prompt layouts for long-running sessions
+- Improve desktop usability and visual polish without changing core AI functionality
 
 ### Phase 1 – API Foundation (Current)
 
@@ -188,7 +187,7 @@ Prompt 031 – Tools ✅
 - Verified live tool calling using the OpenAI API
 - Preserved the offline-first architecture
 
-Prompt 031a – Runtime Context Injection
+Prompt 031a – Runtime Context Injection ✅
 - Inject current runtime context into every AI conversation
 - Supply the current date, time and local time zone to the AI provider
 - Introduce a provider-independent runtime context abstraction
@@ -196,8 +195,7 @@ Prompt 031a – Runtime Context Injection
 - Prepare the architecture for future context providers such as calendar, current project, open documents, weather and system information
 - Preserve provider independence and the offline-first architecture
 
-Prompt 031b
-Avalonia Desktop UX Refinements
+Prompt 031b – Avalonia Desktop UX Refinements
 - Introduce a two-pane desktop workspace optimised for tablet-sized displays
 - Move prompt creation into an overlay/dialog launched from a 'New Prompt' action
 - Maximise space for prompt browsing with independent scrolling
