@@ -2,7 +2,9 @@
 
 ## Goal
 
-Introduce the provider-independent Skills architecture that enables Kryten Assist to discover, register and execute reusable user-facing capabilities.
+Introduce the provider-independent Skills architecture that enables Kryten Assist to register, discover and execute reusable user-facing capabilities.
+
+Validate the architecture by implementing a simple sample Skill before introducing real business capabilities.
 
 This prompt establishes the foundation for all future Skills, including Cruise, Home, Finance, Health, Developer and Career.
 
@@ -161,7 +163,7 @@ Every Skill should answer the following questions:
 | What input do I accept? | SkillRequest |
 | What do I return? | SkillResult |
 | How am I discovered? | ISkillRegistry |
-| How am I execute? | SkillRegistry |
+| How am I executed? | SkillRegistry |
 
 This contract should remain stable as the Skills platform evolves.
 
@@ -176,8 +178,9 @@ This contract should remain stable as the Skills platform evolves.
 - Create Skill request and result models.
 - Create Skill metadata.
 - Create Skill registry interfaces.
-- Implement Skill discovery.
+- Implement the Skill registry.
 - Configure dependency injection.
+- Implement a sample Skill.
 - Add comprehensive unit tests.
 
 ### Out of Scope
@@ -229,11 +232,33 @@ Support Skill registration and discovery.
 
 Configure dependency injection.
 
-Skills should be automatically discoverable without manual registration where practical.
+Register the Skill Registry with the application's dependency injection container.
+
+Provide a single extension point where future prompts can register concrete Skills.
+
+Automatic discovery may be introduced by a future prompt if it provides clear benefits over explicit registration.
 
 ---
 
 ### Step 5
+
+Implement a simple sample Skill to validate the framework.
+
+The sample Skill should:
+
+- implement `ISkill`
+- register with the Skill Registry
+- expose a valid `SkillManifest`
+- execute successfully
+- demonstrate `SkillRequest`, `SkillContext` and `SkillResult`
+
+The sample Skill should be intentionally simple and exist only to prove the framework.
+
+No business functionality should be introduced.
+
+---
+
+### Step 6
 
 Add unit tests covering:
 
@@ -242,12 +267,21 @@ Add unit tests covering:
 - duplicate detection
 - unknown Skill lookup
 - manifest retrieval
+- sample Skill registration
+- sample Skill execution
 
 ---
 
-### Step 6
+### Step 7
 
-Verify the framework can discover Skills without requiring any user interface.
+Verify the framework can register and execute the sample Skill without requiring any user interface.
+
+The sample Skill should:
+
+- be successfully registered with the `SkillRegistry`
+- be discoverable by its identifier
+- execute successfully through the `ISkill` contract
+- demonstrate the use of `SkillRequest`, `SkillContext` and `SkillResult`
 
 No concrete business Skills should exist at the end of this prompt.
 
@@ -257,7 +291,9 @@ No concrete business Skills should exist at the end of this prompt.
 
 At the end of this prompt it should be possible to introduce a new Skill simply by implementing `ISkill`.
 
-The registry should automatically discover the Skill and expose its metadata.
+The registry should successfully register the Skill and expose its metadata.
+
+The sample Skill should demonstrate that the Skills framework is ready for real business capabilities.
 
 No Cruise, Home, Finance or other business functionality should yet be implemented.
 
@@ -265,25 +301,43 @@ The Skills platform should now be ready for Prompt 033.
 
 ---
 
-# Results
+## Results
 
-> To be completed after implementation.
+#### Status
 
-### Status
+_In Progress_
 
-_Not Started_
+Completed:
+
+- Step 1 – Skills namespace and folder structure
+- Step 2 – Core Skill abstractions
+- Step 3 – Skill registry
+
+Remaining:
+
+- Step 4 – Dependency Injection 
+- Step 5 – Sample Skill
+- Step 6 – Unit Tests
+- Step 7 – Framework Verification
 
 ### Files Created
 
--
+- Skills/Models/SkillManifest.cs
+- Skills/Models/SkillContext.cs
+- Skills/Models/SkillRequest.cs
+- Skills/Models/SkillResult.cs
+- Skills/Services/ISkill.cs
+- Skills/Services/ISkillRegistry.cs
+- Skills/Services/SkillRegistry.cs
 
 ### Files Updated
 
--
+- None
 
 ### Build
 
-_Not Run_
+- ✅ dotnet build successful
+- ✅ dotnet test successful
 
 ### Git Commit
 
@@ -293,4 +347,9 @@ _Not Created_
 
 # Lessons Learned
 
-> To be completed after implementation.
+- Skills are intentionally a higher-level abstraction than Tools. Tools perform individual operations; Skills deliver complete user-facing capabilities.
+- Keeping the initial contracts small has avoided speculative architecture and makes future expansion easier.
+- The Skill Registry should remain a lightweight in-memory component responsible only for registration and lookup.
+- Case-insensitive Skill identifiers improve usability while still enforcing uniqueness.
+- Registration order should be preserved so future user interfaces can present Skills consistently.
+- Automatic discovery and dependency injection are best introduced after the core contracts have stabilised.
