@@ -21,6 +21,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\KrytenAssist.Avalonia\KrytenAssist.Avalonia.csproj" />
+    <ProjectReference Include="..\KrytenAssist.Application\KrytenAssist.Application.csproj">
+      <Aliases>KrytenApplication</Aliases>
+    </ProjectReference>
+    <ProjectReference Include="..\KrytenAssist.Core\KrytenAssist.Core.csproj" />
+    <ProjectReference Include="..\KrytenAssist.Infrastructure\KrytenAssist.Infrastructure.csproj">
+      <Aliases>KrytenInfrastructure</Aliases>
+    </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>

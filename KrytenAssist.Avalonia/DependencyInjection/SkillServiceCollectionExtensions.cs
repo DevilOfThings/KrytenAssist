@@ -1,4 +1,5 @@
 using System;
+using KrytenAssist.Avalonia.Skills.Cruises;
 using KrytenAssist.Avalonia.Skills.Samples;
 using KrytenAssist.Avalonia.Skills.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,6 +13,7 @@ public static class SkillServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddSingleton<ISkill, EchoSkill>();
+        services.AddSingleton<ISkill, CruiseOfTheWeekSkill>();
         services.AddSingleton<ISkillRegistry>(serviceProvider =>
         {
             var registry = new SkillRegistry();

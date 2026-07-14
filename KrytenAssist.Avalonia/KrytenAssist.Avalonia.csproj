@@ -11,6 +11,9 @@
     <ProjectReference Include="..\KrytenAssist.Application\KrytenAssist.Application.csproj">
       <Aliases>KrytenApplication</Aliases>
     </ProjectReference>
+    <ProjectReference Include="..\KrytenAssist.Infrastructure\KrytenAssist.Infrastructure.csproj">
+      <Aliases>KrytenInfrastructure</Aliases>
+    </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>
@@ -23,7 +26,7 @@
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.9" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.9" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.9" />
     <PackageReference Include="OpenAI" Version="2.12.0" />
   </ItemGroup>

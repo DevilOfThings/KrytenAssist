@@ -1,4 +1,6 @@
-﻿using Avalonia;
+﻿extern alias KrytenInfrastructure;
+
+using Avalonia;
 using System;
 using KrytenAssist.Avalonia.DependencyInjection;
 using KrytenAssist.Avalonia.Services;
@@ -7,6 +9,8 @@ using Microsoft.Extensions.DependencyInjection;
 using KrytenAssist.Avalonia.Options;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
+using MarellaCruiseServiceCollectionExtensions =
+    KrytenInfrastructure::KrytenAssist.Infrastructure.Cruises.Marella.MarellaCruiseServiceCollectionExtensions;
 
 namespace KrytenAssist.Avalonia;
 
@@ -64,6 +68,9 @@ class Program
 
         services.AddKrytenTools();
         services.AddRuntimeContext();
+        MarellaCruiseServiceCollectionExtensions.AddMarellaCruiseOfTheWeek(
+            services,
+            configuration.GetSection("CruiseOfTheWeek:Marella"));
         services.AddSkills();
         
         return services.BuildServiceProvider();

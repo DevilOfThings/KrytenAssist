@@ -1,9 +1,15 @@
+extern alias KrytenApplication;
+
 using FluentAssertions;
 using KrytenAssist.Avalonia.DependencyInjection;
+using KrytenAssist.Avalonia.Skills.Cruises;
 using KrytenAssist.Avalonia.Skills.Models;
 using KrytenAssist.Avalonia.Skills.Samples;
 using KrytenAssist.Avalonia.Skills.Services;
+using KrytenAssist.Avalonia.Tests.Cruises;
 using Microsoft.Extensions.DependencyInjection;
+using ICruiseOfTheWeekProvider =
+    KrytenApplication::KrytenAssist.Application.Cruises.ICruiseOfTheWeekProvider;
 
 namespace KrytenAssist.Avalonia.Tests.Skills;
 
@@ -13,8 +19,7 @@ public sealed class SkillDependencyInjectionTests
     public void AddSkills_ShouldRegisterSkillRegistry()
     {
         // Arrange
-        var services = new ServiceCollection();
-        services.AddSkills();
+        var services = CreateServices();
 
         // Act
         using var serviceProvider = services.BuildServiceProvider();
@@ -25,105 +30,102 @@ public sealed class SkillDependencyInjectionTests
     }
 
     [Fact]
-    public void AddSkills_ShouldRegisterEchoSkill()
+    public void AddSkills_ShouldRegisterSkillsInExpectedOrder()
     {
         // Arrange
-        var services = new ServiceCollection();
-        services.AddSkills();
+        var services = CreateServices();
 
         // Act
         using var serviceProvider = services.BuildServiceProvider();
         var skills = serviceProvider.GetServices<ISkill>().ToArray();
 
         // Assert
-        skills.Should().ContainSingle();
-        skills.Single().Should().BeOfType<EchoSkill>();
+        skills.Should().HaveCount(2);
+        skills[0].Should().BeOfType<EchoSkill>();
+        skills[1].Should().BeOfType<CruiseOfTheWeekSkill>();
     }
 
-    [Fact]
-    public void AddSkills_ShouldPopulateRegistryWithEchoSkill()
+    [Theory]
+    [InlineData("sample.echo", typeof(EchoSkill))]
+    [InlineData("cruise.of-the-week", typeof(CruiseOfTheWeekSkill))]
+    public void AddSkills_ShouldPopulateRegistryWithRegisteredSkills(
+        string skillId,
+        Type expectedType)
     {
         // Arrange
-        var services = new ServiceCollection();
-        services.AddSkills();
+        var services = CreateServices();
 
         // Act
         using var serviceProvider = services.BuildServiceProvider();
-        var registry = serviceProvider.GetRequiredService<ISkillRegistry>();
-        var skill = registry.Find("sample.echo");
+        var skill = serviceProvider
+            .GetRequiredService<ISkillRegistry>()
+            .Find(skillId);
 
         // Assert
-        skill.Should().BeOfType<EchoSkill>();
+        skill.Should().BeOfType(expectedType);
     }
 
     [Fact]
     public void AddSkills_ShouldRegisterRegistryAsSingleton()
     {
         // Arrange
-        var services = new ServiceCollection();
-        services.AddSkills();
+        var services = CreateServices();
 
         // Act
         using var serviceProvider = services.BuildServiceProvider();
-        var firstRegistry = serviceProvider.GetRequiredService<ISkillRegistry>();
-        var secondRegistry = serviceProvider.GetRequiredService<ISkillRegistry>();
+        var first = serviceProvider.GetRequiredService<ISkillRegistry>();
+        var second = serviceProvider.GetRequiredService<ISkillRegistry>();
 
         // Assert
-        secondRegistry.Should().BeSameAs(firstRegistry);
+        second.Should().BeSameAs(first);
     }
 
     [Fact]
-    public void AddSkills_ShouldRegisterEchoSkillAsSingleton()
+    public void AddSkills_ShouldRegisterBothSkillsAsSingletons()
     {
         // Arrange
-        var services = new ServiceCollection();
-        services.AddSkills();
+        var services = CreateServices();
 
         // Act
         using var serviceProvider = services.BuildServiceProvider();
-        var firstSkill = serviceProvider.GetServices<ISkill>().Single();
-        var secondSkill = serviceProvider.GetServices<ISkill>().Single();
+        var first = serviceProvider.GetServices<ISkill>().ToArray();
+        var second = serviceProvider.GetServices<ISkill>().ToArray();
 
         // Assert
-        secondSkill.Should().BeSameAs(firstSkill);
+        second.Should().HaveCount(first.Length);
+        second[0].Should().BeSameAs(first[0]);
+        second[1].Should().BeSameAs(first[1]);
     }
 
     [Fact]
-    public void AddSkills_ShouldPopulateRegistryWithTheDependencyInjectionSkillInstance()
+    public void AddSkills_ShouldPopulateRegistryWithDependencyInjectionInstances()
     {
         // Arrange
-        var services = new ServiceCollection();
-        services.AddSkills();
+        var services = CreateServices();
 
         // Act
         using var serviceProvider = services.BuildServiceProvider();
-        var dependencyInjectionSkill = serviceProvider.GetServices<ISkill>().Single();
-        var registrySkill = serviceProvider
-            .GetRequiredService<ISkillRegistry>()
-            .Find("sample.echo");
+        var skills = serviceProvider.GetServices<ISkill>().ToArray();
+        var registry = serviceProvider.GetRequiredService<ISkillRegistry>();
 
         // Assert
-        registrySkill.Should().BeSameAs(dependencyInjectionSkill);
+        registry.Find("sample.echo").Should().BeSameAs(skills[0]);
+        registry.Find("cruise.of-the-week").Should().BeSameAs(skills[1]);
     }
 
     [Fact]
     public async Task RegisteredEchoSkill_ShouldExecuteSuccessfullyThroughRegistry()
     {
         // Arrange
-        var services = new ServiceCollection();
-        services.AddSkills();
+        var services = CreateServices();
         using var serviceProvider = services.BuildServiceProvider();
         var skill = serviceProvider
             .GetRequiredService<ISkillRegistry>()
             .Find("sample.echo");
         var request = new SkillRequest(
             "echo",
-            new Dictionary<string, object?>
-            {
-                ["message"] = "Hello, Kryten."
-            });
-        var context = new SkillContext(
-            new DateTimeOffset(2026, 7, 14, 10, 0, 0, TimeSpan.Zero));
+            new Dictionary<string, object?> { ["message"] = "Hello, Kryten." });
+        var context = new SkillContext(CruiseTestData.ObservedAt);
 
         // Act
         var result = await skill!.ExecuteAsync(request, context);
@@ -131,5 +133,37 @@ public sealed class SkillDependencyInjectionTests
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Data.Should().Be("Hello, Kryten.");
+    }
+
+    [Fact]
+    public async Task RegisteredCruiseSkill_ShouldExecuteSuccessfullyThroughRegistry()
+    {
+        // Arrange
+        var services = CreateServices();
+        using var serviceProvider = services.BuildServiceProvider();
+        var skill = serviceProvider
+            .GetRequiredService<ISkillRegistry>()
+            .Find("cruise.of-the-week");
+
+        // Act
+        var result = await skill!.ExecuteAsync(
+            new SkillRequest("get-current"),
+            new SkillContext(CruiseTestData.ObservedAt));
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Data.Should().BeOfType<KrytenAssist.Core.Cruises.CruiseObservation>();
+    }
+
+    private static ServiceCollection CreateServices()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<ICruiseOfTheWeekProvider>(
+            new FakeCruiseOfTheWeekProvider
+            {
+                Observation = CruiseTestData.CreateObservation()
+            });
+        services.AddSkills();
+        return services;
     }
 }
