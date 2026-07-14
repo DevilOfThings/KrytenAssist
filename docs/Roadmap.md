@@ -6,15 +6,23 @@ v0.1.0
 
 Current Phase
 -------------
-Phase 5 – Avalonia AI Features
+Phase 6 – Skills Platform
 
 Current Prompt
 --------------
-Prompt 031d – Avalonia Prompt Management
-- Select and use stored prompts without sending automatically
-- Reuse the prompt editor for create and edit modes
-- Update and delete prompts while preserving offline data integrity
-- Keep prompt search, selection and dynamically derived categories current
+Prompt 032 – Skills Framework
+Create the provider-independent Skills architecture.
+
+Introduce:
+
+• ISkill
+• SkillDefinition
+• SkillManifest
+• SkillContext
+• SkillResult
+• SkillRegistry
+• Dependency Injection
+• Unit tests
 
 ### Phase 1 – API Foundation (Current)
 
@@ -214,101 +222,430 @@ Prompt 031d – Avalonia Prompt Management
 - Added confirmed deletion and immediate prompt/category/search refresh
 - Added prompt-management ViewModel tests
 
-## Phase 6 – Career Assistant
+---
 
-Prompt 032
-Job Opportunity Domain
+# 🏁 Platform Foundation Complete
 
-Prompt 033
-Job Opportunity API
+Prompt 031d completes the first generation of the Kryten Assist platform.
 
-Prompt 034
-Interview Prep Notes
+The platform now provides:
 
-Prompt 035
-Interview Question Bank
+- Clean Architecture
+- REST API
+- SQLite and Entity Framework persistence
+- React web client
+- Avalonia desktop client
+- Offline prompt storage
+- Semantic search
+- AI conversations
+- Conversation memory
+- Runtime context
+- Provider-independent tools
+- OpenAI integration
 
-Prompt 036
-Mock Interview Sessions
+The technical platform is now considered complete.
 
-Prompt 037
-React Interview Prep UI
+From this point onwards, Kryten Assist transitions from platform engineering to capability development through reusable Skills.
+
+Future prompts should continue to follow the established structure:
+
+- Goal
+- Why This Prompt Exists
+- User Experience
+- Architecture
+- Scope
+- Implementation Steps
+- Results
+- Lessons Learned
 
 ---
 
-# Phase 7 – Personal Automation
+# Phase 6 – Skills Platform
 
-Extend Kryten Assist beyond conversations by introducing autonomous monitoring,
-scheduled tasks, historical data collection, and personal notifications.
+Introduce the reusable Skills architecture that will power every future capability within Kryten Assist.
 
-## Prompt 038 – Automation Framework
+Skills represent complete user-facing capabilities rather than technical components.
 
-Create the scheduling and background task infrastructure that allows Kryten to
-perform periodic work without user interaction.
+Each Skill may expose:
 
-## Prompt 039 – Cruise Deal Monitoring
+- Conversational actions
+- Dashboard cards
+- Background processing
+- Notifications
+- Local data storage
+- Settings
 
-Implement the first real-world automation.
+## Prompt 032 – Skills Framework
 
-Create a Marella Cruise of the Week provider that retrieves the current offer,
-extracts the structured cruise details, and stores observations locally.
+Create the provider-independent Skills architecture.
 
-No generic scraping framework should be introduced in this prompt.
+Introduce:
 
-## Prompt 040 – Cruise Price History
+- ISkill
+- SkillDefinition
+- SkillManifest
+- SkillContext
+- SkillResult
+- SkillRegistry
+- Dependency Injection
+- Unit tests
 
-Persist observations over time and display historical pricing for each cruise.
+No user interface should be introduced.
 
-Allow users to see:
+---
 
-- First observed price
+## Prompt 033 – Cruise Domain Models
+
+Create the shared Cruise domain.
+
+Introduce models such as:
+
+- CruiseOffer
+- CruiseSnapshot
+- CruisePrice
+- CruiseProvider
+- CruiseObservation
+
+No web access or dashboard implementation should be added.
+
+---
+
+## Prompt 034 – Cruise of the Week Skill
+
+Implement the first real Skill.
+
+The Skill should:
+
+- Retrieve the current Cruise of the Week
+- Parse structured cruise information
+- Return provider-independent models
+- Remain independently testable
+
+No historical storage should be implemented.
+
+---
+
+## Prompt 035 – Dashboard & Navigation
+
+Introduce the first dashboard experience.
+
+Implement:
+
+- Dashboard page
+- Left navigation
+- Skill discovery
+- Dashboard cards
+- Navigation between Skills
+
+This establishes the visual shell that future Skills will plug into.
+
+---
+
+# Phase 7 – Cruise Assistant
+
+The Cruise Assistant becomes the first complete end-user capability built on the Skills platform.
+
+---
+
+## Prompt 036 – Cruise History Store
+
+Persist Cruise of the Week observations locally.
+
+Store snapshots only when meaningful changes occur.
+
+---
+
+## Prompt 037 – Price History
+
+Display historical pricing.
+
+Include:
+
+- First observed
 - Current price
 - Lowest price
 - Highest price
-- Number of observations
-- Price trend
+- Observation count
+- Trend
 
-## Prompt 041 – Change Detection & Notifications
+---
 
-Detect meaningful changes between observations.
+## Prompt 038 – Watch List
 
-Notify the user when:
+Allow users to monitor selected cruises.
 
-- The Cruise of the Week changes.
-- The price changes.
-- A new promotion appears.
-- The itinerary changes.
+Support:
 
-## Prompt 042 – Multi-Provider Monitoring
-
-Generalise the monitoring framework so additional providers can be added.
-
-Examples include:
-
-- Marella
-- P&O
-- MSC
-- Royal Caribbean
-- Virgin Voyages
-
-Each provider should implement a common abstraction while remaining independently testable.
-
-## Prompt 043 – Personal Watch Lists
-
-Allow users to watch specific cruises rather than only promotional offers.
-
-Users should be able to monitor:
-
-- Sailing
-- Cabin type
-- Departure month
-- Maximum price
-- Preferred ports
+- Favourite cruises
 - Favourite ships
+- Departure month
+- Maximum budget
+- Preferred cabin
 
-Historical observations should continue even when prices remain unchanged.
+---
 
-# Milestone Achieved
+## Prompt 039 – Price Drop Alerts
+
+Detect meaningful price reductions.
+
+Notify users when:
+
+- Prices fall
+- New promotions appear
+- Watched cruises meet budget
+
+---
+
+## Prompt 040 – Cabin Availability
+
+Monitor cabin availability.
+
+Track:
+
+- Inside
+- Outside
+- Balcony
+- Suites
+- Solo cabins
+
+---
+
+## Prompt 041 – New Itinerary Detection
+
+Detect newly published itineraries.
+
+Initially support Marella.
+
+Architecture should support future providers.
+
+---
+
+## Prompt 042 – Cruise Dashboard
+
+Complete the Cruise Assistant.
+
+Display:
+
+- Cruise of the Week
+- Watch List
+- Price History
+- Alerts
+- Recent Changes
+- Cabin Availability
+
+---
+
+# 🚢 Milestone – Cruise Assistant Complete
+
+The first end-user Skill is complete.
+
+Kryten can now:
+
+- Monitor Cruise of the Week
+- Track historical prices
+- Maintain watch lists
+- Detect price changes
+- Detect itinerary changes
+- Monitor cabin availability
+- Present a dedicated Cruise Dashboard
+
+---
+
+# Phase 8 – Home Assistant
+
+Provide insight into Robin's smart home and energy systems.
+
+---
+
+## Prompt 043 – Solar Skill
+
+Monitor:
+
+- Solar generation
+- Daily production
+- Monthly production
+- Historical trends
+
+---
+
+## Prompt 044 – Battery Skill
+
+Monitor:
+
+- Battery charge
+- Charge/discharge
+- Reserve levels
+- Daily cycling
+
+---
+
+## Prompt 045 – Octopus Skill
+
+Provide:
+
+- Current tariff
+- Cheapest periods
+- Historical comparison
+- Tariff recommendations
+
+---
+
+## Prompt 046 – Heat Pump Skill
+
+Display:
+
+- COP
+- Consumption
+- Flow temperatures
+- Daily efficiency
+
+---
+
+## Prompt 047 – Weather Skill
+
+Provide weather context for:
+
+- Solar
+- Heat pump
+- Energy predictions
+
+---
+
+## Prompt 048 – Home Dashboard
+
+Bring all Home Skills together.
+
+---
+
+# 🏠 Milestone – Home Assistant Complete
+
+---
+
+# Phase 9 – Finance Assistant
+
+Support long-term financial planning.
+
+---
+
+## Prompt 049 – Pension Skill
+
+---
+
+## Prompt 050 – Mortgage Skill
+
+---
+
+## Prompt 051 – Premium Bonds Skill
+
+---
+
+## Prompt 052 – Spending Skill
+
+---
+
+## Prompt 053 – Finance Dashboard
+
+---
+
+# 💷 Milestone – Finance Assistant Complete
+
+---
+
+# Phase 10 – Health Assistant
+
+Support health and wellbeing.
+
+---
+
+## Prompt 054 – Glucose Dashboard
+
+---
+
+## Prompt 055 – Exercise Skill
+
+---
+
+## Prompt 056 – Weight Skill
+
+---
+
+## Prompt 057 – Medication Skill
+
+---
+
+## Prompt 058 – Health Dashboard
+
+---
+
+# ❤️ Milestone – Health Assistant Complete
+
+---
+
+# Phase 11 – Developer Assistant
+
+Use Kryten to improve Kryten.
+
+---
+
+## Prompt 059 – Git Skill
+
+---
+
+## Prompt 060 – Build Skill
+
+---
+
+## Prompt 061 – Test Runner
+
+---
+
+## Prompt 062 – Prompt Generator
+
+---
+
+## Prompt 063 – Architecture Review
+
+---
+
+## Prompt 064 – Development Dashboard
+
+---
+
+# 💻 Milestone – Developer Assistant Complete
+
+---
+
+# Phase 12 – Career Assistant
+
+Support ongoing professional development.
+
+---
+
+## Prompt 065 – Job Skill
+
+---
+
+## Prompt 066 – CV Assistant
+
+---
+
+## Prompt 067 – Interview Coach
+
+---
+
+## Prompt 068 – Mock Interviews
+
+---
+
+## Prompt 069 – Career Dashboard
+
+---
+
+# 👔 Milestone – Career Assistant Complete
+
+At this point, Kryten Assist has evolved into a modular personal assistant platform powered by reusable Skills, shared infrastructure and a unified dashboard experience.
+
+# Platform Foundation Achievements
 
 ✔ Complete CRUD API
 ✔ Clean Architecture established
