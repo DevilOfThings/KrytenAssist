@@ -10,19 +10,18 @@ Phase 6 – Skills Platform
 
 Current Prompt
 --------------
-Prompt 032 – Skills Framework
-Create the provider-independent Skills architecture.
+Prompt 033 – Cruise Domain Models
+Create the shared Cruise domain.
 
 Introduce:
 
-• ISkill
-• SkillDefinition
-• SkillManifest
-• SkillContext
-• SkillResult
-• SkillRegistry
-• Dependency Injection
-• Unit tests
+• CruiseOffer
+• CruiseSnapshot
+• CruisePrice
+• CruiseProvider
+• CruiseObservation
+
+No web access or dashboard implementation should be added.
 
 ### Phase 1 – API Foundation (Current)
 
@@ -275,9 +274,9 @@ Each Skill may expose:
 - Local data storage
 - Settings
 
-## Prompt 032 – Skills Framework
+## Prompt 032 – Skills Framework ✅
 
-Create the provider-independent Skills architecture.
+Created and verified the provider-independent Skills architecture.
 
 Introduce:
 
@@ -291,6 +290,8 @@ Introduce:
 - Unit tests
 
 No user interface should be introduced.
+
+Completed with comprehensive registry, sample Skill and dependency-injection tests. The framework was verified end to end with all solution tests passing.
 
 ---
 
