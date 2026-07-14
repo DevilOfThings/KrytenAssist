@@ -46,7 +46,6 @@ class Program
         services.Configure<ConversationOptions>(configuration.GetSection("Conversation"));
 
         services.AddSingleton<IPromptCardStore, JsonPromptCardStore>();
-        services.AddTransient<MainWindowViewModel>();
         
         services.AddSingleton<OpenAIEmbeddingService>();
         services.AddSingleton<DeterministicEmbeddingService>();
@@ -72,6 +71,7 @@ class Program
             services,
             configuration.GetSection("CruiseOfTheWeek:Marella"));
         services.AddSkills();
+        services.AddShell();
         
         return services.BuildServiceProvider();
     }

@@ -2,8 +2,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:models="using:KrytenAssist.Avalonia.Models"
+        xmlns:navigationModels="clr-namespace:KrytenAssist.Avalonia.Navigation.Models"
         xmlns:viewModels="clr-namespace:KrytenAssist.Avalonia.ViewModels"
+        xmlns:views="clr-namespace:KrytenAssist.Avalonia.Views"
         mc:Ignorable="d"
         d:DesignWidth="1100"
         d:DesignHeight="700"
@@ -13,316 +14,59 @@
         Height="700"
         MinWidth="900"
         MinHeight="600"
-        x:DataType="viewModels:MainWindowViewModel">
-    <Grid>
-        <Grid RowDefinitions="Auto,*"
-              Margin="20"
-              RowSpacing="12">
+        x:DataType="viewModels:ShellViewModel">
+    <Grid RowDefinitions="Auto,*"
+          Margin="20"
+          RowSpacing="12">
+        <Border Grid.Row="0"
+                Classes="header-surface"
+                Padding="12,9">
+            <StackPanel Spacing="1">
+                <TextBlock Text="Kryten Assist"
+                           FontSize="22"
+                           FontWeight="SemiBold" />
+                <TextBlock Text="Making Future Robin's Life Easier"
+                           Classes="secondary-text"
+                           FontSize="12" />
+            </StackPanel>
+        </Border>
 
-            <Border Grid.Row="0"
-                    Classes="header-surface"
-                    Padding="12,9">
-                <Grid ColumnDefinitions="*,Auto"
-                      ColumnSpacing="16">
-                    <StackPanel Spacing="1">
-                        <TextBlock Text="Kryten Assist"
-                                   FontSize="22"
-                                   FontWeight="SemiBold" />
-                        <TextBlock Text="Making Future Robin's Life Easier"
-                                   Classes="secondary-text"
-                                   FontSize="12" />
-                    </StackPanel>
-
-                    <Border Grid.Column="1"
-                            Classes="status-surface"
-                            IsVisible="{Binding HasEmbeddingStatusMessage}"
-                            MaxWidth="360"
-                            Padding="9,5"
-                            VerticalAlignment="Center">
-                        <TextBlock Text="{Binding EmbeddingStatusMessage}"
-                                   Classes="secondary-text"
-                                   FontSize="12"
-                                   TextWrapping="Wrap" />
-                    </Border>
+        <Grid Grid.Row="1"
+              ColumnDefinitions="210,*"
+              ColumnSpacing="12">
+            <Border Grid.Column="0"
+                    Classes="navigation-surface"
+                    Padding="10">
+                <Grid RowDefinitions="Auto,*"
+                      RowSpacing="8">
+                    <TextBlock Text="Navigation"
+                               Classes="section-heading"
+                               Margin="6,2" />
+                    <ListBox x:Name="NavigationList"
+                             Grid.Row="1"
+                             Classes="navigation-list"
+                             ItemsSource="{Binding NavigationItems}"
+                             SelectedItem="{Binding SelectedNavigationItem, Mode=OneWay}"
+                             SelectionChanged="NavigationList_OnSelectionChanged"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="navigationModels:NavigationItem">
+                                <TextBlock Text="{Binding Title}"
+                                           TextWrapping="Wrap" />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
                 </Grid>
             </Border>
 
-            <Grid Grid.Row="1"
-                  ColumnDefinitions="2*,3*"
-                  ColumnSpacing="12">
-
-                <Border Grid.Column="0"
-                        Classes="workspace-surface"
-                        Padding="12">
-                    <Grid RowDefinitions="Auto,Auto,Auto,Auto,*"
-                          RowSpacing="10">
-                        <Grid Grid.Row="0"
-                              ColumnDefinitions="*,Auto"
-                              ColumnSpacing="8">
-                            <TextBlock Text="Prompt Library"
-                                       Classes="section-heading"
-                                       VerticalAlignment="Center" />
-                            <Button Grid.Column="1"
-                                    Content="New Prompt"
-                                    Classes="primary"
-                                    Command="{Binding OpenPromptEditorCommand}" />
-                        </Grid>
-
-                        <TextBox Grid.Row="1"
-                                 PlaceholderText="Search prompts..."
-                                 Text="{Binding SearchText}" />
-
-                        <StackPanel Grid.Row="2"
-                                    Orientation="Horizontal"
-                                    Spacing="8">
-                            <Button Content="Use Prompt"
-                                    Classes="primary"
-                                    IsEnabled="{Binding HasSelectedPrompt}"
-                                    Command="{Binding UsePromptCommand}"
-                                    Click="UsePrompt_OnClick" />
-                            <Button Content="Delete"
-                                    Classes="danger"
-                                    IsEnabled="{Binding HasSelectedPrompt}"
-                                    Command="{Binding RequestDeletePromptCommand}" />
-                        </StackPanel>
-
-                        <TextBlock Grid.Row="3"
-                                   Text="No prompts found."
-                                   Classes="secondary-text"
-                                   IsVisible="{Binding HasNoSearchResults}"
-                                   HorizontalAlignment="Center" />
-
-                        <ListBox x:Name="PromptList"
-                                 Grid.Row="4"
-                                 Classes="prompt-list"
-                                 ItemsSource="{Binding FilteredPromptCards}"
-                                 SelectedItem="{Binding SelectedPrompt, Mode=TwoWay}"
-                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate DataType="models:PromptCardModel">
-                                    <Border Padding="10"
-                                            Margin="0,0,0,6"
-                                            Classes="prompt-card"
-                                            DoubleTapped="PromptCard_OnDoubleTapped">
-                                        <StackPanel Spacing="3">
-                                            <TextBlock Text="{Binding Title}"
-                                                       FontSize="16"
-                                                       FontWeight="SemiBold" />
-                                            <TextBlock Text="{Binding Category}"
-                                                       Classes="accent-text"
-                                                       FontSize="12"
-                                                       FontWeight="SemiBold" />
-                                            <TextBlock Text="{Binding Description}"
-                                                       Classes="secondary-text"
-                                                       TextWrapping="Wrap" />
-                                        </StackPanel>
-                                    </Border>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
-                    </Grid>
-                </Border>
-
-                <Border Grid.Column="1"
-                        Classes="workspace-surface"
-                        Padding="12">
-                    <Grid RowDefinitions="Auto,*,Auto,Auto,Auto"
-                          RowSpacing="12">
-                        <TextBlock Grid.Row="0"
-                                   Text="AI Conversation"
-                                   Classes="section-heading" />
-
-                        <ListBox x:Name="ConversationList"
-                                 Grid.Row="1"
-                                 ItemsSource="{Binding ConversationHistory}"
-                                 BorderThickness="0"
-                                 Background="Transparent"
-                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate DataType="models:ConversationMessage">
-                                    <Border BorderThickness="1"
-                                            Classes="message-surface"
-                                            Padding="10"
-                                            Margin="0,0,0,8">
-                                        <StackPanel Spacing="4">
-                                            <TextBlock Text="{Binding Role}"
-                                                       Classes="accent-text"
-                                                       FontWeight="SemiBold"
-                                                       FontSize="12" />
-                                            <TextBlock Text="{Binding Content}"
-                                                       TextWrapping="Wrap" />
-                                        </StackPanel>
-                                    </Border>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
-
-                        <TextBlock Grid.Row="2"
-                                   Text="{Binding ConversationErrorMessage}"
-                                   Classes="error-text"
-                                   IsVisible="{Binding HasConversationError}"
-                                   TextWrapping="Wrap" />
-
-                        <TextBox x:Name="ConversationInputBox"
-                                 Grid.Row="3"
-                                 AcceptsReturn="True"
-                                 MinHeight="80"
-                                 MaxHeight="160"
-                                 TextWrapping="Wrap"
-                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                 PlaceholderText="Ask Kryten..."
-                                 Text="{Binding ConversationInput, UpdateSourceTrigger=PropertyChanged}" />
-
-                        <Grid Grid.Row="4"
-                              ColumnDefinitions="Auto,Auto,Auto,*,Auto"
-                              ColumnSpacing="8">
-                            <Button Content="Send"
-                                    Classes="primary"
-                                    MinWidth="72"
-                                    Command="{Binding SendMessageCommand}" />
-
-                            <Button Grid.Column="1"
-                                    Content="Cancel"
-                                    Classes="secondary"
-                                    MinWidth="72"
-                                    Command="{Binding CancelConversationCommand}" />
-                            <Button Grid.Column="2"
-                                    Content="Clear Conversation"
-                                    Classes="tertiary"
-                                    Command="{Binding ClearConversationCommand}" />
-
-                            <Border Grid.Column="4"
-                                    Classes="status-surface"
-                                    Padding="8,4"
-                                    VerticalAlignment="Center"
-                                    IsVisible="{Binding IsConversationBusy}">
-                                <TextBlock Text="Thinking..."
-                                           Classes="busy-text"
-                                           FontSize="12" />
-                            </Border>
-                        </Grid>
-                    </Grid>
-                </Border>
+            <Grid Grid.Column="1">
+                <views:DashboardView IsVisible="{Binding IsDashboardSelected}" />
+                <views:AssistantWorkspaceView x:DataType="viewModels:ShellViewModel"
+                                              DataContext="{Binding AssistantWorkspace}"
+                                              IsVisible="{Binding IsAssistantSelected}" />
+                <views:SkillDetailsView IsVisible="{Binding IsSkillSelected}" />
             </Grid>
         </Grid>
-
-        <Border IsVisible="{Binding IsPromptEditorOpen}"
-                Background="{DynamicResource KrytenOverlayBrush}">
-            <Border Width="620"
-                    MaxHeight="560"
-                    Classes="dialog-surface"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Padding="20">
-                <Grid RowDefinitions="Auto,*,Auto"
-                      RowSpacing="16">
-                    <Grid ColumnDefinitions="*,Auto">
-                        <TextBlock Text="{Binding PromptEditorTitle}"
-                                   Classes="section-heading"
-                                   VerticalAlignment="Center" />
-                    </Grid>
-
-                    <ScrollViewer Grid.Row="1"
-                                  VerticalScrollBarVisibility="Auto"
-                                  HorizontalScrollBarVisibility="Disabled">
-                        <StackPanel Spacing="8">
-                            <TextBox PlaceholderText="Title"
-                                     Text="{Binding NewTitle}" />
-
-                            <TextBox PlaceholderText="Category"
-                                     Text="{Binding NewCategory}" />
-
-                            <TextBlock Text="Category suggestions"
-                                       Classes="secondary-text"
-                                       FontSize="12"
-                                       />
-
-                            <ItemsControl x:Name="CategorySuggestions"
-                                          ItemsSource="{Binding Categories}"
-                                          Tag="{Binding SelectCategoryCommand}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <WrapPanel />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="x:String">
-                                        <Button Content="{Binding}"
-                                                Classes="secondary"
-                                                Command="{Binding #CategorySuggestions.Tag}"
-                                                CommandParameter="{Binding}"
-                                                Margin="0,0,8,8"
-                                                Padding="8,4" />
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-
-                            <TextBox PlaceholderText="Description"
-                                     Text="{Binding NewDescription}" />
-
-                            <TextBox PlaceholderText="Prompt text"
-                                     Text="{Binding NewPromptText}"
-                                     AcceptsReturn="True"
-                                     MinHeight="100"
-                                     TextWrapping="Wrap" />
-
-                            <TextBox PlaceholderText="Tags, comma separated"
-                                     Text="{Binding NewTags}" />
-
-                            <TextBlock Text="{Binding PromptEditorErrorMessage}"
-                                       Classes="error-text"
-                                       IsVisible="{Binding HasPromptEditorError}"
-                                       TextWrapping="Wrap" />
-
-                        </StackPanel>
-                    </ScrollViewer>
-
-                    <StackPanel Grid.Row="2"
-                                Orientation="Horizontal"
-                                Spacing="8">
-                        <Button Content="{Binding PromptEditorSaveButtonText}"
-                                Classes="primary"
-                                MinWidth="72"
-                                Command="{Binding SaveCommand}" />
-                        <Button Content="Cancel"
-                                Classes="secondary"
-                                MinWidth="72"
-                                Command="{Binding ClosePromptEditorCommand}" />
-                    </StackPanel>
-                </Grid>
-            </Border>
-        </Border>
-
-        <Border IsVisible="{Binding IsDeleteConfirmationOpen}"
-                Background="{DynamicResource KrytenOverlayBrush}">
-            <Border Width="420"
-                    Classes="dialog-surface"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Padding="20">
-                <StackPanel Spacing="14">
-                    <TextBlock Text="Delete Prompt"
-                               Classes="section-heading" />
-                    <TextBlock Text="{Binding DeleteConfirmationMessage}"
-                               TextWrapping="Wrap" />
-                    <TextBlock Text="This action cannot be undone."
-                               Classes="secondary-text" />
-                    <StackPanel Orientation="Horizontal"
-                                Spacing="8">
-                        <Button Content="Delete"
-                                Classes="danger"
-                                MinWidth="72"
-                                Command="{Binding ConfirmDeletePromptCommand}" />
-                        <Button Content="Cancel"
-                                Classes="secondary"
-                                MinWidth="72"
-                                Command="{Binding CancelDeletePromptCommand}" />
-                    </StackPanel>
-                </StackPanel>
-            </Border>
-        </Border>
     </Grid>
 </Window>

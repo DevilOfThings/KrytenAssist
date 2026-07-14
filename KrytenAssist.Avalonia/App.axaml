@@ -63,6 +63,41 @@
             <Setter Property="CornerRadius" Value="6" />
         </Style>
 
+        <Style Selector="Border.navigation-surface">
+            <Setter Property="Background" Value="{DynamicResource KrytenSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource KrytenBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+        </Style>
+
+        <Style Selector="ListBox.navigation-list">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+
+        <Style Selector="ListBox.navigation-list ListBoxItem">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="Padding" Value="10,8" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        </Style>
+
+        <Style Selector="ListBox.navigation-list ListBoxItem:pointerover">
+            <Setter Property="Background" Value="{DynamicResource KrytenSubtleSurfaceBrush}" />
+        </Style>
+
+        <Style Selector="ListBox.navigation-list ListBoxItem:selected">
+            <Setter Property="Background" Value="{DynamicResource KrytenSelectedSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource KrytenAccentBrush}" />
+        </Style>
+
+        <Style Selector="ListBox.navigation-list ListBoxItem:focus">
+            <Setter Property="BorderBrush" Value="{DynamicResource KrytenAccentBrush}" />
+        </Style>
+
         <Style Selector="Border.prompt-card">
             <Setter Property="Background" Value="{DynamicResource KrytenSurfaceBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource KrytenBorderBrush}" />
