@@ -1,0 +1,54 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="clr-namespace:KrytenAssist.Avalonia.ViewModels"
+             x:Class="KrytenAssist.Avalonia.Views.SkillDetailsView"
+             x:DataType="viewModels:ShellViewModel">
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled">
+        <Border Margin="20"
+                Padding="20"
+                Classes="workspace-surface">
+            <StackPanel Spacing="16">
+                <StackPanel Spacing="6">
+                    <TextBlock Text="{Binding SelectedSkillManifest.Name}"
+                               Classes="section-heading"
+                               TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding SelectedSkillManifest.Description}"
+                               Classes="secondary-text"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+
+                <Grid ColumnDefinitions="Auto,*"
+                      RowDefinitions="Auto,Auto"
+                      ColumnSpacing="16"
+                      RowSpacing="8">
+                    <TextBlock Grid.Row="0"
+                               Grid.Column="0"
+                               Text="Version"
+                               FontWeight="SemiBold" />
+                    <TextBlock Grid.Row="0"
+                               Grid.Column="1"
+                               Text="{Binding SelectedSkillManifest.Version}"
+                               Classes="secondary-text" />
+
+                    <TextBlock Grid.Row="1"
+                               Grid.Column="0"
+                               Text="Identifier"
+                               FontWeight="SemiBold" />
+                    <TextBlock Grid.Row="1"
+                               Grid.Column="1"
+                               Text="{Binding SelectedSkillManifest.Id}"
+                               Classes="secondary-text"
+                               TextWrapping="Wrap" />
+                </Grid>
+
+                <Border Padding="12"
+                        Classes="status-surface">
+                    <TextBlock Text="Capability-specific controls will appear here when supported."
+                               Classes="secondary-text"
+                               TextWrapping="Wrap" />
+                </Border>
+            </StackPanel>
+        </Border>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,71 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="clr-namespace:KrytenAssist.Avalonia.ViewModels"
+             xmlns:navigationModels="clr-namespace:KrytenAssist.Avalonia.Navigation.Models"
+             x:Class="KrytenAssist.Avalonia.Views.DashboardView"
+             x:DataType="viewModels:ShellViewModel">
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="20"
+                    Spacing="16">
+            <StackPanel Spacing="4">
+                <TextBlock Text="Dashboard"
+                           Classes="section-heading" />
+                <TextBlock Text="Discover the capabilities available in Kryten Assist."
+                           Classes="secondary-text"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+
+            <TextBlock Text="No Skills are currently available."
+                       Classes="secondary-text"
+                       IsVisible="{Binding !HasDashboardCards}"
+                       HorizontalAlignment="Center"
+                       Margin="0,32" />
+
+            <ItemsControl x:Name="SkillCards"
+                          ItemsSource="{Binding DashboardCards}"
+                          Tag="{Binding NavigateCommand}"
+                          IsVisible="{Binding HasDashboardCards}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="navigationModels:DashboardSkillCard">
+                        <Border Width="300"
+                                MinHeight="190"
+                                Margin="0,0,12,12"
+                                Padding="16"
+                                Classes="message-surface">
+                            <Grid RowDefinitions="Auto,*,Auto,Auto"
+                                  RowSpacing="10">
+                                <TextBlock Grid.Row="0"
+                                           Text="{Binding Name}"
+                                           Classes="section-heading"
+                                           TextWrapping="Wrap" />
+
+                                <TextBlock Grid.Row="1"
+                                           Text="{Binding Description}"
+                                           Classes="secondary-text"
+                                           TextWrapping="Wrap" />
+
+                                <TextBlock Grid.Row="2"
+                                           Text="{Binding Version, StringFormat='Version {0}'}"
+                                           Classes="accent-text"
+                                           FontSize="12" />
+
+                                <Button Grid.Row="3"
+                                        Content="Open"
+                                        Classes="primary"
+                                        HorizontalAlignment="Left"
+                                        Command="{Binding #SkillCards.Tag}"
+                                        CommandParameter="{Binding}" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
