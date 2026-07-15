@@ -12,28 +12,39 @@ public sealed class ShellViewModelTests
     public void Constructor_RejectsNullAssistantWorkspace()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            new ShellViewModel(null!, new SkillRegistry()));
+            new ShellViewModel(null!, CreateCruiseViewModel(), new SkillRegistry()));
     }
 
     [Fact]
     public void Constructor_RejectsNullSkillRegistry()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            new ShellViewModel(CreateAssistantWorkspace(), null!));
+            new ShellViewModel(CreateAssistantWorkspace(), CreateCruiseViewModel(), null!));
+    }
+
+    [Fact]
+    public void Constructor_RejectsNullCruiseOfTheWeekViewModel()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            new ShellViewModel(CreateAssistantWorkspace(), null!, new SkillRegistry()));
     }
 
     [Fact]
     public void Constructor_SelectsDashboardAndRetainsAssistantWorkspace()
     {
         var assistant = CreateAssistantWorkspace();
-        var viewModel = new ShellViewModel(assistant, new SkillRegistry());
+        var cruise = CreateCruiseViewModel();
+        var viewModel = new ShellViewModel(assistant, cruise, new SkillRegistry());
 
         Assert.Same(assistant, viewModel.AssistantWorkspace);
+        Assert.Same(cruise, viewModel.CruiseOfTheWeek);
         Assert.Same(viewModel.NavigationItems[0], viewModel.SelectedNavigationItem);
         Assert.Equal("navigation.dashboard", viewModel.SelectedNavigationItem.Id);
         Assert.True(viewModel.IsDashboardSelected);
         Assert.False(viewModel.IsAssistantSelected);
         Assert.False(viewModel.IsSkillSelected);
+        Assert.False(viewModel.IsCruiseOfTheWeekSelected);
+        Assert.False(viewModel.IsGenericSkillSelected);
         Assert.Null(viewModel.SelectedSkillManifest);
         Assert.NotNull(viewModel.NavigateCommand);
     }
@@ -43,6 +54,7 @@ public sealed class ShellViewModelTests
     {
         var viewModel = new ShellViewModel(
             CreateAssistantWorkspace(),
+            CreateCruiseViewModel(),
             new SkillRegistry());
 
         Assert.Collection(
@@ -73,6 +85,7 @@ public sealed class ShellViewModelTests
 
         var viewModel = new ShellViewModel(
             CreateAssistantWorkspace(),
+            CreateCruiseViewModel(),
             CreateRegistry(first, second));
 
         Assert.Collection(
@@ -107,6 +120,7 @@ public sealed class ShellViewModelTests
     {
         var viewModel = new ShellViewModel(
             CreateAssistantWorkspace(),
+            CreateCruiseViewModel(),
             CreateRegistry(new CountingSkill(FirstManifest)));
 
         var navigationItems = Assert.IsAssignableFrom<IList<NavigationItem>>(
@@ -258,7 +272,10 @@ public sealed class ShellViewModelTests
         var first = new CountingSkill(FirstManifest);
         var second = new CountingSkill(SecondManifest);
         var registry = CreateRegistry(first, second);
-        var viewModel = new ShellViewModel(CreateAssistantWorkspace(), registry);
+        var viewModel = new ShellViewModel(
+            CreateAssistantWorkspace(),
+            CreateCruiseViewModel(),
+            registry);
 
         _ = viewModel.NavigationItems;
         _ = viewModel.DashboardCards;
@@ -277,10 +294,55 @@ public sealed class ShellViewModelTests
         Assert.Equal(0, second.ExecutionCount);
     }
 
+    [Fact]
+    public void CruiseNavigationAndCard_SelectDedicatedCapabilityWithoutExecution()
+    {
+        var cruiseManifest = new KrytenAssist.Avalonia.Skills.Models.SkillManifest(
+            "cruise.of-the-week",
+            "Cruise of the Week",
+            "Cruise capability",
+            "1.0.0");
+        var cruiseSkill = new CountingSkill(cruiseManifest);
+        var registry = CreateRegistry(cruiseSkill);
+        var clock = new FixedClock();
+        var cruiseViewModel = CreateCruiseViewModel(registry, clock);
+        var viewModel = new ShellViewModel(
+            CreateAssistantWorkspace(),
+            cruiseViewModel,
+            registry);
+
+        viewModel.NavigateCommand.Execute(viewModel.NavigationItems[2]);
+
+        Assert.True(viewModel.IsSkillSelected);
+        Assert.True(viewModel.IsCruiseOfTheWeekSelected);
+        Assert.False(viewModel.IsGenericSkillSelected);
+
+        viewModel.NavigateCommand.Execute(viewModel.NavigationItems[0]);
+        viewModel.NavigateCommand.Execute(viewModel.DashboardCards[0]);
+
+        Assert.True(viewModel.IsCruiseOfTheWeekSelected);
+        Assert.False(viewModel.IsGenericSkillSelected);
+        Assert.Equal(0, cruiseSkill.ExecutionCount);
+        Assert.Equal(0, clock.ReadCount);
+    }
+
+    [Fact]
+    public void NonCruiseSkill_SelectsGenericSkillDetails()
+    {
+        var viewModel = CreatePopulatedViewModel();
+
+        viewModel.NavigateCommand.Execute(viewModel.NavigationItems[2]);
+
+        Assert.True(viewModel.IsSkillSelected);
+        Assert.False(viewModel.IsCruiseOfTheWeekSelected);
+        Assert.True(viewModel.IsGenericSkillSelected);
+    }
+
     private static ShellViewModel CreatePopulatedViewModel()
     {
         return new ShellViewModel(
             CreateAssistantWorkspace(),
+            CreateCruiseViewModel(),
             CreateRegistry(
                 new CountingSkill(FirstManifest),
                 new CountingSkill(SecondManifest)));
@@ -302,6 +364,8 @@ public sealed class ShellViewModelTests
         Assert.Contains(nameof(ShellViewModel.IsDashboardSelected), notifications);
         Assert.Contains(nameof(ShellViewModel.IsAssistantSelected), notifications);
         Assert.Contains(nameof(ShellViewModel.IsSkillSelected), notifications);
+        Assert.Contains(nameof(ShellViewModel.IsCruiseOfTheWeekSelected), notifications);
+        Assert.Contains(nameof(ShellViewModel.IsGenericSkillSelected), notifications);
         Assert.Equal(
             expectManifestNotification,
             notifications.Contains(nameof(ShellViewModel.SelectedSkillManifest)));

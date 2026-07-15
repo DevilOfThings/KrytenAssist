@@ -3,6 +3,7 @@ using KrytenAssist.Avalonia.Options;
 using KrytenAssist.Avalonia.Services;
 using KrytenAssist.Avalonia.Skills.Models;
 using KrytenAssist.Avalonia.Skills.Services;
+using KrytenAssist.Avalonia.Tools;
 using KrytenAssist.Avalonia.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -46,6 +47,15 @@ internal static class ShellTestFactory
         return registry;
     }
 
+    internal static CruiseOfTheWeekViewModel CreateCruiseViewModel(
+        ISkillRegistry? registry = null,
+        IClock? clock = null)
+    {
+        return new CruiseOfTheWeekViewModel(
+            registry ?? new SkillRegistry(),
+            clock ?? new FixedClock());
+    }
+
     internal static void AddAssistantDependencies(IServiceCollection services)
     {
         services.AddSingleton<IPromptCardStore, EmptyPromptCardStore>();
@@ -53,6 +63,8 @@ internal static class ShellTestFactory
         services.AddSingleton<CosineSimilarityService>();
         services.AddSingleton<IConversationService, DeterministicConversationService>();
         services.AddSingleton<IConversationMemory, EmptyConversationMemory>();
+        services.AddSingleton<FixedClock>();
+        services.AddSingleton<IClock>(provider => provider.GetRequiredService<FixedClock>());
         services.AddSingleton<IOptions<ConversationOptions>>(
             Microsoft.Extensions.Options.Options.Create(new ConversationOptions()));
     }
@@ -70,6 +82,23 @@ internal static class ShellTestFactory
         {
             ExecutionCount++;
             return Task.FromResult(SkillResult.Success("deterministic"));
+        }
+    }
+
+    internal sealed class FixedClock : IClock
+    {
+        public DateTimeOffset NowValue { get; set; } =
+            new(2026, 7, 14, 10, 30, 0, TimeSpan.FromHours(1));
+
+        public int ReadCount { get; private set; }
+
+        public DateTimeOffset Now
+        {
+            get
+            {
+                ReadCount++;
+                return NowValue;
+            }
         }
     }
 

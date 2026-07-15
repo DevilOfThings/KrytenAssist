@@ -11,6 +11,7 @@ public static class ShellServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddTransient<MainWindowViewModel>();
+        services.AddTransient<CruiseOfTheWeekViewModel>();
         services.AddTransient<ShellViewModel>();
 
         return services;

@@ -1,0 +1,158 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="clr-namespace:KrytenAssist.Avalonia.ViewModels"
+             x:Class="KrytenAssist.Avalonia.Views.CruiseOfTheWeekView"
+             x:DataType="viewModels:CruiseOfTheWeekViewModel">
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="20"
+                    Spacing="16">
+            <StackPanel Spacing="4">
+                <TextBlock Text="Cruise of the Week"
+                           Classes="section-heading" />
+                <TextBlock Text="Retrieve Marella Cruises' currently advertised Cruise of the Week."
+                           Classes="secondary-text"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal"
+                        Spacing="8">
+                <Button Content="{Binding RetrieveButtonText}"
+                        Classes="primary"
+                        Command="{Binding RetrieveCommand}" />
+                <Button Content="Cancel"
+                        Classes="secondary"
+                        Command="{Binding CancelCommand}"
+                        IsVisible="{Binding IsBusy}" />
+                <Border Classes="status-surface"
+                        Padding="8,4"
+                        IsVisible="{Binding IsBusy}">
+                    <TextBlock Text="Retrieving Cruise of the Week..."
+                               Classes="busy-text"
+                               VerticalAlignment="Center" />
+                </Border>
+            </StackPanel>
+
+            <Border Classes="status-surface"
+                    Padding="12"
+                    IsVisible="{Binding HasError}">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="{Binding ErrorMessage}"
+                               Classes="error-text"
+                               TextWrapping="Wrap" />
+                    <Button Content="Try Again"
+                            Classes="secondary"
+                            HorizontalAlignment="Left"
+                            Command="{Binding RetrieveCommand}" />
+                </StackPanel>
+            </Border>
+
+            <Border Classes="workspace-surface"
+                    Padding="20"
+                    IsVisible="{Binding HasObservation}">
+                <StackPanel Spacing="18">
+                    <TextBlock Text="{Binding Summary}"
+                               FontSize="19"
+                               FontWeight="SemiBold"
+                               TextWrapping="Wrap" />
+
+                    <Grid ColumnDefinitions="Auto,*"
+                          RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+                          ColumnSpacing="18"
+                          RowSpacing="9">
+                        <TextBlock Grid.Row="0"
+                                   Text="Cruise"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="1"
+                                   Text="{Binding CruiseTitle}"
+                                   TextWrapping="Wrap" />
+
+                        <TextBlock Grid.Row="1"
+                                   Text="Ship"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Grid.Row="1"
+                                   Grid.Column="1"
+                                   Text="{Binding ShipName}"
+                                   TextWrapping="Wrap" />
+
+                        <TextBlock Grid.Row="2"
+                                   Text="Departure"
+                                   FontWeight="SemiBold" />
+                        <StackPanel Grid.Row="2"
+                                    Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    Spacing="5">
+                            <TextBlock Text="{Binding DepartureDateText}" />
+                            <TextBlock Text="from"
+                                       Classes="secondary-text"
+                                       IsVisible="{Binding HasDeparturePort}" />
+                            <TextBlock Text="{Binding DeparturePort}"
+                                       IsVisible="{Binding HasDeparturePort}" />
+                        </StackPanel>
+
+                        <TextBlock Grid.Row="3"
+                                   Text="Duration"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Grid.Row="3"
+                                   Grid.Column="1"
+                                   Text="{Binding DurationText}" />
+
+                        <TextBlock Grid.Row="4"
+                                   Text="Current price"
+                                   FontWeight="SemiBold" />
+                        <StackPanel Grid.Row="4"
+                                    Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    Spacing="5">
+                            <TextBlock Text="{Binding PriceText}" />
+                            <TextBlock Text="{Binding PriceBasis}"
+                                       Classes="secondary-text"
+                                       IsVisible="{Binding HasPriceBasis}" />
+                        </StackPanel>
+
+                        <TextBlock Grid.Row="5"
+                                   Text="Provider"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Grid.Row="5"
+                                   Grid.Column="1"
+                                   Text="{Binding ProviderName}" />
+
+                        <TextBlock Grid.Row="6"
+                                   Text="Observed"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Grid.Row="6"
+                                   Grid.Column="1"
+                                   Text="{Binding ObservedAtText}" />
+                    </Grid>
+
+                    <Border Classes="status-surface"
+                            Padding="12"
+                            IsVisible="{Binding HasPromotionSummary}">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Promotion"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding PromotionSummary}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+
+                    <StackPanel Spacing="4"
+                                IsVisible="{Binding HasSourceReference}">
+                        <TextBlock Text="Source"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding SourceReference}"
+                                   Classes="secondary-text"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <TextBlock Text="Press Get Cruise of the Week to retrieve the current offer."
+                       Classes="secondary-text"
+                       IsVisible="{Binding !HasObservation}"
+                       HorizontalAlignment="Center"
+                       Margin="0,28" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

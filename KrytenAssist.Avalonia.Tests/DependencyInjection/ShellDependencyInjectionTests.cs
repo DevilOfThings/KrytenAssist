@@ -28,6 +28,10 @@ public sealed class ShellDependencyInjectionTests
             descriptor.ImplementationType == typeof(MainWindowViewModel) &&
             descriptor.Lifetime == ServiceLifetime.Transient);
         Assert.Contains(services, descriptor =>
+            descriptor.ServiceType == typeof(CruiseOfTheWeekViewModel) &&
+            descriptor.ImplementationType == typeof(CruiseOfTheWeekViewModel) &&
+            descriptor.Lifetime == ServiceLifetime.Transient);
+        Assert.Contains(services, descriptor =>
             descriptor.ServiceType == typeof(ShellViewModel) &&
             descriptor.ImplementationType == typeof(ShellViewModel) &&
             descriptor.Lifetime == ServiceLifetime.Transient);
@@ -49,6 +53,7 @@ public sealed class ShellDependencyInjectionTests
 
         Assert.NotSame(first, second);
         Assert.NotSame(first.AssistantWorkspace, second.AssistantWorkspace);
+        Assert.NotSame(first.CruiseOfTheWeek, second.CruiseOfTheWeek);
         Assert.True(first.IsDashboardSelected);
         Assert.True(second.IsDashboardSelected);
         Assert.Contains(first.NavigationItems, item => item.SkillId == FirstManifest.Id);
@@ -67,9 +72,11 @@ public sealed class ShellDependencyInjectionTests
         using var provider = services.BuildServiceProvider();
 
         var shell = provider.GetRequiredService<ShellViewModel>();
+        var clock = provider.GetRequiredService<FixedClock>();
         shell.NavigateCommand.Execute(shell.NavigationItems[2]);
         shell.NavigateCommand.Execute(shell.DashboardCards[0]);
 
         Assert.Equal(0, skill.ExecutionCount);
+        Assert.Equal(0, clock.ReadCount);
     }
 }

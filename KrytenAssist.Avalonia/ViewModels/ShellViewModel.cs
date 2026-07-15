@@ -21,12 +21,15 @@ public sealed class ShellViewModel : INotifyPropertyChanged
 
     public ShellViewModel(
         MainWindowViewModel assistantWorkspace,
+        CruiseOfTheWeekViewModel cruiseOfTheWeek,
         ISkillRegistry skillRegistry)
     {
         ArgumentNullException.ThrowIfNull(assistantWorkspace);
+        ArgumentNullException.ThrowIfNull(cruiseOfTheWeek);
         ArgumentNullException.ThrowIfNull(skillRegistry);
 
         AssistantWorkspace = assistantWorkspace;
+        CruiseOfTheWeek = cruiseOfTheWeek;
 
         var dashboard = new NavigationItem(
             DashboardNavigationId,
@@ -69,6 +72,8 @@ public sealed class ShellViewModel : INotifyPropertyChanged
 
     public MainWindowViewModel AssistantWorkspace { get; }
 
+    public CruiseOfTheWeekViewModel CruiseOfTheWeek { get; }
+
     public IReadOnlyList<NavigationItem> NavigationItems { get; }
 
     public IReadOnlyList<DashboardSkillCard> DashboardCards { get; }
@@ -87,6 +92,13 @@ public sealed class ShellViewModel : INotifyPropertyChanged
 
     public bool IsSkillSelected =>
         SelectedNavigationItem.Kind == NavigationDestinationKind.Skill;
+
+    public bool IsCruiseOfTheWeekSelected =>
+        IsSkillSelected &&
+        string.Equals(SelectedNavigationItem.SkillId, "cruise.of-the-week", StringComparison.Ordinal);
+
+    public bool IsGenericSkillSelected =>
+        IsSkillSelected && !IsCruiseOfTheWeekSelected;
 
     public ICommand NavigateCommand { get; }
 
@@ -150,6 +162,8 @@ public sealed class ShellViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(IsDashboardSelected));
         OnPropertyChanged(nameof(IsAssistantSelected));
         OnPropertyChanged(nameof(IsSkillSelected));
+        OnPropertyChanged(nameof(IsCruiseOfTheWeekSelected));
+        OnPropertyChanged(nameof(IsGenericSkillSelected));
 
         if (manifestChanged)
         {

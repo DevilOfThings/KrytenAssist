@@ -62,10 +62,13 @@
 
             <Grid Grid.Column="1">
                 <views:DashboardView IsVisible="{Binding IsDashboardSelected}" />
-                <views:AssistantWorkspaceView x:DataType="viewModels:ShellViewModel"
-                                              DataContext="{Binding AssistantWorkspace}"
-                                              IsVisible="{Binding IsAssistantSelected}" />
-                <views:SkillDetailsView IsVisible="{Binding IsSkillSelected}" />
+                <Grid IsVisible="{Binding IsAssistantSelected}">
+                    <views:AssistantWorkspaceView DataContext="{Binding AssistantWorkspace}" />
+                </Grid>
+                <Grid IsVisible="{Binding IsCruiseOfTheWeekSelected}">
+                    <views:CruiseOfTheWeekView DataContext="{Binding CruiseOfTheWeek}" />
+                </Grid>
+                <views:SkillDetailsView IsVisible="{Binding IsGenericSkillSelected}" />
             </Grid>
         </Grid>
     </Grid>

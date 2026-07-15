@@ -10,18 +10,12 @@ Phase 6 – Skills Platform
 
 Current Prompt
 --------------
-Prompt 033 – Cruise Domain Models
-Create the shared Cruise domain.
+Prompt 035h – Cruise of the Week View
 
-Introduce:
+Make the existing Cruise of the Week Skill usable from the desktop application.
 
-• CruiseOffer
-• CruiseSnapshot
-• CruisePrice
-• CruiseProvider
-• CruiseObservation
-
-No web access or dashboard implementation should be added.
+Selecting Cruise of the Week should open a focused page where Robin can explicitly
+retrieve and read Marella's current Cruise of the Week.
 
 ### Phase 1 – API Foundation (Current)
 
@@ -295,7 +289,7 @@ Completed with comprehensive registry, sample Skill and dependency-injection tes
 
 ---
 
-## Prompt 033 – Cruise Domain Models
+## Prompt 033 – Cruise Domain Models ✅
 
 Create the shared Cruise domain.
 
@@ -311,7 +305,7 @@ No web access or dashboard implementation should be added.
 
 ---
 
-## Prompt 034 – Cruise of the Week Skill
+## Prompt 034 – Cruise of the Week Skill ✅
 
 Implement the first real Skill.
 
@@ -326,7 +320,7 @@ No historical storage should be implemented.
 
 ---
 
-## Prompt 035 – Dashboard & Navigation
+## Prompt 035 – Dashboard & Navigation ✅
 
 Introduce the first dashboard experience.
 
@@ -339,6 +333,44 @@ Implement:
 - Navigation between Skills
 
 This establishes the visual shell that future Skills will plug into.
+
+---
+
+## Prompt 035h – Cruise of the Week View
+
+Make the existing Cruise of the Week Skill usable from the Avalonia application
+before the complete Cruise Dashboard is introduced in Prompt 042.
+
+Selecting Cruise of the Week should display a focused capability page with:
+
+- an explicit `Get Cruise of the Week` action
+- loading, error and retry states
+- the current cruise title
+- ship
+- departure date and port where available
+- duration
+- current per-person price
+- promotion summary where available
+- source and observation timestamp where useful
+
+The first version may present the result as a simple readable statement, for example:
+
+```text
+Cruise of the Week is Mediterranean Medley on Marella Explorer,
+departing Palma on 27 October 2026 for 7 nights from £903 per person.
+```
+
+Requirements:
+
+- reuse the existing `CruiseOfTheWeekSkill` and provider-independent Cruise models
+- retrieve only after explicit user action
+- do not make a network request during startup or navigation
+- keep retrieval and presentation state in a focused ViewModel
+- preserve cancellation and controlled failure behavior
+- support deterministic offline tests with a fake Skill or provider
+- do not add history, watch lists, alerts, scheduling or persistence
+
+Prompt 042 remains responsible for the complete Cruise Dashboard.
 
 ---
 
