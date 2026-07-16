@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "candidates": [
+    {
+      "providerOfferId": "fictional-offer-001",
+      "title": "Island Discovery",
+      "shipName": "Marella Example",
+      "departureDate": "2027-01-15",
+      "durationNights": 7,
+      "departurePort": "Santa Cruz",
+      "itinerarySummary": "Santa Cruz, Madeira and Gran Canaria",
+      "prices": [
+        {
+          "amount": 999.00,
+          "currency": "GBP",
+          "basis": "per person"
+        },
+        {
+          "amount": 1998.00,
+          "currency": "GBP",
+          "basis": "total based on 2 sharing"
+        }
+      ],
+      "promotionSummary": "Fictional test promotion",
+      "futurePageMetadata": "ignored"
+    }
+  ],
+  "futurePayloadMetadata": true
+}
