@@ -73,9 +73,20 @@ public sealed class CruiseCaptureReviewViewModelTests
         Assert.Contains("document.querySelectorAll('tui-product-cards')", TuiCruiseCaptureScript.Script);
         Assert.Contains("element.shadowRoot", TuiCruiseCaptureScript.Script);
         Assert.Contains("roots.flatMap", TuiCruiseCaptureScript.Script);
+        Assert.Contains(".slice(0, 3)", TuiCruiseCaptureScript.Script);
+        Assert.Contains("new URL(value, document.location.href)", TuiCruiseCaptureScript.Script);
+        Assert.Contains("items.findIndex", TuiCruiseCaptureScript.Script);
+        Assert.Contains("JSON.stringify({version: 1, candidates})", TuiCruiseCaptureScript.Script);
         Assert.DoesNotContain("document.cookie", TuiCruiseCaptureScript.Script, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("localStorage", TuiCruiseCaptureScript.Script, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("sessionStorage", TuiCruiseCaptureScript.Script, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("innerHTML", TuiCruiseCaptureScript.Script, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("outerHTML", TuiCruiseCaptureScript.Script, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("document.body", TuiCruiseCaptureScript.Script, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(".click(", TuiCruiseCaptureScript.Script, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(".submit(", TuiCruiseCaptureScript.Script, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(".focus(", TuiCruiseCaptureScript.Script, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("scroll", TuiCruiseCaptureScript.Script, StringComparison.OrdinalIgnoreCase);
     }
 
     private sealed class StubCaptureService(CaptureResult result) : CaptureService

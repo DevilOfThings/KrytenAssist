@@ -422,6 +422,42 @@ public sealed class CruiseBrowserFeasibilityViewModelTests
         Assert.False(viewModel.HasUnsupportedHost);
     }
 
+    [Fact]
+    public void NavigationHistory_IsBoundedToTwelveMostRecentAddresses()
+    {
+        var viewModel = new CruiseBrowserFeasibilityViewModel();
+        viewModel.LoadCommand.Execute(null);
+
+        for (var index = 0; index < 15; index++)
+        {
+            viewModel.ReportNavigationStarted(
+                new Uri($"https://www.tui.co.uk/cruise/deals/offer-{index}"));
+        }
+
+        var history = viewModel.NavigationHistory.Split(Environment.NewLine);
+        Assert.Equal(12, history.Length);
+        Assert.EndsWith("offer-3", history[0]);
+        Assert.EndsWith("offer-14", history[^1]);
+    }
+
+    [Fact]
+    public void CruiseLinks_AreTrustedDeduplicatedAndBoundedToTen()
+    {
+        var viewModel = CreateReadyViewModel();
+        var links = Enumerable.Range(0, 12)
+            .Select(index => $"https://www.tui.co.uk/cruise/bookitineraries/offer-{index}")
+            .Append("https://www.tui.co.uk/cruise/bookitineraries/offer-0")
+            .Append("https://example.test/cruise/bookitineraries/untrusted")
+            .ToArray();
+
+        viewModel.ReportReadAccessSucceeded("TUI", viewModel.CurrentAddress, true, links);
+
+        var retained = viewModel.CruiseLinks.Split(Environment.NewLine);
+        Assert.Equal(10, retained.Length);
+        Assert.Equal(10, retained.Distinct(StringComparer.Ordinal).Count());
+        Assert.All(retained, link => Assert.StartsWith("https://www.tui.co.uk/", link));
+    }
+
     private static CruiseBrowserFeasibilityViewModel CreateReadyViewModel()
     {
         var viewModel = new CruiseBrowserFeasibilityViewModel();
