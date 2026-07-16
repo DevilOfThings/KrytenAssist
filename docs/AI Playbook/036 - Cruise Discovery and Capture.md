@@ -622,35 +622,81 @@ Prompt 036 is complete only when:
 
 ### Status
 
-Not started.
+Complete. Trusted embedded TUI browsing, explicit capture, provider-independent
+review, deterministic tests and final verification passed.
 
 ### Feasibility Outcome
 
-To be completed after 036a.
+`Go`. Avalonia `NativeWebView` supports the required responsive embedded browsing,
+manual cookie interaction, navigation and bounded read-only script invocation on
+macOS. TUI loads only after an explicit source action.
 
 ### Files Created
 
-To be completed.
+- Application capture contract and controlled-result types
+- Avalonia trusted-source, host-policy and fixed TUI script types
+- Infrastructure TUI capture adapter and DI extension
+- Cruise capture contract, adapter, lifecycle and DI tests
+- bounded fictional TUI capture fixture
+- Codex prompts 036a–036g
+- Session Handover 017
 
 ### Files Updated
 
-To be completed.
+- Core Cruise observation/source models and tests
+- Cruise Discovery View, ViewModel and Cruise of the Week composition
+- Avalonia shell dependency injection and test project references
+- Roadmap Prompt 036 status
+- this Playbook's Results and Lessons Learned
 
 ### Build
 
-Not run.
+Passed on 16 July 2026:
+
+```text
+dotnet build KrytenAssist.sln --no-restore
+```
+
+0 errors. 5 existing NU1903 warnings for the known
+`SQLitePCLRaw.lib.e_sqlite3` package advisory.
 
 ### Tests
 
-Not run.
+Passed on 16 July 2026:
+
+```text
+dotnet test KrytenAssist.Avalonia.Tests/KrytenAssist.Avalonia.Tests.csproj --no-restore
+dotnet test KrytenAssist.sln --no-build --no-restore
+```
+
+350 passed, 0 failed, 0 skipped:
+
+- Core: 71
+- Avalonia: 270
+- API: 9
+
+All tests use offline fixtures, hand-written services and fixed clocks. No test
+contacts TUI, launches a browser or invokes the operating-system launcher.
 
 ### Manual Verification
 
-Not performed.
+Passed on 16 July 2026. Robin opened the embedded TUI Marella Cruise of the Week
+page, accepted cookies manually, viewed Canarian Flavours and selected
+`Capture Displayed Cruise`. Kryten entered the demonstrated open
+`tui-product-cards` shadow root, deduplicated its repeated itinerary link and
+displayed the successful session-only Cruise review.
 
 ### Git Commits
 
-Not created.
+- `033d140` – 036a Embedded Cruise Browser Feasibility
+- `ac647ce` – 036b Cruise Source Navigation
+- `2f63f76` – 036c Cruise Capture Contract
+- `38075cc` – 036d TUI Cruise Capture Adapter
+- `2b128bb` – 036e Cruise Capture Review
+- `4545dae` – 036f Cruise Discovery Tests
+
+The 036g verification documentation is intentionally uncommitted for Robin to
+review and commit.
 
 ---
 
@@ -658,3 +704,25 @@ Not created.
 
 > Complete after implementation and verification. Do not begin Prompt 037 until
 > this section and Results have been updated.
+
+- Interactive browser-assisted capture is a viable fallback when a retailer
+  blocks unattended HTTP retrieval, provided every external action remains
+  explicit and bounded.
+- Visible web-component content may live outside ordinary document selectors.
+  TUI's weekly offer uses an open `tui-product-cards` shadow root; supporting
+  that one demonstrated component is safer than recursively crawling arbitrary
+  shadow trees.
+- Operator and retail source are different concepts. Marella Cruises operates
+  the sailing while TUI supplied the observed advertisement and source link.
+- A fixed source-specific script belongs at the native-browser presentation
+  boundary. Application receives only bounded transport-neutral JSON and
+  Infrastructure owns source-specific validation and mapping.
+- Exact host comparison is essential. HTTPS alone does not make deceptive
+  suffixes, user-info URLs or unrelated hosts trusted.
+- Cancellation generations prevent correct results from being shown against the
+  wrong page after navigation, Refresh or Close.
+- Deterministic lifecycle tests with controlled tasks provide stronger stale-
+  result evidence than sleeps, polling or browser automation.
+- Prompt 036 deliberately ends at review. Local observation history, price
+  trends and saved-cruise evaluation remain cleanly assigned to Prompts 037 and
+  038.

@@ -388,12 +388,20 @@ The Cruise Assistant becomes the first complete end-user capability built on the
 
 Create the first usable cruise-research workflow.
 
-Current status: Prompt 036a is complete with a `Go` decision. TUI can be browsed
-interactively in an embedded, responsive macOS WebView, the cookie message can be
-accepted, and read-only page access can recover a detailed Marella offer link
-before TUI redirects into its generic booking flow. The remaining Prompt 036
-steps will build the controlled discovery and explicit capture workflow on that
-foundation.
+Current status: Complete. TUI can be browsed interactively in an embedded,
+responsive macOS WebView only after an explicit source action. Robin can capture
+the displayed Marella Cruise of the Week into provider-independent Cruise data,
+review the observation without saving it and explicitly continue at TUI.
+
+The verified TUI page renders its offer inside an open `tui-product-cards`
+shadow root. Kryten reads only that demonstrated component through a fixed,
+bounded, read-only script, deduplicates repeated itinerary links and preserves
+Marella Cruises as operator separately from TUI as retail source. Trusted-host
+navigation, cancellation, stale-result rejection and controlled failure states
+are covered by deterministic offline tests.
+
+Prompt 037 – Cruise History and Price Tracking is the next step. It has not
+started.
 
 Allow Robin to:
 
