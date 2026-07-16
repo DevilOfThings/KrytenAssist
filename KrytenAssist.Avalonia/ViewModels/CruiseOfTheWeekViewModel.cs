@@ -1,3 +1,5 @@
+extern alias KrytenApplication;
+
 using System;
 using System.ComponentModel;
 using System.Globalization;
@@ -10,6 +12,7 @@ using KrytenAssist.Avalonia.Skills.Models;
 using KrytenAssist.Avalonia.Skills.Services;
 using KrytenAssist.Avalonia.Tools;
 using KrytenAssist.Core.Cruises;
+using ICruisePageCaptureService = KrytenApplication::KrytenAssist.Application.Cruises.ICruisePageCaptureService;
 
 namespace KrytenAssist.Avalonia.ViewModels;
 
@@ -34,7 +37,8 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
         ISkillRegistry skillRegistry,
         IClock clock,
         CruiseDiscoverySourceCatalog? sourceCatalog = null,
-        CruiseTrustedHostPolicy? trustedHostPolicy = null)
+        CruiseTrustedHostPolicy? trustedHostPolicy = null,
+        ICruisePageCaptureService? captureService = null)
     {
         ArgumentNullException.ThrowIfNull(skillRegistry);
         ArgumentNullException.ThrowIfNull(clock);
@@ -43,7 +47,9 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
         _clock = clock;
         BrowserFeasibility = new CruiseBrowserFeasibilityViewModel(
             sourceCatalog ?? new CruiseDiscoverySourceCatalog(),
-            trustedHostPolicy ?? new CruiseTrustedHostPolicy());
+            trustedHostPolicy ?? new CruiseTrustedHostPolicy(),
+            captureService,
+            clock);
         _retrieveCommand = new AsyncCommand(RetrieveAsync, () => CanRetrieve);
         _cancelCommand = new DelegateCommand(Cancel, () => IsBusy);
     }

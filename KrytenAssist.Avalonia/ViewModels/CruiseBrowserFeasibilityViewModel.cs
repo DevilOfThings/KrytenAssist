@@ -1,9 +1,19 @@
+extern alias KrytenApplication;
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using KrytenAssist.Avalonia.Cruises.Discovery;
+using KrytenAssist.Avalonia.Tools;
+using KrytenAssist.Core.Cruises;
+using CruiseCaptureStatus = KrytenApplication::KrytenAssist.Application.Cruises.CruiseCaptureStatus;
+using CruisePageCaptureRequest = KrytenApplication::KrytenAssist.Application.Cruises.CruisePageCaptureRequest;
+using ICruisePageCaptureService = KrytenApplication::KrytenAssist.Application.Cruises.ICruisePageCaptureService;
 
 namespace KrytenAssist.Avalonia.ViewModels;
 
@@ -19,6 +29,11 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     private readonly DelegateCommand _refreshCommand;
     private readonly DelegateCommand _closeCommand;
     private readonly DelegateCommand _verifyReadAccessCommand;
+    private readonly DelegateCommand _captureCommand;
+    private readonly DelegateCommand _cancelCaptureCommand;
+    private readonly DelegateCommand _openExternalCommand;
+    private readonly ICruisePageCaptureService? _captureService;
+    private readonly IClock? _clock;
     private bool _hasStarted;
     private bool _isNavigating;
     private bool _isPageReady;
@@ -35,6 +50,13 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     private bool _canGoForward;
     private bool _hasUnsupportedHost;
     private bool _wasNavigationStopped;
+    private bool _isCapturing;
+    private CruiseCaptureStatus? _captureStatus;
+    private string? _captureMessage;
+    private CruiseObservation? _capturedObservation;
+    private IReadOnlyList<string> _captureMissingFields = Array.Empty<string>();
+    private CancellationTokenSource? _captureCancellation;
+    private int _captureGeneration;
 
     public CruiseBrowserFeasibilityViewModel()
         : this(new CruiseDiscoverySourceCatalog(), new CruiseTrustedHostPolicy())
@@ -43,12 +65,16 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
 
     public CruiseBrowserFeasibilityViewModel(
         CruiseDiscoverySourceCatalog sourceCatalog,
-        CruiseTrustedHostPolicy trustedHostPolicy)
+        CruiseTrustedHostPolicy trustedHostPolicy,
+        ICruisePageCaptureService? captureService = null,
+        IClock? clock = null)
     {
         ArgumentNullException.ThrowIfNull(sourceCatalog);
         ArgumentNullException.ThrowIfNull(trustedHostPolicy);
 
         _trustedHostPolicy = trustedHostPolicy;
+        _captureService = captureService;
+        _clock = clock;
         AvailableSources = sourceCatalog.Sources;
         var sourceOptions = new List<CruiseDiscoverySourceOptionViewModel>(AvailableSources.Count);
         foreach (var source in AvailableSources)
@@ -68,6 +94,9 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         _verifyReadAccessCommand = new DelegateCommand(
             RequestReadAccessVerification,
             () => CanVerifyReadAccess);
+        _captureCommand = new DelegateCommand(RequestCapture, () => CanCapture);
+        _cancelCaptureCommand = new DelegateCommand(CancelCapture, () => IsCapturing);
+        _openExternalCommand = new DelegateCommand(RequestExternalOpen, () => CanOpenExternal);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -87,6 +116,10 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     public event EventHandler? ReadAccessVerificationRequested;
 
     public event EventHandler? UntrustedAddressObserved;
+
+    public event EventHandler? CapturePayloadRequested;
+
+    public event EventHandler<BrowserNavigationRequestedEventArgs>? ExternalOpenRequested;
 
     public IReadOnlyList<CruiseDiscoverySource> AvailableSources { get; }
 
@@ -125,6 +158,69 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     public ICommand CloseCommand => _closeCommand;
 
     public ICommand VerifyReadAccessCommand => _verifyReadAccessCommand;
+
+    public ICommand CaptureCommand => _captureCommand;
+
+    public ICommand CancelCaptureCommand => _cancelCaptureCommand;
+
+    public ICommand OpenExternalCommand => _openExternalCommand;
+
+    public bool IsCapturing
+    {
+        get => _isCapturing;
+        private set
+        {
+            if (SetField(ref _isCapturing, value))
+            {
+                OnCommandStateChanged();
+            }
+        }
+    }
+
+    public bool CanCapture => _captureService is not null &&
+                              _clock is not null &&
+                              IsPageReady &&
+                              HasSelectedSource &&
+                              !HasUnsupportedHost &&
+                              !IsCapturing;
+
+    public bool CanOpenExternal => HasSelectedSource &&
+                                   !HasUnsupportedHost &&
+                                   Uri.TryCreate(CurrentAddress, UriKind.Absolute, out var address) &&
+                                   _trustedHostPolicy.Classify(address, SelectedSource!) == CruiseAddressTrust.Trusted;
+
+    public CruiseCaptureStatus? CaptureStatus => _captureStatus;
+
+    public string? CaptureMessage => _captureMessage;
+
+    public bool HasCaptureMessage => !string.IsNullOrWhiteSpace(CaptureMessage);
+
+    public IReadOnlyList<string> CaptureMissingFields => _captureMissingFields;
+
+    public string CaptureMissingFieldsText => string.Join(", ", CaptureMissingFields);
+
+    public bool HasCaptureMissingFields => CaptureMissingFields.Count > 0;
+
+    public CruiseObservation? CapturedObservation => _capturedObservation;
+
+    public bool HasCapturedObservation => CapturedObservation is not null;
+
+    public string? CapturedTitle => CapturedObservation?.Snapshot.Offer.Title;
+    public string? CapturedOperator => CapturedObservation?.Snapshot.Offer.Provider.Name;
+    public string? CapturedSource => CapturedObservation?.Source?.Name;
+    public string? CapturedShip => CapturedObservation?.Snapshot.Offer.ShipName;
+    public string? CapturedDeparture => CapturedObservation?.Snapshot.Offer.DepartureDate.ToString("d MMMM yyyy");
+    public string? CapturedDuration => CapturedObservation is null ? null : $"{CapturedObservation.Snapshot.Offer.DurationNights} nights";
+    public string? CapturedDeparturePort => CapturedObservation?.Snapshot.Offer.DeparturePort;
+    public string? CapturedItinerary => CapturedObservation?.Snapshot.Offer.ItinerarySummary;
+    public string? CapturedPrices => CapturedObservation is null ? null : string.Join(Environment.NewLine, CapturedObservation.Snapshot.Prices.Select(price => $"{price.Currency} {price.Amount:0.##}{(price.Basis is null ? string.Empty : $" {price.Basis}")}"));
+    public string? CapturedPromotion => CapturedObservation?.Snapshot.PromotionSummary;
+    public string? CapturedSourceReference => CapturedObservation?.SourceReference;
+    public string? CapturedObservedAt => CapturedObservation?.ObservedAt.ToString("d MMMM yyyy 'at' HH:mm zzz");
+    public bool HasCapturedDeparturePort => !string.IsNullOrWhiteSpace(CapturedDeparturePort);
+    public bool HasCapturedItinerary => !string.IsNullOrWhiteSpace(CapturedItinerary);
+    public bool HasCapturedPrices => !string.IsNullOrWhiteSpace(CapturedPrices);
+    public bool HasCapturedPromotion => !string.IsNullOrWhiteSpace(CapturedPromotion);
 
     public bool HasStarted
     {
@@ -242,6 +338,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
                 OnPropertyChanged(nameof(HasCurrentAddress));
                 OnPropertyChanged(nameof(CurrentHost));
                 OnPropertyChanged(nameof(HasCurrentHost));
+                OnCommandStateChanged();
             }
         }
     }
@@ -302,6 +399,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         }
 
         HasStarted = true;
+        ClearCaptureState(cancelActive: true);
         _wasNavigationStopped = false;
         IsVerifying = false;
         IsPageReady = false;
@@ -418,6 +516,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
 
     public void ReportBrowserClosed()
     {
+        ClearCaptureState(cancelActive: true);
         HasStarted = false;
         IsNavigating = false;
         IsVerifying = false;
@@ -472,12 +571,14 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
 
     private void RequestBack()
     {
+        ClearCaptureState(cancelActive: true);
         _wasNavigationStopped = false;
         BackRequested?.Invoke(this, EventArgs.Empty);
     }
 
     private void RequestForward()
     {
+        ClearCaptureState(cancelActive: true);
         _wasNavigationStopped = false;
         ForwardRequested?.Invoke(this, EventArgs.Empty);
     }
@@ -489,6 +590,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
 
     private void RequestRefresh()
     {
+        ClearCaptureState(cancelActive: true);
         _wasNavigationStopped = false;
         IsPageReady = false;
         IsNavigating = true;
@@ -510,6 +612,168 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         ReadAccessVerificationRequested?.Invoke(this, EventArgs.Empty);
     }
 
+    private void RequestCapture()
+    {
+        _captureCancellation?.Cancel();
+        _captureCancellation?.Dispose();
+        _captureCancellation = new CancellationTokenSource();
+        _captureGeneration++;
+        SetCaptureResult(null, null, Array.Empty<string>());
+        IsCapturing = true;
+        CapturePayloadRequested?.Invoke(this, EventArgs.Empty);
+        if (CapturePayloadRequested is null)
+        {
+            ReportCaptureBridgeFailed();
+        }
+    }
+
+    public async Task ProcessCapturePayloadAsync(string payload, Uri sourceReference)
+    {
+        if (!IsCapturing ||
+            _captureService is null ||
+            _clock is null ||
+            SelectedSource is null)
+        {
+            return;
+        }
+
+        var generation = _captureGeneration;
+        var cancellation = _captureCancellation!;
+        if (_trustedHostPolicy.Classify(sourceReference, SelectedSource) != CruiseAddressTrust.Trusted ||
+            payload.Length > CruisePageCaptureRequest.MaximumPagePayloadLength)
+        {
+            ReportCaptureBridgeFailed();
+            return;
+        }
+
+        try
+        {
+            var request = new CruisePageCaptureRequest(
+                SelectedSource.Identifier,
+                new CruiseSource("tui", "TUI"),
+                sourceReference.AbsoluteUri,
+                _clock.Now,
+                payload);
+            var result = await _captureService.CaptureAsync(request, cancellation.Token);
+            if (generation != _captureGeneration || cancellation.IsCancellationRequested)
+            {
+                return;
+            }
+
+            SetCaptureResult(result.Status, result.Message, result.MissingFields, result.Observation);
+        }
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
+        {
+            // Cancellation is a neutral user action.
+        }
+        catch (Exception)
+        {
+            if (generation == _captureGeneration)
+            {
+                SetCaptureResult(
+                    CruiseCaptureStatus.Failed,
+                    "The displayed cruise could not be captured. Refresh the page and try again.",
+                    Array.Empty<string>());
+            }
+        }
+        finally
+        {
+            if (generation == _captureGeneration)
+            {
+                IsCapturing = false;
+            }
+        }
+    }
+
+    public void ReportCaptureBridgeFailed()
+    {
+        if (!IsCapturing)
+        {
+            return;
+        }
+
+        SetCaptureResult(
+            CruiseCaptureStatus.Failed,
+            "The displayed page could not be read for capture. Refresh the page and try again.",
+            Array.Empty<string>());
+        IsCapturing = false;
+    }
+
+    public void ReportExternalOpenFailed()
+    {
+        ErrorMessage = "The trusted TUI page could not be opened externally.";
+    }
+
+    private void CancelCapture()
+    {
+        _captureGeneration++;
+        _captureCancellation?.Cancel();
+        _captureCancellation?.Dispose();
+        _captureCancellation = null;
+        IsCapturing = false;
+        SetCaptureResult(null, null, Array.Empty<string>());
+    }
+
+    private void RequestExternalOpen()
+    {
+        if (Uri.TryCreate(CurrentAddress, UriKind.Absolute, out var address) &&
+            SelectedSource is not null &&
+            _trustedHostPolicy.Classify(address, SelectedSource) == CruiseAddressTrust.Trusted)
+        {
+            ExternalOpenRequested?.Invoke(this, new BrowserNavigationRequestedEventArgs(address));
+        }
+    }
+
+    private void ClearCaptureState(bool cancelActive)
+    {
+        if (cancelActive)
+        {
+            _captureGeneration++;
+            _captureCancellation?.Cancel();
+            _captureCancellation?.Dispose();
+            _captureCancellation = null;
+        }
+
+        IsCapturing = false;
+        SetCaptureResult(null, null, Array.Empty<string>());
+    }
+
+    private void SetCaptureResult(
+        CruiseCaptureStatus? status,
+        string? message,
+        IReadOnlyList<string> missingFields,
+        CruiseObservation? observation = null)
+    {
+        _captureStatus = status;
+        _captureMessage = message;
+        _captureMissingFields = missingFields;
+        _capturedObservation = observation;
+        OnPropertyChanged(nameof(CaptureStatus));
+        OnPropertyChanged(nameof(CaptureMessage));
+        OnPropertyChanged(nameof(HasCaptureMessage));
+        OnPropertyChanged(nameof(CaptureMissingFields));
+        OnPropertyChanged(nameof(CaptureMissingFieldsText));
+        OnPropertyChanged(nameof(HasCaptureMissingFields));
+        OnPropertyChanged(nameof(CapturedObservation));
+        OnPropertyChanged(nameof(HasCapturedObservation));
+        OnPropertyChanged(nameof(CapturedTitle));
+        OnPropertyChanged(nameof(CapturedOperator));
+        OnPropertyChanged(nameof(CapturedSource));
+        OnPropertyChanged(nameof(CapturedShip));
+        OnPropertyChanged(nameof(CapturedDeparture));
+        OnPropertyChanged(nameof(CapturedDuration));
+        OnPropertyChanged(nameof(CapturedDeparturePort));
+        OnPropertyChanged(nameof(CapturedItinerary));
+        OnPropertyChanged(nameof(CapturedPrices));
+        OnPropertyChanged(nameof(CapturedPromotion));
+        OnPropertyChanged(nameof(CapturedSourceReference));
+        OnPropertyChanged(nameof(CapturedObservedAt));
+        OnPropertyChanged(nameof(HasCapturedDeparturePort));
+        OnPropertyChanged(nameof(HasCapturedItinerary));
+        OnPropertyChanged(nameof(HasCapturedPrices));
+        OnPropertyChanged(nameof(HasCapturedPromotion));
+    }
+
     private void OnCommandStateChanged()
     {
         OnPropertyChanged(nameof(CanLoad));
@@ -517,6 +781,8 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(CanVerifyReadAccess));
         OnPropertyChanged(nameof(CanGoBack));
         OnPropertyChanged(nameof(CanGoForward));
+        OnPropertyChanged(nameof(CanCapture));
+        OnPropertyChanged(nameof(CanOpenExternal));
         _loadCommand.RaiseCanExecuteChanged();
         _backCommand.RaiseCanExecuteChanged();
         _forwardCommand.RaiseCanExecuteChanged();
@@ -524,6 +790,9 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         _refreshCommand.RaiseCanExecuteChanged();
         _closeCommand.RaiseCanExecuteChanged();
         _verifyReadAccessCommand.RaiseCanExecuteChanged();
+        _captureCommand.RaiseCanExecuteChanged();
+        _cancelCaptureCommand.RaiseCanExecuteChanged();
+        _openExternalCommand.RaiseCanExecuteChanged();
     }
 
     private void RecordNavigationAddress(Uri? address)

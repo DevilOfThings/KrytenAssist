@@ -67,6 +67,18 @@
                         Classes="secondary"
                         Command="{Binding VerifyReadAccessCommand}"
                         IsVisible="{Binding HasStarted}" />
+                <Button Content="Capture Displayed Cruise"
+                        Classes="primary"
+                        Command="{Binding CaptureCommand}"
+                        IsVisible="{Binding HasStarted}" />
+                <Button Content="Cancel Capture"
+                        Classes="secondary"
+                        Command="{Binding CancelCaptureCommand}"
+                        IsVisible="{Binding IsCapturing}" />
+                <Button Content="Open at TUI"
+                        Classes="secondary"
+                        Command="{Binding OpenExternalCommand}"
+                        IsVisible="{Binding HasStarted}" />
                 </WrapPanel>
             </StackPanel>
 
@@ -162,7 +174,7 @@
             </Grid>
 
             <Grid Grid.Row="3"
-                  RowDefinitions="Auto,*"
+                  RowDefinitions="Auto,Auto,Auto,*"
                   RowSpacing="8">
                 <Border Grid.Row="0"
                         Classes="status-surface"
@@ -173,8 +185,70 @@
                                TextWrapping="Wrap" />
                 </Border>
 
+                <Border Grid.Row="1"
+                        Classes="status-surface"
+                        Padding="10"
+                        IsVisible="{Binding IsCapturing}">
+                    <TextBlock Text="Capturing the displayed cruise..."
+                               TextWrapping="Wrap" />
+                </Border>
+
+                <Border Grid.Row="1"
+                        Classes="status-surface"
+                        Padding="10"
+                        IsVisible="{Binding HasCaptureMessage}">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="{Binding CaptureMessage}"
+                                   TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding CaptureMissingFieldsText, StringFormat='Missing: {0}'}"
+                                   Classes="secondary-text"
+                                   TextWrapping="Wrap"
+                                   IsVisible="{Binding HasCaptureMissingFields}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Row="2"
+                        Classes="workspace-surface"
+                        Padding="12"
+                        IsVisible="{Binding HasCapturedObservation}">
+                    <ScrollViewer MaxHeight="260"
+                                  VerticalScrollBarVisibility="Auto">
+                        <StackPanel Spacing="5">
+                            <TextBlock Text="Captured cruise review"
+                                       FontSize="16"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding CapturedTitle}"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding CapturedOperator, StringFormat='Operator: {0}'}" />
+                            <TextBlock Text="{Binding CapturedSource, StringFormat='Source: {0}'}" />
+                            <TextBlock Text="{Binding CapturedShip, StringFormat='Ship: {0}'}" />
+                            <TextBlock Text="{Binding CapturedDeparture, StringFormat='Departure: {0}'}" />
+                            <TextBlock Text="{Binding CapturedDuration, StringFormat='Duration: {0}'}" />
+                            <TextBlock Text="{Binding CapturedDeparturePort, StringFormat='Departure port: {0}'}"
+                                       IsVisible="{Binding HasCapturedDeparturePort}" />
+                            <TextBlock Text="{Binding CapturedItinerary, StringFormat='Itinerary: {0}'}"
+                                       TextWrapping="Wrap"
+                                       IsVisible="{Binding HasCapturedItinerary}" />
+                            <TextBlock Text="{Binding CapturedPrices, StringFormat='Price: {0}'}"
+                                       TextWrapping="Wrap"
+                                       IsVisible="{Binding HasCapturedPrices}" />
+                            <TextBlock Text="{Binding CapturedPromotion, StringFormat='Promotion: {0}'}"
+                                       TextWrapping="Wrap"
+                                       IsVisible="{Binding HasCapturedPromotion}" />
+                            <TextBlock Text="{Binding CapturedObservedAt, StringFormat='Observed: {0}'}" />
+                            <TextBlock Text="{Binding CapturedSourceReference}"
+                                       Classes="secondary-text"
+                                       TextWrapping="Wrap" />
+                            <TextBlock Text="Review only — this cruise has not been saved."
+                                       Classes="secondary-text" />
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+
                 <NativeWebView x:Name="EmbeddedBrowser"
-                               Grid.Row="1"
+                               Grid.Row="3"
                                MinHeight="240"
                                HorizontalAlignment="Stretch"
                                VerticalAlignment="Stretch"

@@ -1,10 +1,14 @@
+extern alias KrytenApplication;
+
 using System;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using KrytenAssist.Avalonia.Cruises.Discovery;
 using KrytenAssist.Avalonia.ViewModels;
+using CruisePageCaptureRequest = KrytenApplication::KrytenAssist.Application.Cruises.CruisePageCaptureRequest;
 
 namespace KrytenAssist.Avalonia.Views;
 
@@ -79,6 +83,8 @@ public partial class CruiseBrowserFeasibilityView : UserControl
         _viewModel.CloseRequested += OnCloseRequested;
         _viewModel.ReadAccessVerificationRequested += OnReadAccessVerificationRequested;
         _viewModel.UntrustedAddressObserved += OnUntrustedAddressObserved;
+        _viewModel.CapturePayloadRequested += OnCapturePayloadRequested;
+        _viewModel.ExternalOpenRequested += OnExternalOpenRequested;
     }
 
     private void OnBackRequested(object? sender, EventArgs e)
@@ -176,6 +182,55 @@ public partial class CruiseBrowserFeasibilityView : UserControl
         await VerifyReadAccessAsync();
     }
 
+    private async void OnCapturePayloadRequested(object? sender, EventArgs e)
+    {
+        try
+        {
+            var addressAtStart = EmbeddedBrowser.Source;
+            if (addressAtStart is null)
+            {
+                _viewModel?.ReportCaptureBridgeFailed();
+                return;
+            }
+
+            var rawResult = await EmbeddedBrowser.InvokeScript(TuiCruiseCaptureScript.Script);
+            if (_viewModel?.IsCapturing != true || EmbeddedBrowser.Source != addressAtStart)
+            {
+                return;
+            }
+
+            var payload = ParseScriptString(rawResult);
+            if (string.IsNullOrWhiteSpace(payload) ||
+                payload.Length > CruisePageCaptureRequest.MaximumPagePayloadLength)
+            {
+                _viewModel.ReportCaptureBridgeFailed();
+                return;
+            }
+
+            await _viewModel.ProcessCapturePayloadAsync(payload, addressAtStart);
+        }
+        catch (Exception)
+        {
+            _viewModel?.ReportCaptureBridgeFailed();
+        }
+    }
+
+    private async void OnExternalOpenRequested(object? sender, BrowserNavigationRequestedEventArgs e)
+    {
+        try
+        {
+            var topLevel = TopLevel.GetTopLevel(this);
+            if (topLevel is null || !await topLevel.Launcher.LaunchUriAsync(e.Address))
+            {
+                _viewModel?.ReportExternalOpenFailed();
+            }
+        }
+        catch (Exception)
+        {
+            _viewModel?.ReportExternalOpenFailed();
+        }
+    }
+
     private async Task VerifyReadAccessAsync()
     {
         try
@@ -239,6 +294,8 @@ public partial class CruiseBrowserFeasibilityView : UserControl
         _viewModel.CloseRequested -= OnCloseRequested;
         _viewModel.ReadAccessVerificationRequested -= OnReadAccessVerificationRequested;
         _viewModel.UntrustedAddressObserved -= OnUntrustedAddressObserved;
+        _viewModel.CapturePayloadRequested -= OnCapturePayloadRequested;
+        _viewModel.ExternalOpenRequested -= OnExternalOpenRequested;
         _viewModel = null;
     }
 
@@ -267,6 +324,18 @@ public partial class CruiseBrowserFeasibilityView : UserControl
                    json,
                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
                ?? throw new JsonException("The script result was invalid.");
+    }
+
+    private static string ParseScriptString(string? rawResult)
+    {
+        if (string.IsNullOrWhiteSpace(rawResult))
+        {
+            throw new JsonException("The script returned no capture payload.");
+        }
+
+        return rawResult.TrimStart().StartsWith('"')
+            ? JsonSerializer.Deserialize<string>(rawResult) ?? throw new JsonException("The capture payload was empty.")
+            : rawResult;
     }
 
     private sealed record PageReadDiagnostics(
