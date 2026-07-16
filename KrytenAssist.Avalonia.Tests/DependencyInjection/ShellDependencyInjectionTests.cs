@@ -1,4 +1,5 @@
 using KrytenAssist.Avalonia.DependencyInjection;
+using KrytenAssist.Avalonia.Cruises.Discovery;
 using KrytenAssist.Avalonia.Skills.Services;
 using KrytenAssist.Avalonia.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,6 +36,12 @@ public sealed class ShellDependencyInjectionTests
             descriptor.ServiceType == typeof(ShellViewModel) &&
             descriptor.ImplementationType == typeof(ShellViewModel) &&
             descriptor.Lifetime == ServiceLifetime.Transient);
+        Assert.Contains(services, descriptor =>
+            descriptor.ServiceType == typeof(CruiseDiscoverySourceCatalog) &&
+            descriptor.Lifetime == ServiceLifetime.Singleton);
+        Assert.Contains(services, descriptor =>
+            descriptor.ServiceType == typeof(CruiseTrustedHostPolicy) &&
+            descriptor.Lifetime == ServiceLifetime.Singleton);
     }
 
     [Fact]

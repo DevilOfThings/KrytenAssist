@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using KrytenAssist.Avalonia.Cruises.Discovery;
 using KrytenAssist.Avalonia.Skills.Models;
 using KrytenAssist.Avalonia.Skills.Services;
 using KrytenAssist.Avalonia.Tools;
@@ -31,14 +32,18 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
 
     public CruiseOfTheWeekViewModel(
         ISkillRegistry skillRegistry,
-        IClock clock)
+        IClock clock,
+        CruiseDiscoverySourceCatalog? sourceCatalog = null,
+        CruiseTrustedHostPolicy? trustedHostPolicy = null)
     {
         ArgumentNullException.ThrowIfNull(skillRegistry);
         ArgumentNullException.ThrowIfNull(clock);
 
         _skill = skillRegistry.Find(SkillId);
         _clock = clock;
-        BrowserFeasibility = new CruiseBrowserFeasibilityViewModel();
+        BrowserFeasibility = new CruiseBrowserFeasibilityViewModel(
+            sourceCatalog ?? new CruiseDiscoverySourceCatalog(),
+            trustedHostPolicy ?? new CruiseTrustedHostPolicy());
         _retrieveCommand = new AsyncCommand(RetrieveAsync, () => CanRetrieve);
         _cancelCommand = new DelegateCommand(Cancel, () => IsBusy);
     }

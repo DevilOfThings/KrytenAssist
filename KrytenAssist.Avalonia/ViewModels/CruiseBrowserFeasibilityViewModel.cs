@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using KrytenAssist.Avalonia.Cruises.Discovery;
 
 namespace KrytenAssist.Avalonia.ViewModels;
 
@@ -10,11 +11,10 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
 {
     private const int MaximumNavigationHistoryEntries = 12;
 
-    public static readonly Uri StartingAddress = new(
-        "https://www.tui.co.uk/cruise/deals/marella-cruise-of-the-week",
-        UriKind.Absolute);
-
+    private readonly CruiseTrustedHostPolicy _trustedHostPolicy;
     private readonly DelegateCommand _loadCommand;
+    private readonly DelegateCommand _backCommand;
+    private readonly DelegateCommand _forwardCommand;
     private readonly DelegateCommand _stopCommand;
     private readonly DelegateCommand _refreshCommand;
     private readonly DelegateCommand _closeCommand;
@@ -23,17 +23,45 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     private bool _isNavigating;
     private bool _isPageReady;
     private bool _isVerifying;
-    private string _statusMessage = "The TUI page has not been loaded.";
+    private string _statusMessage = "Choose a trusted cruise source to begin.";
     private string? _errorMessage;
     private string? _currentAddress;
     private string? _pageTitle;
     private bool _hasVisibleTextSample;
     private readonly List<string> _navigationHistory = [];
     private readonly List<string> _cruiseLinks = [];
+    private CruiseDiscoverySource? _selectedSource;
+    private bool _canGoBack;
+    private bool _canGoForward;
+    private bool _hasUnsupportedHost;
+    private bool _wasNavigationStopped;
 
     public CruiseBrowserFeasibilityViewModel()
+        : this(new CruiseDiscoverySourceCatalog(), new CruiseTrustedHostPolicy())
     {
-        _loadCommand = new DelegateCommand(RequestLoad, () => CanLoad);
+    }
+
+    public CruiseBrowserFeasibilityViewModel(
+        CruiseDiscoverySourceCatalog sourceCatalog,
+        CruiseTrustedHostPolicy trustedHostPolicy)
+    {
+        ArgumentNullException.ThrowIfNull(sourceCatalog);
+        ArgumentNullException.ThrowIfNull(trustedHostPolicy);
+
+        _trustedHostPolicy = trustedHostPolicy;
+        AvailableSources = sourceCatalog.Sources;
+        var sourceOptions = new List<CruiseDiscoverySourceOptionViewModel>(AvailableSources.Count);
+        foreach (var source in AvailableSources)
+        {
+            sourceOptions.Add(new CruiseDiscoverySourceOptionViewModel(source, OpenSource));
+        }
+
+        SourceOptions = sourceOptions;
+        _loadCommand = new DelegateCommand(
+            () => OpenSource(AvailableSources[0]),
+            () => CanLoad);
+        _backCommand = new DelegateCommand(RequestBack, () => CanGoBack);
+        _forwardCommand = new DelegateCommand(RequestForward, () => CanGoForward);
         _stopCommand = new DelegateCommand(RequestStop, () => IsNavigating);
         _refreshCommand = new DelegateCommand(RequestRefresh, () => CanRefresh);
         _closeCommand = new DelegateCommand(RequestClose, () => HasStarted);
@@ -46,6 +74,10 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
 
     public event EventHandler<BrowserNavigationRequestedEventArgs>? LoadRequested;
 
+    public event EventHandler? BackRequested;
+
+    public event EventHandler? ForwardRequested;
+
     public event EventHandler? StopRequested;
 
     public event EventHandler? RefreshRequested;
@@ -54,7 +86,37 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
 
     public event EventHandler? ReadAccessVerificationRequested;
 
+    public event EventHandler? UntrustedAddressObserved;
+
+    public IReadOnlyList<CruiseDiscoverySource> AvailableSources { get; }
+
+    public IReadOnlyList<CruiseDiscoverySourceOptionViewModel> SourceOptions { get; }
+
+    public CruiseDiscoverySource? SelectedSource
+    {
+        get => _selectedSource;
+        private set
+        {
+            if (SetField(ref _selectedSource, value))
+            {
+                OnPropertyChanged(nameof(HasSelectedSource));
+                OnPropertyChanged(nameof(SelectedSourceName));
+                OnPropertyChanged(nameof(TrustedHost));
+            }
+        }
+    }
+
+    public bool HasSelectedSource => SelectedSource is not null;
+
+    public string? SelectedSourceName => SelectedSource?.DisplayName;
+
+    public string? TrustedHost => SelectedSource?.TrustedHost;
+
     public ICommand LoadCommand => _loadCommand;
+
+    public ICommand BackCommand => _backCommand;
+
+    public ICommand ForwardCommand => _forwardCommand;
 
     public ICommand StopCommand => _stopCommand;
 
@@ -67,8 +129,40 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     public bool HasStarted
     {
         get => _hasStarted;
-        private set => SetField(ref _hasStarted, value);
+        private set
+        {
+            if (SetField(ref _hasStarted, value))
+            {
+                OnPropertyChanged(nameof(IsBrowserVisible));
+                OnCommandStateChanged();
+            }
+        }
     }
+
+    public bool CanGoBack => HasStarted && _canGoBack && !IsVerifying;
+
+    public bool CanGoForward => HasStarted && _canGoForward && !IsVerifying;
+
+    public string? CurrentHost => Uri.TryCreate(CurrentAddress, UriKind.Absolute, out var address) &&
+                                  address.Scheme == Uri.UriSchemeHttps
+        ? address.Host
+        : null;
+
+    public bool HasCurrentHost => !string.IsNullOrWhiteSpace(CurrentHost);
+
+    public bool HasUnsupportedHost
+    {
+        get => _hasUnsupportedHost;
+        private set
+        {
+            if (SetField(ref _hasUnsupportedHost, value))
+            {
+                OnPropertyChanged(nameof(IsBrowserVisible));
+            }
+        }
+    }
+
+    public bool IsBrowserVisible => HasStarted && !HasUnsupportedHost;
 
     public bool IsNavigating
     {
@@ -146,6 +240,8 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
             if (SetField(ref _currentAddress, value))
             {
                 OnPropertyChanged(nameof(HasCurrentAddress));
+                OnPropertyChanged(nameof(CurrentHost));
+                OnPropertyChanged(nameof(HasCurrentHost));
             }
         }
     }
@@ -184,7 +280,29 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
 
     public void ReportNavigationStarted(Uri? address)
     {
+        if (SelectedSource is null)
+        {
+            return;
+        }
+
+        if (_wasNavigationStopped &&
+            (address is null ||
+             string.Equals(CurrentAddress, address.AbsoluteUri, StringComparison.Ordinal)))
+        {
+            return;
+        }
+
+        _wasNavigationStopped = false;
+
+        if (IsPageReady &&
+            address is not null &&
+            string.Equals(CurrentAddress, address.AbsoluteUri, StringComparison.Ordinal))
+        {
+            return;
+        }
+
         HasStarted = true;
+        _wasNavigationStopped = false;
         IsVerifying = false;
         IsPageReady = false;
         IsNavigating = true;
@@ -192,30 +310,50 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         PageTitle = null;
         HasVisibleTextSample = false;
         OnPropertyChanged(nameof(VisibleTextSampleStatus));
-        CurrentAddress = address?.AbsoluteUri ?? CurrentAddress;
-        RecordNavigationAddress(address);
-        StatusMessage = "Loading the embedded TUI page...";
+        if (!ObserveAddress(address))
+        {
+            return;
+        }
+
+        StatusMessage = "Loading the selected cruise source...";
     }
 
     public void ReportNavigationCompleted(Uri? address)
     {
+        if (SelectedSource is null)
+        {
+            return;
+        }
+
         HasStarted = true;
+        _wasNavigationStopped = false;
         IsNavigating = false;
         IsPageReady = true;
         ErrorMessage = null;
-        CurrentAddress = address?.AbsoluteUri ?? CurrentAddress;
-        RecordNavigationAddress(address);
-        StatusMessage = "The embedded page is ready.";
+        if (!ObserveAddress(address))
+        {
+            return;
+        }
+
+        StatusMessage = "The selected cruise source is displayed.";
     }
 
     public void ReportNavigationFailed(Uri? address)
     {
+        if (SelectedSource is null)
+        {
+            return;
+        }
+
         HasStarted = true;
         IsNavigating = false;
         IsPageReady = false;
-        CurrentAddress = address?.AbsoluteUri ?? CurrentAddress;
-        RecordNavigationAddress(address);
-        StatusMessage = "The embedded page could not be loaded.";
+        if (!ObserveAddress(address) && HasUnsupportedHost)
+        {
+            return;
+        }
+
+        StatusMessage = "The selected cruise source could not be loaded.";
         ErrorMessage = "Check your connection and try loading the TUI page again.";
     }
 
@@ -223,8 +361,16 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     {
         IsNavigating = false;
         IsPageReady = false;
+        _wasNavigationStopped = true;
         StatusMessage = "Navigation was stopped.";
         ErrorMessage = null;
+    }
+
+    public void ReportNavigationCapabilities(bool canGoBack, bool canGoForward)
+    {
+        _canGoBack = canGoBack;
+        _canGoForward = canGoForward;
+        OnCommandStateChanged();
     }
 
     public void ReportReadAccessSucceeded(
@@ -234,11 +380,14 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         IReadOnlyList<string>? cruiseLinks = null)
     {
         IsVerifying = false;
+        IsNavigating = false;
+        IsPageReady = true;
+        _wasNavigationStopped = false;
         ErrorMessage = null;
         PageTitle = string.IsNullOrWhiteSpace(pageTitle) ? null : pageTitle.Trim();
         CurrentAddress = string.IsNullOrWhiteSpace(currentAddress)
             ? CurrentAddress
-            : currentAddress.Trim();
+            : ObserveDiagnosticAddress(currentAddress);
         HasVisibleTextSample = hasVisibleTextSample;
         ReplaceCruiseLinks(cruiseLinks);
         OnPropertyChanged(nameof(VisibleTextSampleStatus));
@@ -250,6 +399,9 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     public void ReportReadAccessFailed()
     {
         IsVerifying = false;
+        IsNavigating = false;
+        IsPageReady = true;
+        _wasNavigationStopped = false;
         StatusMessage = "Read-only page access could not be verified.";
         ErrorMessage = "The embedded page did not return the requested diagnostics.";
     }
@@ -259,6 +411,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         IsNavigating = false;
         IsVerifying = false;
         IsPageReady = false;
+        HasUnsupportedHost = false;
         StatusMessage = "The embedded browser operation failed.";
         ErrorMessage = "The embedded browser is unavailable. Please try again.";
     }
@@ -271,6 +424,11 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         IsPageReady = false;
         ErrorMessage = null;
         CurrentAddress = null;
+        SelectedSource = null;
+        HasUnsupportedHost = false;
+        _canGoBack = false;
+        _canGoForward = false;
+        _wasNavigationStopped = false;
         _navigationHistory.Clear();
         OnPropertyChanged(nameof(NavigationHistory));
         OnPropertyChanged(nameof(HasNavigationHistory));
@@ -280,20 +438,48 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         PageTitle = null;
         HasVisibleTextSample = false;
         OnPropertyChanged(nameof(VisibleTextSampleStatus));
-        StatusMessage = "The TUI page has not been loaded.";
+        StatusMessage = "Choose a trusted cruise source to begin.";
         OnCommandStateChanged();
     }
 
-    private void RequestLoad()
+    private void OpenSource(CruiseDiscoverySource source)
     {
+        ArgumentNullException.ThrowIfNull(source);
+        if (_trustedHostPolicy.Classify(source.StartingAddress, source) != CruiseAddressTrust.Trusted)
+        {
+            StatusMessage = "The selected cruise source is not configured safely.";
+            ErrorMessage = "Choose another trusted cruise source.";
+            return;
+        }
+
+        if (HasStarted && ReferenceEquals(SelectedSource, source))
+        {
+            return;
+        }
+
+        SelectedSource = source;
+        _wasNavigationStopped = false;
         HasStarted = true;
         IsPageReady = false;
         IsNavigating = true;
+        HasUnsupportedHost = false;
         ErrorMessage = null;
-        CurrentAddress = StartingAddress.AbsoluteUri;
-        RecordNavigationAddress(StartingAddress);
-        StatusMessage = "Preparing the embedded TUI page...";
-        LoadRequested?.Invoke(this, new BrowserNavigationRequestedEventArgs(StartingAddress));
+        CurrentAddress = source.StartingAddress.AbsoluteUri;
+        RecordNavigationAddress(source.StartingAddress);
+        StatusMessage = $"Opening {source.DisplayName}...";
+        LoadRequested?.Invoke(this, new BrowserNavigationRequestedEventArgs(source.StartingAddress));
+    }
+
+    private void RequestBack()
+    {
+        _wasNavigationStopped = false;
+        BackRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void RequestForward()
+    {
+        _wasNavigationStopped = false;
+        ForwardRequested?.Invoke(this, EventArgs.Empty);
     }
 
     private void RequestStop()
@@ -303,6 +489,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
 
     private void RequestRefresh()
     {
+        _wasNavigationStopped = false;
         IsPageReady = false;
         IsNavigating = true;
         ErrorMessage = null;
@@ -328,7 +515,11 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(CanLoad));
         OnPropertyChanged(nameof(CanRefresh));
         OnPropertyChanged(nameof(CanVerifyReadAccess));
+        OnPropertyChanged(nameof(CanGoBack));
+        OnPropertyChanged(nameof(CanGoForward));
         _loadCommand.RaiseCanExecuteChanged();
+        _backCommand.RaiseCanExecuteChanged();
+        _forwardCommand.RaiseCanExecuteChanged();
         _stopCommand.RaiseCanExecuteChanged();
         _refreshCommand.RaiseCanExecuteChanged();
         _closeCommand.RaiseCanExecuteChanged();
@@ -359,6 +550,49 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(HasNavigationHistory));
     }
 
+    private bool ObserveAddress(Uri? address)
+    {
+        if (SelectedSource is null || address is null)
+        {
+            return true;
+        }
+
+        var trust = _trustedHostPolicy.Classify(address, SelectedSource);
+        if (trust == CruiseAddressTrust.BrowserInternal)
+        {
+            StatusMessage = "The embedded browser is preparing the trusted page.";
+            return false;
+        }
+
+        if (trust == CruiseAddressTrust.Untrusted)
+        {
+            IsNavigating = false;
+            IsPageReady = false;
+            HasUnsupportedHost = true;
+            StatusMessage = "Navigation outside the trusted cruise source was stopped.";
+            ErrorMessage = $"Kryten only allows browsing on {SelectedSource.TrustedHost}.";
+            UntrustedAddressObserved?.Invoke(this, EventArgs.Empty);
+            return false;
+        }
+
+        HasUnsupportedHost = false;
+        ErrorMessage = null;
+        CurrentAddress = address.AbsoluteUri;
+        RecordNavigationAddress(address);
+        return true;
+    }
+
+    private string? ObserveDiagnosticAddress(string currentAddress)
+    {
+        if (!Uri.TryCreate(currentAddress.Trim(), UriKind.Absolute, out var address) ||
+            !ObserveAddress(address))
+        {
+            return CurrentAddress;
+        }
+
+        return address.AbsoluteUri;
+    }
+
     private void ReplaceCruiseLinks(IReadOnlyList<string>? cruiseLinks)
     {
         _cruiseLinks.Clear();
@@ -372,9 +606,13 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
                     break;
                 }
 
-                if (!Uri.TryCreate(value, UriKind.Absolute, out var address) ||
+                if (SelectedSource is null ||
+                    !Uri.TryCreate(value, UriKind.Absolute, out var address) ||
                     address.Scheme != Uri.UriSchemeHttps ||
-                    !string.Equals(address.Host, "www.tui.co.uk", StringComparison.OrdinalIgnoreCase) ||
+                    !string.Equals(
+                        address.Host,
+                        SelectedSource.TrustedHost,
+                        StringComparison.OrdinalIgnoreCase) ||
                     _cruiseLinks.Exists(existing =>
                         string.Equals(existing, address.AbsoluteUri, StringComparison.Ordinal)))
                 {
@@ -429,6 +667,39 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         {
             CanExecuteChanged?.Invoke(this, EventArgs.Empty);
         }
+    }
+}
+
+public sealed class CruiseDiscoverySourceOptionViewModel
+{
+    public CruiseDiscoverySourceOptionViewModel(
+        CruiseDiscoverySource source,
+        Action<CruiseDiscoverySource> open)
+    {
+        Source = source ?? throw new ArgumentNullException(nameof(source));
+        ArgumentNullException.ThrowIfNull(open);
+        OpenCommand = new SourceCommand(() => open(Source));
+    }
+
+    public CruiseDiscoverySource Source { get; }
+
+    public string DisplayName => Source.DisplayName;
+
+    public string Description => Source.Description;
+
+    public ICommand OpenCommand { get; }
+
+    private sealed class SourceCommand(Action execute) : ICommand
+    {
+        public event EventHandler? CanExecuteChanged
+        {
+            add { }
+            remove { }
+        }
+
+        public bool CanExecute(object? parameter) => true;
+
+        public void Execute(object? parameter) => execute();
     }
 }
 

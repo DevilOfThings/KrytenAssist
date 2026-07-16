@@ -20,7 +20,7 @@ public sealed class CruiseBrowserFeasibilityViewModelTests
         Assert.False(viewModel.HasCurrentAddress);
         Assert.False(viewModel.HasNavigationHistory);
         Assert.False(viewModel.HasPageTitle);
-        Assert.Equal("The TUI page has not been loaded.", viewModel.StatusMessage);
+        Assert.Equal("Choose a trusted cruise source to begin.", viewModel.StatusMessage);
         Assert.True(viewModel.LoadCommand.CanExecute(null));
         Assert.False(viewModel.StopCommand.CanExecute(null));
         Assert.False(viewModel.RefreshCommand.CanExecute(null));
@@ -37,7 +37,7 @@ public sealed class CruiseBrowserFeasibilityViewModelTests
 
         viewModel.LoadCommand.Execute(null);
 
-        Assert.Equal(CruiseBrowserFeasibilityViewModel.StartingAddress, requestedAddress);
+        Assert.Equal(viewModel.AvailableSources[0].StartingAddress, requestedAddress);
         Assert.Equal(Uri.UriSchemeHttps, requestedAddress!.Scheme);
         Assert.Equal("www.tui.co.uk", requestedAddress.Host);
         Assert.Equal(
@@ -60,12 +60,12 @@ public sealed class CruiseBrowserFeasibilityViewModelTests
         var redirectedAddress = new Uri("https://www.tui.co.uk/cruise/deals/example");
 
         viewModel.LoadCommand.Execute(null);
-        viewModel.ReportNavigationStarted(CruiseBrowserFeasibilityViewModel.StartingAddress);
+        viewModel.ReportNavigationStarted(viewModel.AvailableSources[0].StartingAddress);
 
         Assert.True(viewModel.IsNavigating);
         Assert.False(viewModel.IsPageReady);
         Assert.Equal(
-            CruiseBrowserFeasibilityViewModel.StartingAddress.AbsoluteUri,
+            viewModel.AvailableSources[0].StartingAddress.AbsoluteUri,
             viewModel.CurrentAddress);
 
         viewModel.ReportNavigationCompleted(redirectedAddress);
@@ -77,7 +77,7 @@ public sealed class CruiseBrowserFeasibilityViewModelTests
         Assert.Equal(redirectedAddress.AbsoluteUri, viewModel.CurrentAddress);
         Assert.False(viewModel.HasPageTitle);
         Assert.False(viewModel.HasVisibleTextSample);
-        Assert.Equal("The embedded page is ready.", viewModel.StatusMessage);
+        Assert.Equal("The selected cruise source is displayed.", viewModel.StatusMessage);
     }
 
     [Fact]
@@ -86,7 +86,7 @@ public sealed class CruiseBrowserFeasibilityViewModelTests
         var viewModel = new CruiseBrowserFeasibilityViewModel();
 
         viewModel.LoadCommand.Execute(null);
-        viewModel.ReportNavigationFailed(CruiseBrowserFeasibilityViewModel.StartingAddress);
+        viewModel.ReportNavigationFailed(viewModel.AvailableSources[0].StartingAddress);
 
         Assert.False(viewModel.IsNavigating);
         Assert.False(viewModel.IsPageReady);
@@ -113,6 +113,35 @@ public sealed class CruiseBrowserFeasibilityViewModelTests
         Assert.False(viewModel.IsPageReady);
         Assert.False(viewModel.HasError);
         Assert.Equal("Navigation was stopped.", viewModel.StatusMessage);
+    }
+
+    [Fact]
+    public void SameAddressNavigationStart_AfterStopDoesNotResetStoppedStatus()
+    {
+        var viewModel = new CruiseBrowserFeasibilityViewModel();
+        viewModel.LoadCommand.Execute(null);
+        var address = new Uri(viewModel.CurrentAddress!);
+
+        viewModel.ReportNavigationStopped();
+        viewModel.ReportNavigationStarted(address);
+
+        Assert.False(viewModel.IsNavigating);
+        Assert.False(viewModel.IsPageReady);
+        Assert.Equal("Navigation was stopped.", viewModel.StatusMessage);
+    }
+
+    [Fact]
+    public void DifferentTrustedAddress_AfterStopStartsNewNavigation()
+    {
+        var viewModel = new CruiseBrowserFeasibilityViewModel();
+        viewModel.LoadCommand.Execute(null);
+        viewModel.ReportNavigationStopped();
+
+        viewModel.ReportNavigationStarted(
+            new Uri("https://www.tui.co.uk/cruise/deals/different-page"));
+
+        Assert.True(viewModel.IsNavigating);
+        Assert.Equal("Loading the selected cruise source...", viewModel.StatusMessage);
     }
 
     [Fact]
@@ -148,7 +177,8 @@ public sealed class CruiseBrowserFeasibilityViewModelTests
     [Fact]
     public void ReadAccessSuccess_MapsOnlyBoundedDiagnosticState()
     {
-        var viewModel = CreateReadyViewModel();
+        var viewModel = new CruiseBrowserFeasibilityViewModel();
+        viewModel.LoadCommand.Execute(null);
         var verificationRequests = 0;
         viewModel.ReadAccessVerificationRequested += (_, _) => verificationRequests++;
 
@@ -168,6 +198,8 @@ public sealed class CruiseBrowserFeasibilityViewModelTests
             ]);
 
         Assert.False(viewModel.IsVerifying);
+        Assert.False(viewModel.IsNavigating);
+        Assert.True(viewModel.IsPageReady);
         Assert.False(viewModel.HasError);
         Assert.Equal("Marella Cruise of the Week | TUI", viewModel.PageTitle);
         Assert.True(viewModel.HasVisibleTextSample);
@@ -244,9 +276,43 @@ public sealed class CruiseBrowserFeasibilityViewModelTests
         Assert.False(viewModel.HasPageTitle);
         Assert.False(viewModel.HasVisibleTextSample);
         Assert.False(viewModel.HasCruiseLinks);
-        Assert.Equal("The TUI page has not been loaded.", viewModel.StatusMessage);
+        Assert.Equal("Choose a trusted cruise source to begin.", viewModel.StatusMessage);
         Assert.True(viewModel.LoadCommand.CanExecute(null));
         Assert.False(viewModel.CloseCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void LateNavigationEvent_AfterCloseDoesNotReopenBrowserSession()
+    {
+        var viewModel = CreateReadyViewModel();
+        var previousAddress = viewModel.CurrentAddress;
+
+        viewModel.ReportBrowserClosed();
+        viewModel.ReportNavigationStarted(new Uri(previousAddress!));
+        viewModel.ReportNavigationCompleted(new Uri(previousAddress!));
+
+        Assert.False(viewModel.HasStarted);
+        Assert.False(viewModel.HasSelectedSource);
+        Assert.False(viewModel.HasCurrentAddress);
+        Assert.False(viewModel.IsNavigating);
+        Assert.False(viewModel.IsBrowserVisible);
+        Assert.Equal("Choose a trusted cruise source to begin.", viewModel.StatusMessage);
+    }
+
+    [Fact]
+    public void SameAddressNavigationStart_AfterVerificationDoesNotResetReadyStatus()
+    {
+        var viewModel = CreateReadyViewModel();
+        var address = new Uri(viewModel.CurrentAddress!);
+        viewModel.ReportReadAccessSucceeded("Marella", address.AbsoluteUri, true);
+        var verifiedStatus = viewModel.StatusMessage;
+
+        viewModel.ReportNavigationStarted(address);
+
+        Assert.True(viewModel.IsPageReady);
+        Assert.False(viewModel.IsNavigating);
+        Assert.Equal(verifiedStatus, viewModel.StatusMessage);
+        Assert.Equal("Marella", viewModel.PageTitle);
     }
 
     [Fact]
@@ -255,8 +321,8 @@ public sealed class CruiseBrowserFeasibilityViewModelTests
         var viewModel = CreateReadyViewModel();
         viewModel.ReportReadAccessSucceeded("Previous title", null, true);
 
-        viewModel.LoadCommand.Execute(null);
-        viewModel.ReportNavigationStarted(CruiseBrowserFeasibilityViewModel.StartingAddress);
+        viewModel.ReportNavigationStarted(
+            new Uri("https://www.tui.co.uk/cruise/deals/another-offer"));
 
         Assert.False(viewModel.HasPageTitle);
         Assert.Null(viewModel.PageTitle);
@@ -281,7 +347,7 @@ public sealed class CruiseBrowserFeasibilityViewModelTests
         Assert.Equal(
             string.Join(
                 Environment.NewLine,
-                CruiseBrowserFeasibilityViewModel.StartingAddress.AbsoluteUri,
+                viewModel.AvailableSources[0].StartingAddress.AbsoluteUri,
                 itineraryAddress.AbsoluteUri,
                 bookingAddress.AbsoluteUri),
             viewModel.NavigationHistory);
@@ -292,11 +358,75 @@ public sealed class CruiseBrowserFeasibilityViewModelTests
         Assert.Empty(viewModel.NavigationHistory);
     }
 
+    [Fact]
+    public void SourceSelection_IsExplicitAndDoesNotNavigateTwice()
+    {
+        var viewModel = new CruiseBrowserFeasibilityViewModel();
+        var requests = 0;
+        viewModel.LoadRequested += (_, _) => requests++;
+
+        viewModel.SourceOptions[0].OpenCommand.Execute(null);
+        viewModel.SourceOptions[0].OpenCommand.Execute(null);
+
+        Assert.Equal(1, requests);
+        Assert.True(viewModel.HasSelectedSource);
+        Assert.Equal("Marella Cruise of the Week", viewModel.SelectedSourceName);
+        Assert.Equal("www.tui.co.uk", viewModel.TrustedHost);
+    }
+
+    [Fact]
+    public void BackAndForward_AreExplicitAndFollowReportedCapabilities()
+    {
+        var viewModel = CreateReadyViewModel();
+        var backRequests = 0;
+        var forwardRequests = 0;
+        viewModel.BackRequested += (_, _) => backRequests++;
+        viewModel.ForwardRequested += (_, _) => forwardRequests++;
+
+        viewModel.ReportNavigationCapabilities(true, false);
+        viewModel.BackCommand.Execute(null);
+        viewModel.ForwardCommand.Execute(null);
+
+        Assert.Equal(1, backRequests);
+        Assert.Equal(0, forwardRequests);
+        Assert.True(viewModel.CanGoBack);
+        Assert.False(viewModel.CanGoForward);
+    }
+
+    [Fact]
+    public void UntrustedObservedAddress_StopsPresentationWithoutDisplayingAddress()
+    {
+        var viewModel = CreateReadyViewModel();
+        var stopRequests = 0;
+        viewModel.UntrustedAddressObserved += (_, _) => stopRequests++;
+
+        viewModel.ReportNavigationStarted(new Uri("https://www.tui.co.uk.evil.example/cruise"));
+
+        Assert.Equal(1, stopRequests);
+        Assert.True(viewModel.HasUnsupportedHost);
+        Assert.False(viewModel.IsBrowserVisible);
+        Assert.DoesNotContain("evil", viewModel.CurrentAddress);
+        Assert.Contains("www.tui.co.uk", viewModel.ErrorMessage);
+    }
+
+    [Fact]
+    public void AboutBlank_IsInternalAndNeverPresentedAsTrustedAddress()
+    {
+        var viewModel = CreateReadyViewModel();
+        var trustedAddress = viewModel.CurrentAddress;
+
+        viewModel.ReportNavigationStarted(new Uri("about:blank"));
+
+        Assert.Equal(trustedAddress, viewModel.CurrentAddress);
+        Assert.DoesNotContain("about:blank", viewModel.NavigationHistory);
+        Assert.False(viewModel.HasUnsupportedHost);
+    }
+
     private static CruiseBrowserFeasibilityViewModel CreateReadyViewModel()
     {
         var viewModel = new CruiseBrowserFeasibilityViewModel();
         viewModel.LoadCommand.Execute(null);
-        viewModel.ReportNavigationCompleted(CruiseBrowserFeasibilityViewModel.StartingAddress);
+        viewModel.ReportNavigationCompleted(viewModel.AvailableSources[0].StartingAddress);
         return viewModel;
     }
 }

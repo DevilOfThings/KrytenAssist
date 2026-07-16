@@ -1,4 +1,5 @@
 using System;
+using KrytenAssist.Avalonia.Cruises.Discovery;
 using KrytenAssist.Avalonia.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -11,6 +12,8 @@ public static class ShellServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddTransient<MainWindowViewModel>();
+        services.AddSingleton<CruiseDiscoverySourceCatalog>();
+        services.AddSingleton<CruiseTrustedHostPolicy>();
         services.AddTransient<CruiseOfTheWeekViewModel>();
         services.AddTransient<ShellViewModel>();
 

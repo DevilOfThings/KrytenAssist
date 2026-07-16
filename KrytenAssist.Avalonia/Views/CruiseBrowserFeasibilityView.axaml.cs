@@ -72,10 +72,39 @@ public partial class CruiseBrowserFeasibilityView : UserControl
         }
 
         _viewModel.LoadRequested += OnLoadRequested;
+        _viewModel.BackRequested += OnBackRequested;
+        _viewModel.ForwardRequested += OnForwardRequested;
         _viewModel.StopRequested += OnStopRequested;
         _viewModel.RefreshRequested += OnRefreshRequested;
         _viewModel.CloseRequested += OnCloseRequested;
         _viewModel.ReadAccessVerificationRequested += OnReadAccessVerificationRequested;
+        _viewModel.UntrustedAddressObserved += OnUntrustedAddressObserved;
+    }
+
+    private void OnBackRequested(object? sender, EventArgs e)
+    {
+        try
+        {
+            EmbeddedBrowser.GoBack();
+            ReportNavigationCapabilities();
+        }
+        catch (Exception)
+        {
+            _viewModel?.ReportBrowserOperationFailed();
+        }
+    }
+
+    private void OnForwardRequested(object? sender, EventArgs e)
+    {
+        try
+        {
+            EmbeddedBrowser.GoForward();
+            ReportNavigationCapabilities();
+        }
+        catch (Exception)
+        {
+            _viewModel?.ReportBrowserOperationFailed();
+        }
     }
 
     private void OnLoadRequested(object? sender, BrowserNavigationRequestedEventArgs e)
@@ -96,6 +125,7 @@ public partial class CruiseBrowserFeasibilityView : UserControl
         {
             EmbeddedBrowser.Stop();
             _viewModel?.ReportNavigationStopped();
+            ReportNavigationCapabilities();
         }
         catch (Exception)
         {
@@ -108,6 +138,19 @@ public partial class CruiseBrowserFeasibilityView : UserControl
         try
         {
             EmbeddedBrowser.Refresh();
+            ReportNavigationCapabilities();
+        }
+        catch (Exception)
+        {
+            _viewModel?.ReportBrowserOperationFailed();
+        }
+    }
+
+    private void OnUntrustedAddressObserved(object? sender, EventArgs e)
+    {
+        try
+        {
+            EmbeddedBrowser.Stop();
         }
         catch (Exception)
         {
@@ -163,6 +206,7 @@ public partial class CruiseBrowserFeasibilityView : UserControl
         WebViewNavigationStartingEventArgs e)
     {
         _viewModel?.ReportNavigationStarted(EmbeddedBrowser.Source);
+        ReportNavigationCapabilities();
     }
 
     private void EmbeddedBrowser_OnNavigationCompleted(
@@ -172,10 +216,12 @@ public partial class CruiseBrowserFeasibilityView : UserControl
         if (e.IsSuccess)
         {
             _viewModel?.ReportNavigationCompleted(EmbeddedBrowser.Source);
+            ReportNavigationCapabilities();
             return;
         }
 
         _viewModel?.ReportNavigationFailed(EmbeddedBrowser.Source);
+        ReportNavigationCapabilities();
     }
 
     private void DetachViewModel()
@@ -186,11 +232,21 @@ public partial class CruiseBrowserFeasibilityView : UserControl
         }
 
         _viewModel.LoadRequested -= OnLoadRequested;
+        _viewModel.BackRequested -= OnBackRequested;
+        _viewModel.ForwardRequested -= OnForwardRequested;
         _viewModel.StopRequested -= OnStopRequested;
         _viewModel.RefreshRequested -= OnRefreshRequested;
         _viewModel.CloseRequested -= OnCloseRequested;
         _viewModel.ReadAccessVerificationRequested -= OnReadAccessVerificationRequested;
+        _viewModel.UntrustedAddressObserved -= OnUntrustedAddressObserved;
         _viewModel = null;
+    }
+
+    private void ReportNavigationCapabilities()
+    {
+        _viewModel?.ReportNavigationCapabilities(
+            EmbeddedBrowser.CanGoBack,
+            EmbeddedBrowser.CanGoForward);
     }
 
     private static PageReadDiagnostics ParseDiagnostics(string? rawResult)

@@ -12,21 +12,45 @@
               RowSpacing="10">
             <StackPanel Grid.Row="0"
                         Spacing="3">
-                <TextBlock Text="Embedded TUI Browser Feasibility"
+                <TextBlock Text="Cruise Discovery"
                            FontWeight="SemiBold"
                            FontSize="17" />
-                <TextBlock Text="Test whether TUI's Cruise of the Week can be displayed safely inside Kryten."
+                <TextBlock Text="Choose a trusted cruise source. Nothing loads until you select one."
                            Classes="secondary-text"
                            TextWrapping="Wrap" />
             </StackPanel>
 
-            <WrapPanel Grid.Row="1"
-                       Orientation="Horizontal"
-                       ItemSpacing="8"
-                       LineSpacing="8">
-                <Button Content="Load TUI in Embedded Browser"
-                        Classes="primary"
-                        Command="{Binding LoadCommand}" />
+            <StackPanel Grid.Row="1"
+                        Spacing="8">
+                <ItemsControl ItemsSource="{Binding SourceOptions}"
+                              IsVisible="{Binding !HasStarted}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal"
+                                       ItemSpacing="8"
+                                       LineSpacing="8" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="viewModels:CruiseDiscoverySourceOptionViewModel">
+                            <Button Content="{Binding DisplayName}"
+                                    Classes="primary"
+                                    Command="{Binding OpenCommand}"
+                                    ToolTip.Tip="{Binding Description}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <WrapPanel Orientation="Horizontal"
+                           ItemSpacing="8"
+                           LineSpacing="8"
+                           IsVisible="{Binding HasStarted}">
+                <Button Content="Back"
+                        Classes="secondary"
+                        Command="{Binding BackCommand}" />
+                <Button Content="Forward"
+                        Classes="secondary"
+                        Command="{Binding ForwardCommand}" />
                 <Button Content="Stop"
                         Classes="secondary"
                         Command="{Binding StopCommand}"
@@ -43,11 +67,12 @@
                         Classes="secondary"
                         Command="{Binding VerifyReadAccessCommand}"
                         IsVisible="{Binding HasStarted}" />
-            </WrapPanel>
+                </WrapPanel>
+            </StackPanel>
 
             <Grid Grid.Row="2"
                   ColumnDefinitions="Auto,*"
-                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
+                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
                   ColumnSpacing="10"
                   RowSpacing="4">
                 <TextBlock Grid.Row="0"
@@ -59,10 +84,28 @@
                            TextWrapping="Wrap" />
 
                 <TextBlock Grid.Row="1"
+                           Text="Source"
+                           FontWeight="SemiBold"
+                           IsVisible="{Binding HasSelectedSource}" />
+                <TextBlock Grid.Row="1"
+                           Grid.Column="1"
+                           Text="{Binding SelectedSourceName}"
+                           IsVisible="{Binding HasSelectedSource}" />
+
+                <TextBlock Grid.Row="2"
+                           Text="Trusted host"
+                           FontWeight="SemiBold"
+                           IsVisible="{Binding HasSelectedSource}" />
+                <TextBlock Grid.Row="2"
+                           Grid.Column="1"
+                           Text="{Binding TrustedHost}"
+                           IsVisible="{Binding HasSelectedSource}" />
+
+                <TextBlock Grid.Row="3"
                            Text="Address"
                            FontWeight="SemiBold"
                            IsVisible="{Binding HasCurrentAddress}" />
-                <TextBox Grid.Row="1"
+                <TextBox Grid.Row="3"
                          Grid.Column="1"
                          Text="{Binding CurrentAddress, Mode=OneWay}"
                          IsReadOnly="True"
@@ -70,30 +113,30 @@
                          PlaceholderText="The current page address will appear here."
                          IsVisible="{Binding HasCurrentAddress}" />
 
-                <TextBlock Grid.Row="2"
+                <TextBlock Grid.Row="4"
                            Text="Page title"
                            FontWeight="SemiBold"
                            IsVisible="{Binding HasPageTitle}" />
-                <TextBlock Grid.Row="2"
+                <TextBlock Grid.Row="4"
                            Grid.Column="1"
                            Text="{Binding PageTitle}"
                            TextWrapping="Wrap"
                            IsVisible="{Binding HasPageTitle}" />
 
-                <TextBlock Grid.Row="3"
+                <TextBlock Grid.Row="5"
                            Text="Visible text sample received"
                            FontWeight="SemiBold"
                            IsVisible="{Binding HasPageTitle}" />
-                <TextBlock Grid.Row="3"
+                <TextBlock Grid.Row="5"
                            Grid.Column="1"
                            Text="{Binding VisibleTextSampleStatus}"
                            IsVisible="{Binding HasPageTitle}" />
 
-                <TextBlock Grid.Row="4"
+                <TextBlock Grid.Row="6"
                            Text="Navigation history"
                            FontWeight="SemiBold"
                            IsVisible="{Binding HasNavigationHistory}" />
-                <TextBox Grid.Row="4"
+                <TextBox Grid.Row="6"
                          Grid.Column="1"
                          Text="{Binding NavigationHistory, Mode=OneWay}"
                          IsReadOnly="True"
@@ -103,11 +146,11 @@
                          ScrollViewer.VerticalScrollBarVisibility="Auto"
                          IsVisible="{Binding HasNavigationHistory}" />
 
-                <TextBlock Grid.Row="5"
+                <TextBlock Grid.Row="7"
                            Text="Cruise links found"
                            FontWeight="SemiBold"
                            IsVisible="{Binding HasCruiseLinks}" />
-                <TextBox Grid.Row="5"
+                <TextBox Grid.Row="7"
                          Grid.Column="1"
                          Text="{Binding CruiseLinks, Mode=OneWay}"
                          IsReadOnly="True"
@@ -135,7 +178,7 @@
                                MinHeight="240"
                                HorizontalAlignment="Stretch"
                                VerticalAlignment="Stretch"
-                               IsVisible="{Binding HasStarted}"
+                               IsVisible="{Binding IsBrowserVisible}"
                                NavigationStarted="EmbeddedBrowser_OnNavigationStarted"
                                NavigationCompleted="EmbeddedBrowser_OnNavigationCompleted" />
             </Grid>
