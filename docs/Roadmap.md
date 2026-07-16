@@ -6,18 +6,17 @@ v0.1.0
 
 Current Phase
 -------------
-Phase 6 – Skills Platform
+Phase 7 – Cruise Assistant
 
 Current Prompt
 --------------
-Prompt 035h – Cruise of the Week View
+Prompt 036 – Cruise Discovery and Capture
 
-Make the existing Cruise of the Week Skill usable from the desktop application.
+Allow Robin to browse trusted cruise offer pages from Kryten, beginning with
+TUI's Marella Cruise of the Week, and explicitly capture interesting cruises for
+later saving, rating and price comparison.
 
-Selecting Cruise of the Week should open a focused page where Robin can explicitly
-retrieve and read Marella's current Cruise of the Week.
-
-### Phase 1 – API Foundation (Current)
+### Phase 1 – API Foundation
 
 ✔ Prompt 001 – Domain
 ✔ Prompt 002 – Application
@@ -336,7 +335,7 @@ This establishes the visual shell that future Skills will plug into.
 
 ---
 
-## Prompt 035h – Cruise of the Week View
+## Prompt 035h – Cruise of the Week View ✅
 
 Make the existing Cruise of the Week Skill usable from the Avalonia application
 before the complete Cruise Dashboard is introduced in Prompt 042.
@@ -372,6 +371,11 @@ Requirements:
 
 Prompt 042 remains responsible for the complete Cruise Dashboard.
 
+The focused view, Skill execution path and deterministic UI tests are complete.
+Live retrieval through the original `HttpClient` provider is currently blocked
+by TUI's website protection. Prompt 036 replaces direct unattended retrieval as
+the primary user workflow with browser-assisted discovery and explicit capture.
+
 ---
 
 # Phase 7 – Cruise Assistant
@@ -380,19 +384,42 @@ The Cruise Assistant becomes the first complete end-user capability built on the
 
 ---
 
-## Prompt 036 – Cruise History Store
+## Prompt 036 – Cruise Discovery and Capture
 
-Persist Cruise of the Week observations locally.
+Create the first usable cruise-research workflow.
 
-Store snapshots only when meaningful changes occur.
+Allow Robin to:
+
+- browse trusted cruise offer pages from within Kryten
+- begin with TUI and Marella Cruise of the Week
+- move between supported cruise sources using clear buttons or chips
+- open the relevant provider page for further investigation or booking
+- explicitly capture a displayed cruise as provider-independent Cruise data
+- review captured details before saving them
+- preserve the source company and source reference
+- handle unsupported pages or incomplete extraction honestly
+
+The initial implementation should investigate Avalonia `NativeWebView` as the
+browser surface. Browser-specific types, HTML and extraction selectors must not
+leak into the shared Cruise domain or application contracts.
+
+Browsing must remain useful when automatic capture is unavailable. Do not make
+booking decisions, submit purchases, store payment details or introduce
+unattended background scraping.
+
+Architecture must support later cruise operators and retailers without assuming
+that the company operating a cruise is always the company advertising or selling
+it.
 
 ---
 
-## Prompt 037 – Price History
+## Prompt 037 – Cruise History and Price Tracking
 
-Display historical pricing.
+Persist explicitly captured Cruise observations locally.
 
-Include:
+Store a new snapshot only when meaningful observable values change.
+
+Display historical pricing including:
 
 - First observed
 - Current price
@@ -401,19 +428,28 @@ Include:
 - Observation count
 - Trend
 
+Preserve observations even when Robin never books the cruise so that later
+offers can be compared with prices seen previously.
+
 ---
 
-## Prompt 038 – Watch List
+## Prompt 038 – Saved Cruises and Preferences
 
-Allow users to monitor selected cruises.
+Allow Robin to save, organise and evaluate interesting cruises.
 
 Support:
 
-- Favourite cruises
-- Favourite ships
-- Departure month
-- Maximum budget
-- Preferred cabin
+- interest level such as Not for us, Maybe or Strong candidate
+- overall rating
+- itinerary, ship and value ratings where useful
+- personal notes
+- favourite cruises and ships
+- departure month
+- maximum budget
+- preferred cabin
+
+Keep Robin's evaluation separate from provider observations. Use saved ratings
+and choices as the first explicit preference data for later cruise comparison.
 
 ---
 
@@ -425,7 +461,7 @@ Notify users when:
 
 - Prices fall
 - New promotions appear
-- Watched cruises meet budget
+- Saved cruises meet budget or preference criteria
 
 ---
 
@@ -447,7 +483,7 @@ Track:
 
 Detect newly published itineraries.
 
-Initially support Marella.
+Initially support Marella and the trusted sources proven by Prompt 036.
 
 Architecture should support future providers.
 
@@ -459,8 +495,9 @@ Complete the Cruise Assistant.
 
 Display:
 
+- Cruise discovery sources
 - Cruise of the Week
-- Watch List
+- Saved cruises and ratings
 - Price History
 - Alerts
 - Recent Changes
@@ -474,9 +511,12 @@ The first end-user Skill is complete.
 
 Kryten can now:
 
-- Monitor Cruise of the Week
+- Browse trusted cruise offer sources
+- Capture and save interesting cruises
+- Rate cruises and record personal preferences
+- Monitor Cruise of the Week where the source permits
 - Track historical prices
-- Maintain watch lists
+- Compare current offers with previously observed prices
 - Detect price changes
 - Detect itinerary changes
 - Monitor cabin availability

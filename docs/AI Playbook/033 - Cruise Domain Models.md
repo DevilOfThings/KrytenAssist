@@ -497,35 +497,55 @@ Prompt 033 is complete when:
 
 ## Results
 
-> Complete this section after implementation.
-
 ### Status
 
-_Not Started_
+✅ Complete. The provider-independent Cruise domain was implemented, tested and
+verified without introducing retrieval, persistence or UI concerns.
 
 ### Files Created
 
-_To be completed._
+- `KrytenAssist.Core/Cruises/CruiseProvider.cs`
+- `KrytenAssist.Core/Cruises/CruisePrice.cs`
+- `KrytenAssist.Core/Cruises/CruiseOffer.cs`
+- `KrytenAssist.Core/Cruises/CruiseSnapshot.cs`
+- `KrytenAssist.Core/Cruises/CruiseObservation.cs`
+- Corresponding tests under `KrytenAssist.Core.Tests/Cruises/`
+- `KrytenAssist.Core.Tests/KrytenAssist.Core.Tests.csproj`
 
 ### Files Updated
 
-_To be completed._
+- `KrytenAssist.sln`
 
 ### Build
 
-_To be completed._
+✅ `dotnet build KrytenAssist.sln --no-restore`
+
+Verified again on 16 July 2026: succeeded with 0 errors.
 
 ### Tests
 
-_To be completed._
+✅ `dotnet test KrytenAssist.sln --no-build --no-restore`
+
+Verified again on 16 July 2026: Core 62 passed; solution total 231 passed,
+0 failed and 0 skipped.
 
 ### Git Commit
 
-_Not Created_
+- `fa5476f` through `72bc442` – Cruise domain foundation, models, tests and
+  verification
 
 ---
 
 # Lessons Learned
 
-> Complete this section after implementation.
-
+- Provider identity should be represented as data rather than an enum so new
+  sources do not require shared-domain changes.
+- Money requires `decimal`, an explicit currency and an honest price basis;
+  display text alone is not a stable domain model.
+- Separating an offer, its current snapshot and the observation event creates a
+  clean foundation for later history and comparison.
+- Optional provider data should remain optional instead of being replaced with
+  fabricated defaults.
+- The future multi-retailer workflow may require distinguishing cruise operator
+  from advertising or selling source; that should be introduced only when the
+  discovery contract demonstrates the exact requirement.

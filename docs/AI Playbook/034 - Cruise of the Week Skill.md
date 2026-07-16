@@ -815,39 +815,68 @@ Prompt 034 is complete when:
 
 ## Results
 
-> Complete this section after implementation.
-
 ### Status
 
-_Not Started_
+✅ Implementation complete and verified offline. The provider-independent
+retrieval contract, Marella parser and HTTP adapter, Skill, configuration,
+dependency injection and tests were delivered.
+
+⚠️ Live use is currently limited: TUI's website protection returns HTTP 403 to
+the application's direct `HttpClient` request. The implementation remains valid
+as an architectural adapter, but it is not a reliable live acquisition route.
 
 ### Files Created
 
-_To be completed._
+- Application Cruise retrieval contract and controlled exception
+- Marella parser, HTTP provider, options and DI registration in Infrastructure
+- `CruiseOfTheWeekSkill` in Avalonia
+- Marella parser, provider, DI and Skill tests in Avalonia Tests
 
 ### Files Updated
 
-_To be completed._
+- Avalonia and Infrastructure project references
+- `KrytenAssist.Avalonia/Program.cs`
+- `KrytenAssist.Avalonia/appsettings.json`
+- Skill dependency injection and its existing tests
 
 ### Build
 
-_To be completed._
+✅ `dotnet build KrytenAssist.sln --no-restore`
+
+Verified again on 16 July 2026: succeeded with 0 errors.
 
 ### Tests
 
-_To be completed._
+✅ Parser, transport, cancellation, configuration, DI, Skill execution and
+controlled-failure tests remain deterministic and offline.
+
+Verified again on 16 July 2026: 231 passed, 0 failed and 0 skipped.
 
 ### Manual Verification
 
-_To be completed if performed._
+The desktop workflow was exercised after Prompt 035h. The page rendered and the
+Skill executed, but live retrieval failed because TUI blocked the direct request.
+Subsequent investigation confirmed the same page works in an interactive browser.
 
 ### Git Commit
 
-_Not Created_
+- `8a0057e` through `8fdafc7` – retrieval contract, Marella adapter, Skill,
+  configuration, tests and verification
 
 ---
 
 # Lessons Learned
 
-> Complete this section after implementation.
-
+- A well-isolated parser and HTTP provider can still fail operationally when the
+  source rejects non-browser clients.
+- Passing fixture-based tests proves deterministic mapping, not continued access
+  to a third-party website.
+- External-source feasibility should be verified with a small live spike before
+  a complete provider workflow is scheduled.
+- Anti-bot protection should not be defeated with escalating header imitation or
+  unattended scraping; an explicit browser-assisted workflow is more appropriate
+  for a personal desktop assistant.
+- The application-owned interface remains valuable because browser capture,
+  manual import or another retailer can supply the same `CruiseObservation`.
+- Email notifications can signal that an offer changed, but Marella's email does
+  not contain the structured itinerary and price needed by Kryten.

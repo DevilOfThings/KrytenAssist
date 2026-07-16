@@ -898,30 +898,66 @@ Prompt 035 is complete when:
 
 ## Results
 
-> Complete this section after implementation.
-
 ### Status
 
-Not started.
+✅ Complete. Dashboard and navigation were implemented through Prompts 035a–035g,
+then 035h added the dedicated Cruise of the Week capability page.
 
 ### Files Created
 
-To be completed.
+- navigation models and `ShellViewModel`
+- `DashboardView`, `SkillDetailsView` and `AssistantWorkspaceView`
+- shell dependency-injection registration
+- dashboard, navigation, shell and DI tests
+- `CruiseOfTheWeekViewModel` and `CruiseOfTheWeekView`
+- Cruise of the Week ViewModel and shell-routing tests
 
 ### Files Updated
 
-To be completed.
+- `KrytenAssist.Avalonia/App.axaml`
+- `KrytenAssist.Avalonia/MainWindow.axaml`
+- `KrytenAssist.Avalonia/MainWindow.axaml.cs`
+- `KrytenAssist.Avalonia/Program.cs`
+- related shell and test-composition files
+- `docs/Roadmap.md`
 
 ### Build
 
-Not run.
+✅ `dotnet build KrytenAssist.sln --no-restore`
+
+Verified again on 16 July 2026: succeeded with 0 errors. Seven pre-existing
+warnings remain and none were introduced by this documentation backfill.
 
 ### Tests
 
-Not run.
+✅ `dotnet test KrytenAssist.sln --no-build --no-restore`
+
+Verified again on 16 July 2026: 231 passed, 0 failed and 0 skipped.
+
+### Manual Verification
+
+Dashboard navigation, Assistant composition and the dedicated Cruise of the Week
+view were exercised. The presentation workflow works, including controlled error
+handling, but live TUI retrieval is unavailable through the current HTTP provider.
+
+### Git Commits
+
+- `6a9f85b` through `1480d75` – navigation foundation through verification
+- `97f3b64` – Cruise of the Week View
 
 ---
 
 ## Lessons Learned
 
-> Complete after implementation.
+- Registry-driven Skill discovery keeps the shell independent of concrete Skill
+  implementations.
+- The Assistant workspace must be composed as a single shell destination; placing
+  overlapping views directly in the window creates layering and visibility bugs.
+- Capability-specific presentation can remain MVVM-driven while executing through
+  the generic `ISkill` contract.
+- Navigation should never execute a network-backed Skill. Retrieval belongs behind
+  an explicit user action with loading, cancellation, error and retry states.
+- A polished view cannot make an inaccessible external source usable; acquisition
+  feasibility must be treated separately from presentation completeness.
+- The failed TUI route clarified the next product goal: cruise discovery, explicit
+  browser-assisted capture, saved candidates, ratings and later price comparison.

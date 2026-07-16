@@ -305,43 +305,40 @@ The Skills platform should now be ready for Prompt 033.
 
 #### Status
 
-_In Progress_
-
-Completed:
-
-- Step 1 – Skills namespace and folder structure
-- Step 2 – Core Skill abstractions
-- Step 3 – Skill registry
-
-Remaining:
-
-- Step 4 – Dependency Injection 
-- Step 5 – Sample Skill
-- Step 6 – Unit Tests
-- Step 7 – Framework Verification
+✅ Complete. All seven implementation and verification steps were completed.
+The framework supports Skill metadata, requests, contexts, results, registry
+lookup, dependency injection and a deterministic sample Skill.
 
 ### Files Created
 
-- Skills/Models/SkillManifest.cs
-- Skills/Models/SkillContext.cs
-- Skills/Models/SkillRequest.cs
-- Skills/Models/SkillResult.cs
-- Skills/Services/ISkill.cs
-- Skills/Services/ISkillRegistry.cs
-- Skills/Services/SkillRegistry.cs
+- `KrytenAssist.Avalonia/Skills/Models/SkillManifest.cs`
+- `KrytenAssist.Avalonia/Skills/Models/SkillContext.cs`
+- `KrytenAssist.Avalonia/Skills/Models/SkillRequest.cs`
+- `KrytenAssist.Avalonia/Skills/Models/SkillResult.cs`
+- `KrytenAssist.Avalonia/Skills/Services/ISkill.cs`
+- `KrytenAssist.Avalonia/Skills/Services/ISkillRegistry.cs`
+- `KrytenAssist.Avalonia/Skills/Services/SkillRegistry.cs`
+- `KrytenAssist.Avalonia/Skills/Samples/EchoSkill.cs`
+- `KrytenAssist.Avalonia/DependencyInjection/SkillServiceCollectionExtensions.cs`
+- Skill registry, dependency-injection and Echo Skill tests
 
 ### Files Updated
 
-- None
+- `KrytenAssist.Avalonia/Program.cs`
+- `docs/AI Playbook/032 - Skills Framework.md`
 
 ### Build
 
-- ✅ dotnet build successful
-- ✅ dotnet test successful
+- ✅ `dotnet build KrytenAssist.sln --no-restore`
+- ✅ `dotnet test KrytenAssist.sln --no-build --no-restore`
+- Verified again on 16 July 2026: build succeeded with 0 errors; 231 tests
+  passed, 0 failed and 0 skipped.
 
 ### Git Commit
 
-_Not Created_
+- `bc572b2` – Skills foundations through sample Skill
+- `3fb385d` – Skills framework tests
+- `e326355` – Skills framework verification prompt
 
 ---
 
@@ -353,3 +350,7 @@ _Not Created_
 - Case-insensitive Skill identifiers improve usability while still enforcing uniqueness.
 - Registration order should be preserved so future user interfaces can present Skills consistently.
 - Automatic discovery and dependency injection are best introduced after the core contracts have stabilised.
+- Resolving every registered Skill in tests catches missing constructor
+  dependencies that isolated Skill tests can overlook.
+- Sample Skills are most useful when they prove the complete registry and
+  dependency-injection path without introducing network or persistence concerns.

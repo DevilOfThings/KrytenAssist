@@ -2054,56 +2054,80 @@ Kryten Assist will have moved from a text-only AI conversation client to the fir
 
 ## Results
 
-To be completed after implementation.
-
 ### Status
 
-Not started.
+✅ Complete. The provider-independent Tool framework, three deterministic built-in
+Tools and OpenAI tool-calling integration were implemented and committed.
 
 ---
 
 ### Files Created
 
-To be completed after implementation.
+- `KrytenAssist.Avalonia/Models/ToolDefinition.cs`
+- `KrytenAssist.Avalonia/Models/ToolInvocation.cs`
+- `KrytenAssist.Avalonia/Models/ToolResult.cs`
+- `KrytenAssist.Avalonia/Services/ITool.cs`
+- `KrytenAssist.Avalonia/Services/IToolRegistry.cs`
+- `KrytenAssist.Avalonia/Services/ToolRegistry.cs`
+- `KrytenAssist.Avalonia/Tools/ApplicationInfoTool.cs`
+- `KrytenAssist.Avalonia/Tools/CalculatorTool.cs`
+- `KrytenAssist.Avalonia/Tools/CurrentDateTimeTool.cs`
+- `KrytenAssist.Avalonia/DependencyInjection/ToolServiceCollectionExtensions.cs`
+- Tool tests under `KrytenAssist.Avalonia.Tests/Services/`
 
 ---
 
 ### Files Updated
 
-To be completed after implementation.
+- `KrytenAssist.Avalonia/Services/OpenAIConversationService.cs`
+- `KrytenAssist.Avalonia/Options/ConversationOptions.cs`
+- `KrytenAssist.Avalonia/Program.cs`
+- `KrytenAssist.Avalonia/appsettings.json`
+- project and solution files
 
 ---
 
 ### Build
 
-To be completed after implementation.
+✅ `dotnet build KrytenAssist.sln --no-restore`
+
+Verified again on 16 July 2026: succeeded with 0 errors. Seven pre-existing
+warnings remain: five `NU1903` SQLite package vulnerability warnings and two
+unused command-event warnings.
 
 ---
 
 ### Tests
 
-To be completed after implementation.
+✅ `dotnet test KrytenAssist.sln --no-build --no-restore`
+
+Verified again on 16 July 2026: 231 passed, 0 failed, 0 skipped.
 
 ---
 
 ### Live Verification
 
-To be completed after implementation.
+Tool calling was verified through the live OpenAI conversation provider during
+the original implementation. The current documentation backfill did not repeat
+an external provider request.
 
 ---
 
 ### Git Commit
 
-Suggested commit message:
-
-```text
-031 - Tools
-```
+`ed745af` – `031 - Tools`
 
 ---
 
 ### Lessons Learnt
 
-To be completed after implementation.
-
+- Tool contracts must be owned by Kryten rather than by an AI-provider SDK.
+- Registry-driven dispatch keeps conversation orchestration independent of
+  individual Tool implementations.
+- Deterministic built-in Tools provide meaningful offline test coverage before
+  live provider verification.
+- Tool iteration limits and controlled failures are necessary to prevent an AI
+  provider from creating unbounded execution loops.
+- Tool results belong in the active provider interaction, while only successful
+  conversational turns belong in conversation memory.
 
