@@ -388,6 +388,13 @@ The Cruise Assistant becomes the first complete end-user capability built on the
 
 Create the first usable cruise-research workflow.
 
+Current status: Prompt 036a is complete with a `Go` decision. TUI can be browsed
+interactively in an embedded, responsive macOS WebView, the cookie message can be
+accepted, and read-only page access can recover a detailed Marella offer link
+before TUI redirects into its generic booking flow. The remaining Prompt 036
+steps will build the controlled discovery and explicit capture workflow on that
+foundation.
+
 Allow Robin to:
 
 - browse trusted cruise offer pages from within Kryten

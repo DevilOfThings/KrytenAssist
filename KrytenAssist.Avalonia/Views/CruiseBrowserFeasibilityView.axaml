@@ -1,0 +1,144 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="clr-namespace:KrytenAssist.Avalonia.ViewModels"
+             x:Class="KrytenAssist.Avalonia.Views.CruiseBrowserFeasibilityView"
+             x:DataType="viewModels:CruiseBrowserFeasibilityViewModel">
+    <Border Classes="workspace-surface"
+            Padding="14"
+            Margin="20,0,20,20"
+            VerticalAlignment="Stretch"
+            HorizontalAlignment="Stretch">
+        <Grid RowDefinitions="Auto,Auto,Auto,*"
+              RowSpacing="10">
+            <StackPanel Grid.Row="0"
+                        Spacing="3">
+                <TextBlock Text="Embedded TUI Browser Feasibility"
+                           FontWeight="SemiBold"
+                           FontSize="17" />
+                <TextBlock Text="Test whether TUI's Cruise of the Week can be displayed safely inside Kryten."
+                           Classes="secondary-text"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+
+            <WrapPanel Grid.Row="1"
+                       Orientation="Horizontal"
+                       ItemSpacing="8"
+                       LineSpacing="8">
+                <Button Content="Load TUI in Embedded Browser"
+                        Classes="primary"
+                        Command="{Binding LoadCommand}" />
+                <Button Content="Stop"
+                        Classes="secondary"
+                        Command="{Binding StopCommand}"
+                        IsVisible="{Binding IsNavigating}" />
+                <Button Content="Refresh"
+                        Classes="secondary"
+                        Command="{Binding RefreshCommand}"
+                        IsVisible="{Binding HasStarted}" />
+                <Button Content="Close Browser"
+                        Classes="secondary"
+                        Command="{Binding CloseCommand}"
+                        IsVisible="{Binding HasStarted}" />
+                <Button Content="Verify Page Access"
+                        Classes="secondary"
+                        Command="{Binding VerifyReadAccessCommand}"
+                        IsVisible="{Binding HasStarted}" />
+            </WrapPanel>
+
+            <Grid Grid.Row="2"
+                  ColumnDefinitions="Auto,*"
+                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
+                  ColumnSpacing="10"
+                  RowSpacing="4">
+                <TextBlock Grid.Row="0"
+                           Text="Status"
+                           FontWeight="SemiBold" />
+                <TextBlock Grid.Row="0"
+                           Grid.Column="1"
+                           Text="{Binding StatusMessage}"
+                           TextWrapping="Wrap" />
+
+                <TextBlock Grid.Row="1"
+                           Text="Address"
+                           FontWeight="SemiBold"
+                           IsVisible="{Binding HasCurrentAddress}" />
+                <TextBox Grid.Row="1"
+                         Grid.Column="1"
+                         Text="{Binding CurrentAddress, Mode=OneWay}"
+                         IsReadOnly="True"
+                         TextWrapping="Wrap"
+                         PlaceholderText="The current page address will appear here."
+                         IsVisible="{Binding HasCurrentAddress}" />
+
+                <TextBlock Grid.Row="2"
+                           Text="Page title"
+                           FontWeight="SemiBold"
+                           IsVisible="{Binding HasPageTitle}" />
+                <TextBlock Grid.Row="2"
+                           Grid.Column="1"
+                           Text="{Binding PageTitle}"
+                           TextWrapping="Wrap"
+                           IsVisible="{Binding HasPageTitle}" />
+
+                <TextBlock Grid.Row="3"
+                           Text="Visible text sample received"
+                           FontWeight="SemiBold"
+                           IsVisible="{Binding HasPageTitle}" />
+                <TextBlock Grid.Row="3"
+                           Grid.Column="1"
+                           Text="{Binding VisibleTextSampleStatus}"
+                           IsVisible="{Binding HasPageTitle}" />
+
+                <TextBlock Grid.Row="4"
+                           Text="Navigation history"
+                           FontWeight="SemiBold"
+                           IsVisible="{Binding HasNavigationHistory}" />
+                <TextBox Grid.Row="4"
+                         Grid.Column="1"
+                         Text="{Binding NavigationHistory, Mode=OneWay}"
+                         IsReadOnly="True"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         MaxHeight="110"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                         IsVisible="{Binding HasNavigationHistory}" />
+
+                <TextBlock Grid.Row="5"
+                           Text="Cruise links found"
+                           FontWeight="SemiBold"
+                           IsVisible="{Binding HasCruiseLinks}" />
+                <TextBox Grid.Row="5"
+                         Grid.Column="1"
+                         Text="{Binding CruiseLinks, Mode=OneWay}"
+                         IsReadOnly="True"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         MaxHeight="130"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                         IsVisible="{Binding HasCruiseLinks}" />
+            </Grid>
+
+            <Grid Grid.Row="3"
+                  RowDefinitions="Auto,*"
+                  RowSpacing="8">
+                <Border Grid.Row="0"
+                        Classes="status-surface"
+                        Padding="10"
+                        IsVisible="{Binding HasError}">
+                    <TextBlock Text="{Binding ErrorMessage}"
+                               Classes="error-text"
+                               TextWrapping="Wrap" />
+                </Border>
+
+                <NativeWebView x:Name="EmbeddedBrowser"
+                               Grid.Row="1"
+                               MinHeight="240"
+                               HorizontalAlignment="Stretch"
+                               VerticalAlignment="Stretch"
+                               IsVisible="{Binding HasStarted}"
+                               NavigationStarted="EmbeddedBrowser_OnNavigationStarted"
+                               NavigationCompleted="EmbeddedBrowser_OnNavigationCompleted" />
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

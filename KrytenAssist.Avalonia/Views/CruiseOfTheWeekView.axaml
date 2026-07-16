@@ -1,10 +1,15 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:viewModels="clr-namespace:KrytenAssist.Avalonia.ViewModels"
+             xmlns:views="clr-namespace:KrytenAssist.Avalonia.Views"
              x:Class="KrytenAssist.Avalonia.Views.CruiseOfTheWeekView"
              x:DataType="viewModels:CruiseOfTheWeekViewModel">
-    <ScrollViewer VerticalScrollBarVisibility="Auto"
-                  HorizontalScrollBarVisibility="Disabled">
+    <Grid RowDefinitions="Auto,*">
+        <ScrollViewer Grid.Row="0"
+                      MaxHeight="220"
+                      IsVisible="{Binding !BrowserFeasibility.HasStarted}"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
         <StackPanel Margin="20"
                     Spacing="16">
             <StackPanel Spacing="4">
@@ -154,5 +159,11 @@
                        HorizontalAlignment="Center"
                        Margin="0,28" />
         </StackPanel>
-    </ScrollViewer>
+        </ScrollViewer>
+
+        <views:CruiseBrowserFeasibilityView Grid.Row="1"
+                                            VerticalAlignment="Stretch"
+                                            HorizontalAlignment="Stretch"
+                                            DataContext="{Binding BrowserFeasibility}" />
+    </Grid>
 </UserControl>

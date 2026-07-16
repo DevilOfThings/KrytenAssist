@@ -54,6 +54,11 @@ public sealed class ShellDependencyInjectionTests
         Assert.NotSame(first, second);
         Assert.NotSame(first.AssistantWorkspace, second.AssistantWorkspace);
         Assert.NotSame(first.CruiseOfTheWeek, second.CruiseOfTheWeek);
+        Assert.NotSame(
+            first.CruiseOfTheWeek.BrowserFeasibility,
+            second.CruiseOfTheWeek.BrowserFeasibility);
+        Assert.False(first.CruiseOfTheWeek.BrowserFeasibility.HasStarted);
+        Assert.False(second.CruiseOfTheWeek.BrowserFeasibility.HasStarted);
         Assert.True(first.IsDashboardSelected);
         Assert.True(second.IsDashboardSelected);
         Assert.Contains(first.NavigationItems, item => item.SkillId == FirstManifest.Id);

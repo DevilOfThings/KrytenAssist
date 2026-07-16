@@ -33,6 +33,8 @@ public sealed class CruiseOfTheWeekViewModelTests
         Assert.False(viewModel.HasObservation);
         Assert.False(viewModel.IsBusy);
         Assert.False(viewModel.HasError);
+        Assert.False(viewModel.BrowserFeasibility.HasStarted);
+        Assert.False(viewModel.BrowserFeasibility.IsNavigating);
     }
 
     [Fact]

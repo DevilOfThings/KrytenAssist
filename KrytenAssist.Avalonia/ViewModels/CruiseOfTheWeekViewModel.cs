@@ -38,6 +38,7 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
 
         _skill = skillRegistry.Find(SkillId);
         _clock = clock;
+        BrowserFeasibility = new CruiseBrowserFeasibilityViewModel();
         _retrieveCommand = new AsyncCommand(RetrieveAsync, () => CanRetrieve);
         _cancelCommand = new DelegateCommand(Cancel, () => IsBusy);
     }
@@ -47,6 +48,8 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
     public ICommand RetrieveCommand => _retrieveCommand;
 
     public ICommand CancelCommand => _cancelCommand;
+
+    public CruiseBrowserFeasibilityViewModel BrowserFeasibility { get; }
 
     public CruiseObservation? Observation
     {
