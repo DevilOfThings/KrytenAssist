@@ -5,7 +5,8 @@ public sealed record CruiseObservation
     public CruiseObservation(
         CruiseSnapshot snapshot,
         DateTimeOffset observedAt,
-        string? sourceReference = null)
+        string? sourceReference = null,
+        CruiseSource? source = null)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
 
@@ -19,6 +20,7 @@ public sealed record CruiseObservation
         Snapshot = snapshot;
         ObservedAt = observedAt;
         SourceReference = sourceReference;
+        Source = source;
     }
 
     public CruiseSnapshot Snapshot { get; }
@@ -26,4 +28,6 @@ public sealed record CruiseObservation
     public DateTimeOffset ObservedAt { get; }
 
     public string? SourceReference { get; }
+
+    public CruiseSource? Source { get; }
 }

@@ -30,6 +30,23 @@ public sealed class CruiseObservationTests
         var observation = new CruiseObservation(CreateSnapshot(), ObservedAt);
 
         observation.SourceReference.Should().BeNull();
+        observation.Source.Should().BeNull();
+    }
+
+    [Fact]
+    public void Constructor_ShouldRetainRetailSourceIndependentlyOfProvider()
+    {
+        var source = new CruiseSource("tui", "TUI");
+
+        var observation = new CruiseObservation(
+            CreateSnapshot(),
+            ObservedAt,
+            "https://www.tui.co.uk/cruise/example",
+            source);
+
+        observation.Source.Should().BeSameAs(source);
+        observation.SourceReference.Should().Be("https://www.tui.co.uk/cruise/example");
+        observation.Snapshot.Offer.Provider.Name.Should().Be("Sample Cruises");
     }
 
     [Fact]
@@ -68,6 +85,11 @@ public sealed class CruiseObservationTests
         first.Should().Be(second);
         first.Should().NotBe(new CruiseObservation(snapshot, ObservedAt.AddMinutes(1), "sample-reference"));
         first.Should().NotBe(new CruiseObservation(snapshot, ObservedAt, "other-reference"));
+        first.Should().NotBe(new CruiseObservation(
+            snapshot,
+            ObservedAt,
+            "sample-reference",
+            new CruiseSource("tui", "TUI")));
     }
 
     private static CruiseSnapshot CreateSnapshot()
