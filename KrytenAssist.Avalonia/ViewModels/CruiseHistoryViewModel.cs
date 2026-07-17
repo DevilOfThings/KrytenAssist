@@ -38,6 +38,8 @@ public sealed class CruiseHistoryViewModel : INotifyPropertyChanged
     private string? _historyErrorMessage;
     private bool _hasLoaded;
     private IReadOnlyList<CruiseHistoryItemViewModel> _histories = Array.Empty<CruiseHistoryItemViewModel>();
+    private IReadOnlyList<CruiseHistoryGroupViewModel> _historyGroups = Array.Empty<CruiseHistoryGroupViewModel>();
+    private CruiseHistoryGrouping _grouping;
     private CruiseHistoryItemViewModel? _selectedHistory;
     private CancellationTokenSource? _recordCancellation;
     private CancellationTokenSource? _loadCancellation;
@@ -142,6 +144,60 @@ public sealed class CruiseHistoryViewModel : INotifyPropertyChanged
     public bool HasHistoryError => !string.IsNullOrWhiteSpace(HistoryErrorMessage);
     public bool HasLoaded => _hasLoaded;
     public IReadOnlyList<CruiseHistoryItemViewModel> Histories => _histories;
+    public IReadOnlyList<CruiseHistoryGrouping> GroupingOptions { get; } =
+        [CruiseHistoryGrouping.None, CruiseHistoryGrouping.Cruise, CruiseHistoryGrouping.Ship];
+    public CruiseHistoryGrouping Grouping
+    {
+        get => _grouping;
+        set
+        {
+            if (SetField(ref _grouping, value))
+            {
+                OnPropertyChanged(nameof(IsGroupedByNone));
+                OnPropertyChanged(nameof(IsGroupedByCruise));
+                OnPropertyChanged(nameof(IsGroupedByShip));
+                RebuildHistoryGroups();
+            }
+        }
+    }
+
+    public bool IsGroupedByNone
+    {
+        get => Grouping == CruiseHistoryGrouping.None;
+        set
+        {
+            if (value)
+            {
+                Grouping = CruiseHistoryGrouping.None;
+            }
+        }
+    }
+
+    public bool IsGroupedByCruise
+    {
+        get => Grouping == CruiseHistoryGrouping.Cruise;
+        set
+        {
+            if (value)
+            {
+                Grouping = CruiseHistoryGrouping.Cruise;
+            }
+        }
+    }
+
+    public bool IsGroupedByShip
+    {
+        get => Grouping == CruiseHistoryGrouping.Ship;
+        set
+        {
+            if (value)
+            {
+                Grouping = CruiseHistoryGrouping.Ship;
+            }
+        }
+    }
+
+    public IReadOnlyList<CruiseHistoryGroupViewModel> HistoryGroups => _historyGroups;
     public bool HasHistories => Histories.Count > 0;
     public bool IsHistoryEmpty => HasLoaded && !IsLoadingHistory && !HasHistories && !HasHistoryError;
 
@@ -153,6 +209,10 @@ public sealed class CruiseHistoryViewModel : INotifyPropertyChanged
             if (SetField(ref _selectedHistory, value))
             {
                 OnPropertyChanged(nameof(HasSelectedHistory));
+                foreach (var group in HistoryGroups)
+                {
+                    group.SynchronizeSelection(value);
+                }
             }
         }
     }
@@ -289,6 +349,7 @@ public sealed class CruiseHistoryViewModel : INotifyPropertyChanged
                 SelectedHistory = FindPreferred(items, preferredKey, preferredSource)
                     ?? (SelectedHistory is null ? items.FirstOrDefault() : FindMatching(items, SelectedHistory))
                     ?? items.FirstOrDefault();
+                RebuildHistoryGroups();
                 HistoryMessage = items.Length == 0
                     ? "No cruise observations have been recorded yet. Capture a cruise and choose Record Observation to begin its price history."
                     : $"{items.Length} recorded cruise histor{(items.Length == 1 ? "y" : "ies")}.";
@@ -319,6 +380,49 @@ public sealed class CruiseHistoryViewModel : INotifyPropertyChanged
                 OnPropertyChanged(nameof(IsHistoryEmpty));
             }
         }
+    }
+
+    private void RebuildHistoryGroups()
+    {
+        IEnumerable<IGrouping<string, CruiseHistoryItemViewModel>> grouped = Grouping switch
+        {
+            CruiseHistoryGrouping.Cruise => Histories.GroupBy(
+                item => item.Title,
+                StringComparer.OrdinalIgnoreCase),
+            CruiseHistoryGrouping.Ship => Histories.GroupBy(
+                item => item.Ship,
+                StringComparer.OrdinalIgnoreCase),
+            _ => []
+        };
+
+        if (Grouping == CruiseHistoryGrouping.None)
+        {
+            _historyGroups =
+            [
+                new CruiseHistoryGroupViewModel(
+                    null,
+                    Histories,
+                    SelectedHistory,
+                    selected => SelectedHistory = selected)
+            ];
+        }
+        else
+        {
+            var groups = new List<CruiseHistoryGroupViewModel>();
+            foreach (var group in grouped)
+            {
+                var items = group.ToArray();
+                groups.Add(new CruiseHistoryGroupViewModel(
+                    $"{group.Key} · {items.Length} {(items.Length == 1 ? "sailing" : "sailings")}",
+                    items,
+                    SelectedHistory,
+                    selected => SelectedHistory = selected));
+            }
+
+            _historyGroups = groups.AsReadOnly();
+        }
+
+        OnPropertyChanged(nameof(HistoryGroups));
     }
 
     private void CancelRecording()

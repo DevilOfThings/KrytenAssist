@@ -417,7 +417,7 @@
                                 <Grid RowDefinitions="Auto,Auto,Auto,Auto,*"
                                       RowSpacing="8">
                                     <Grid Grid.Row="0"
-                                          ColumnDefinitions="*,Auto,Auto"
+                                          ColumnDefinitions="*,Auto,Auto,Auto"
                                           ColumnSpacing="8">
                                         <StackPanel Spacing="2">
                                             <TextBlock Text="Recorded Cruise History"
@@ -427,11 +427,26 @@
                                                        Classes="secondary-text"
                                                        TextWrapping="Wrap" />
                                         </StackPanel>
-                                        <Button Grid.Column="1"
+                                        <StackPanel Grid.Column="1"
+                                                    Orientation="Horizontal"
+                                                    Spacing="6">
+                                            <TextBlock Text="Group by:"
+                                                       VerticalAlignment="Center" />
+                                            <RadioButton Content="None"
+                                                         GroupName="HistoryGrouping"
+                                                         IsChecked="{Binding History.IsGroupedByNone, Mode=TwoWay}" />
+                                            <RadioButton Content="Cruise"
+                                                         GroupName="HistoryGrouping"
+                                                         IsChecked="{Binding History.IsGroupedByCruise, Mode=TwoWay}" />
+                                            <RadioButton Content="Ship"
+                                                         GroupName="HistoryGrouping"
+                                                         IsChecked="{Binding History.IsGroupedByShip, Mode=TwoWay}" />
+                                        </StackPanel>
+                                        <Button Grid.Column="2"
                                                 Content="Refresh History"
                                                 Classes="secondary"
                                                 Command="{Binding History.RefreshHistoryCommand}" />
-                                        <Button Grid.Column="2"
+                                        <Button Grid.Column="3"
                                                 Content="Cancel Loading"
                                                 Classes="secondary"
                                                 Command="{Binding History.CancelHistoryLoadingCommand}"
@@ -474,10 +489,18 @@
                                                            Text="Current"
                                                            FontWeight="SemiBold" />
                                             </Grid>
-                                            <ListBox ItemsSource="{Binding History.Histories}"
-                                                     Grid.Row="1"
-                                                     SelectedItem="{Binding History.SelectedHistory, Mode=TwoWay}"
-                                                     ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                            <ScrollViewer Grid.Row="1"
+                                                          VerticalScrollBarVisibility="Auto">
+                                            <ItemsControl ItemsSource="{Binding History.HistoryGroups}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="viewModels:CruiseHistoryGroupViewModel">
+                                                        <StackPanel Spacing="4">
+                                                            <TextBlock Text="{Binding Title}"
+                                                                       FontWeight="SemiBold"
+                                                                       IsVisible="{Binding HasTitle}" />
+                                                            <ListBox ItemsSource="{Binding Histories}"
+                                                                     SelectedItem="{Binding SelectedHistory, Mode=TwoWay}"
+                                                                     ScrollViewer.VerticalScrollBarVisibility="Auto">
                                                 <ListBox.ItemTemplate>
                                                     <DataTemplate x:DataType="viewModels:CruiseHistoryItemViewModel">
                                                         <Border Padding="6,3">
@@ -507,7 +530,12 @@
                                                         </Border>
                                                     </DataTemplate>
                                                 </ListBox.ItemTemplate>
-                                            </ListBox>
+                                                            </ListBox>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            </ScrollViewer>
                                         </Grid>
 
                                         <Border Grid.Row="1"
