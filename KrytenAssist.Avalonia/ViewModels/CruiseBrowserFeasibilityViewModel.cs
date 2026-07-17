@@ -38,6 +38,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     private readonly DelegateCommand _captureCommand;
     private readonly DelegateCommand _cancelCaptureCommand;
     private readonly DelegateCommand _openExternalCommand;
+    private readonly DelegateCommand _openSelectedHistoryAtTuiCommand;
     private readonly DelegateCommand _selectAllReadyCommand;
     private readonly DelegateCommand _clearSelectionCommand;
     private readonly DelegateCommand _recordSelectedCommand;
@@ -105,6 +106,10 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         _clock = clock;
         _recordObservation = recordObservation;
         History = history;
+        if (History is not null)
+        {
+            History.PropertyChanged += OnHistoryPropertyChanged;
+        }
         AvailableSources = sourceCatalog.Sources;
         var sourceOptions = new List<CruiseDiscoverySourceOptionViewModel>(AvailableSources.Count);
         foreach (var source in AvailableSources)
@@ -128,6 +133,9 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         _captureCommand = new DelegateCommand(RequestCapture, () => CanCapture);
         _cancelCaptureCommand = new DelegateCommand(CancelCapture, () => IsCapturing);
         _openExternalCommand = new DelegateCommand(RequestExternalOpen, () => CanOpenExternal);
+        _openSelectedHistoryAtTuiCommand = new DelegateCommand(
+            RequestOpenSelectedHistoryAtTui,
+            () => CanOpenSelectedHistoryAtTui);
         _selectAllReadyCommand = new DelegateCommand(
             SelectAllReady,
             () => CanSelectAllReady);
@@ -214,6 +222,8 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     public ICommand CancelCaptureCommand => _cancelCaptureCommand;
 
     public ICommand OpenExternalCommand => _openExternalCommand;
+
+    public ICommand OpenSelectedHistoryAtTuiCommand => _openSelectedHistoryAtTuiCommand;
 
     public ICommand SelectAllReadyCommand => _selectAllReadyCommand;
 
@@ -341,6 +351,8 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
                                    !HasUnsupportedHost &&
                                    Uri.TryCreate(CurrentAddress, UriKind.Absolute, out var address) &&
                                    _trustedHostPolicy.Classify(address, SelectedSource!) == CruiseAddressTrust.Trusted;
+
+    public bool CanOpenSelectedHistoryAtTui => TryGetSelectedHistoryAddress(out _);
 
     public CruiseCaptureStatus? CaptureStatus => _captureStatus;
 
@@ -960,6 +972,14 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         }
     }
 
+    private void RequestOpenSelectedHistoryAtTui()
+    {
+        if (TryGetSelectedHistoryAddress(out var address))
+        {
+            ExternalOpenRequested?.Invoke(this, new BrowserNavigationRequestedEventArgs(address));
+        }
+    }
+
     private void RequestCandidateExternalOpen(Uri address)
     {
         if (SelectedSource is not null &&
@@ -1332,6 +1352,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(CanGo));
         OnPropertyChanged(nameof(CanCapture));
         OnPropertyChanged(nameof(CanOpenExternal));
+        OnPropertyChanged(nameof(CanOpenSelectedHistoryAtTui));
         OnPropertyChanged(nameof(CaptureButtonText));
         _loadCommand.RaiseCanExecuteChanged();
         _goCommand.RaiseCanExecuteChanged();
@@ -1344,11 +1365,37 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         _captureCommand.RaiseCanExecuteChanged();
         _cancelCaptureCommand.RaiseCanExecuteChanged();
         _openExternalCommand.RaiseCanExecuteChanged();
+        _openSelectedHistoryAtTuiCommand.RaiseCanExecuteChanged();
         _selectAllReadyCommand.RaiseCanExecuteChanged();
         _clearSelectionCommand.RaiseCanExecuteChanged();
         _recordSelectedCommand.RaiseCanExecuteChanged();
         _recordAllObservationsCommand.RaiseCanExecuteChanged();
         _cancelBatchRecordingCommand.RaiseCanExecuteChanged();
+    }
+
+    private void OnHistoryPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(CruiseHistoryViewModel.SelectedHistory) or
+            nameof(CruiseHistoryViewModel.HasSelectedHistory))
+        {
+            OnPropertyChanged(nameof(CanOpenSelectedHistoryAtTui));
+            _openSelectedHistoryAtTuiCommand.RaiseCanExecuteChanged();
+        }
+    }
+
+    private bool TryGetSelectedHistoryAddress(out Uri address)
+    {
+        address = null!;
+        var sourceReference = History?.SelectedHistory?.LatestSourceReference;
+        if (!Uri.TryCreate(sourceReference, UriKind.Absolute, out var parsedAddress) ||
+            AvailableSources.Count == 0 ||
+            _trustedHostPolicy.Classify(parsedAddress, AvailableSources[0]) != CruiseAddressTrust.Trusted)
+        {
+            return false;
+        }
+
+        address = parsedAddress;
+        return true;
     }
 
     private void RecordNavigationAddress(Uri? address)

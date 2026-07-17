@@ -1,0 +1,162 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="clr-namespace:KrytenAssist.Avalonia.ViewModels"
+             x:Class="KrytenAssist.Avalonia.Views.CruiseHistoryPanelView"
+             x:DataType="viewModels:CruiseBrowserFeasibilityViewModel">
+    <Border Classes="workspace-surface"
+            Padding="12">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto,*"
+              RowSpacing="8">
+            <Grid Grid.Row="0"
+                  ColumnDefinitions="*,Auto,Auto"
+                  ColumnSpacing="8">
+                <StackPanel Spacing="2">
+                    <TextBlock Text="Recorded Cruise History"
+                               FontSize="17"
+                               FontWeight="SemiBold" />
+                    <TextBlock Text="Local observations remain available when the browser is closed."
+                               Classes="secondary-text"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+                <Button Grid.Column="1"
+                        Content="Refresh History"
+                        Classes="secondary"
+                        Command="{Binding History.RefreshHistoryCommand}" />
+                <Button Grid.Column="2"
+                        Content="Cancel Loading"
+                        Classes="secondary"
+                        Command="{Binding History.CancelHistoryLoadingCommand}"
+                        IsVisible="{Binding History.IsLoadingHistory}" />
+            </Grid>
+
+            <TextBlock Grid.Row="1"
+                       Text="Loading recorded cruise history..."
+                       IsVisible="{Binding History.IsLoadingHistory}" />
+            <TextBlock Grid.Row="2"
+                       Text="{Binding History.HistoryMessage}"
+                       Classes="secondary-text"
+                       TextWrapping="Wrap" />
+            <Border Grid.Row="3"
+                    Classes="status-surface"
+                    Padding="8"
+                    IsVisible="{Binding History.HasHistoryError}">
+                <TextBlock Text="{Binding History.HistoryErrorMessage}"
+                           Classes="error-text"
+                           TextWrapping="Wrap" />
+            </Border>
+
+            <Grid Grid.Row="4"
+                  RowDefinitions="2*,*"
+                  RowSpacing="10"
+                  IsVisible="{Binding History.HasHistories}">
+                <Grid RowDefinitions="Auto,*"
+                      RowSpacing="4">
+                    <Grid ColumnDefinitions="2.4*,1.4*,1.2*,1*,1.2*,1.2*"
+                          ColumnSpacing="8">
+                        <TextBlock Text="Cruise"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Grid.Column="1"
+                                   Text="Ship"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Grid.Column="2"
+                                   Text="Departure"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Grid.Column="3"
+                                   Text="Current"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Grid.Column="4"
+                                   Text="Trend"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Grid.Column="5"
+                                   Text="Status"
+                                   FontWeight="SemiBold" />
+                    </Grid>
+                    <ListBox Grid.Row="1"
+                             ItemsSource="{Binding History.Histories}"
+                             SelectedItem="{Binding History.SelectedHistory, Mode=TwoWay}"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="viewModels:CruiseHistoryItemViewModel">
+                                <Border Padding="6,3">
+                                    <Grid ColumnDefinitions="2.4*,1.4*,1.2*,1*,1.2*,1.2*"
+                                          ColumnSpacing="8">
+                                        <TextBlock Text="{Binding Title}"
+                                                   FontWeight="SemiBold"
+                                                   TextWrapping="NoWrap"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   ToolTip.Tip="{Binding Title}" />
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding Ship}"
+                                                   Classes="secondary-text"
+                                                   TextWrapping="NoWrap"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   ToolTip.Tip="{Binding Ship}" />
+                                        <TextBlock Grid.Column="2"
+                                                   Text="{Binding DepartureDate}"
+                                                   TextWrapping="NoWrap"
+                                                   TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Grid.Column="3"
+                                                   Text="{Binding CurrentPrice}"
+                                                   TextWrapping="NoWrap"
+                                                   TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Grid.Column="4"
+                                                   Text="{Binding TrendIndicator}"
+                                                   HorizontalAlignment="Center"
+                                                   ToolTip.Tip="{Binding Trend}" />
+                                        <TextBlock Grid.Column="5"
+                                                   Text="{Binding SailingStatusIndicator}"
+                                                   HorizontalAlignment="Center"
+                                                   ToolTip.Tip="{Binding SailingStatus}" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+
+                <Border Grid.Row="1"
+                        Classes="status-surface"
+                        Padding="10"
+                        IsVisible="{Binding History.HasSelectedHistory}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Price History"
+                                       FontSize="16"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding History.SelectedHistory.Title}"
+                                       FontSize="17"
+                                       FontWeight="SemiBold"
+                                       TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding History.SelectedHistory.Operator, StringFormat='Operator: {0}'}" />
+                            <TextBlock Text="{Binding History.SelectedHistory.Ship, StringFormat='Ship: {0}'}" />
+                            <TextBlock Text="{Binding History.SelectedHistory.DepartureDate, StringFormat='Departure: {0}'}" />
+                            <TextBlock Text="{Binding History.SelectedHistory.Duration, StringFormat='Duration: {0}'}" />
+                            <TextBlock Text="{Binding History.SelectedHistory.RetailSource, StringFormat='Retail source: {0}'}" />
+                            <TextBlock Text="{Binding History.SelectedHistory.FirstObserved, StringFormat='First observed: {0}'}" />
+                            <TextBlock Text="{Binding History.SelectedHistory.LastObserved, StringFormat='Last observed: {0}'}" />
+                            <TextBlock Text="{Binding History.SelectedHistory.LastSeen, StringFormat='Last seen: {0}'}" />
+                            <TextBlock Text="{Binding History.SelectedHistory.CurrentPrice, StringFormat='Current price: {0}'}" />
+                            <TextBlock Text="{Binding History.SelectedHistory.LowestPrice, StringFormat='Lowest price: {0}'}" />
+                            <TextBlock Text="{Binding History.SelectedHistory.HighestPrice, StringFormat='Highest price: {0}'}" />
+                            <TextBlock Text="{Binding History.SelectedHistory.ObservationCount, StringFormat='Recorded observations: {0}'}" />
+                            <TextBlock Text="{Binding History.SelectedHistory.Trend, StringFormat='Trend: {0}'}" />
+                            <TextBlock Text="{Binding History.SelectedHistory.LatestProviderOfferId, StringFormat='Latest offer id: {0}'}"
+                                       TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding History.SelectedHistory.LatestSourceReference}"
+                                       Classes="secondary-text"
+                                       TextWrapping="NoWrap"
+                                       TextTrimming="CharacterEllipsis"
+                                       ToolTip.Tip="{Binding History.SelectedHistory.LatestSourceReference}"
+                                       IsVisible="{Binding History.SelectedHistory.HasLatestSourceReference}" />
+                            <Button Content="Open at TUI"
+                                    Classes="secondary"
+                                    HorizontalAlignment="Left"
+                                    Command="{Binding OpenSelectedHistoryAtTuiCommand}"
+                                    IsVisible="{Binding CanOpenSelectedHistoryAtTui}" />
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

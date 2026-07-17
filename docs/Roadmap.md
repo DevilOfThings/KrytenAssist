@@ -10,7 +10,7 @@ Phase 7 – Cruise Assistant
 
 Current Prompt
 --------------
-Prompt 037i – Cruise Discovery Workspace Layout (next)
+Prompt 037i – Cruise Discovery Workspace Layout ✅
 
 Prompt 037 – Cruise History and Price Tracking, including its 037h Multiple
 Cruise Deals extension, is complete. Kryten can explicitly capture currently
@@ -18,8 +18,13 @@ loaded supported TUI deal cards, review and record observations independently,
 preserve meaningful price changes in local SQLite history and revisit that
 history after restart without loading TUI.
 
-Prompt 037i is the recommended next task. It improves the Cruise Discovery
-workspace before additional TUI page-template support or Prompt 038 begins.
+Prompt 037i is complete. Kryten now provides a larger, resizable Cruise
+Discovery workspace with trusted paste-and-Go navigation, compact diagnostic
+history, bounded review panels, persistent local Cruise History and direct
+trusted links back to recorded TUI offers.
+
+The next task is to plan a small Cruise Discovery workspace-refinement prompt
+for deferred visual improvements. Prompt 038 remains unstarted.
 
 Prompt 038 – Saved Cruises and Preferences remains unstarted.
 
@@ -494,8 +499,7 @@ selector fallback.
 
 ## Prompt 037i – Cruise Discovery Workspace Layout
 
-Current status: Next. Improve the Cruise Discovery workspace before extending
-capture to further TUI page templates.
+Current status: Complete.
 
 The priority is a durable two-panel layout:
 
@@ -519,7 +523,13 @@ This is a presentation and workspace-navigation prompt. It must not alter the
 capture contract, TUI extraction script, persistence schema, recording rules,
 or introduce support for the separate `small-product-card` template.
 
-Prompt 038 follows this layout work and remains unstarted.
+Robin manually verified the redesigned workspace on 17 July 2026. A later
+small refinement prompt may cover mobile browser presentation, Cruise/Ship
+grouping, moving the History open action beside its heading and hiding
+secondary History columns while the browser is open. These are deferred
+presentation improvements, not incomplete 037i work.
+
+Prompt 038 remains unstarted.
 
 ---
 

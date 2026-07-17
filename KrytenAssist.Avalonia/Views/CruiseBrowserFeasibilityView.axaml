@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:viewModels="clr-namespace:KrytenAssist.Avalonia.ViewModels"
+             xmlns:views="clr-namespace:KrytenAssist.Avalonia.Views"
              x:Class="KrytenAssist.Avalonia.Views.CruiseBrowserFeasibilityView"
              x:DataType="viewModels:CruiseBrowserFeasibilityViewModel">
     <Border Classes="workspace-surface"
@@ -21,24 +22,30 @@
             </StackPanel>
 
             <Grid Grid.Row="1">
-                <ItemsControl ItemsSource="{Binding SourceOptions}"
-                              IsVisible="{Binding !HasStarted}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel Orientation="Horizontal"
-                                       ItemSpacing="8"
-                                       LineSpacing="8" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="viewModels:CruiseDiscoverySourceOptionViewModel">
-                            <Button Content="{Binding DisplayName}"
-                                    Classes="primary"
-                                    Command="{Binding OpenCommand}"
-                                    ToolTip.Tip="{Binding Description}" />
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                <Grid RowDefinitions="Auto,*"
+                      RowSpacing="10"
+                      IsVisible="{Binding !HasStarted}">
+                    <ItemsControl Grid.Row="0"
+                                  ItemsSource="{Binding SourceOptions}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal"
+                                           ItemSpacing="8"
+                                           LineSpacing="8" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="viewModels:CruiseDiscoverySourceOptionViewModel">
+                                <Button Content="{Binding DisplayName}"
+                                        Classes="primary"
+                                        Command="{Binding OpenCommand}"
+                                        ToolTip.Tip="{Binding Description}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <views:CruiseHistoryPanelView Grid.Row="1" />
+                </Grid>
 
                 <Grid IsVisible="{Binding HasStarted}">
                     <Grid.ColumnDefinitions>
@@ -502,14 +509,12 @@
                                                                            TextWrapping="NoWrap"
                                                                            TextTrimming="CharacterEllipsis" />
                                                                 <TextBlock Grid.Column="4"
-                                                                           Text="{Binding Trend}"
-                                                                           TextWrapping="NoWrap"
-                                                                           TextTrimming="CharacterEllipsis" />
+                                                                           Text="{Binding TrendIndicator}"
+                                                                           HorizontalAlignment="Center"
+                                                                           ToolTip.Tip="{Binding Trend}" />
                                                                 <TextBlock Grid.Column="5"
-                                                                           Text="{Binding SailingStatus}"
-                                                                           Classes="secondary-text"
-                                                                           TextWrapping="NoWrap"
-                                                                           TextTrimming="CharacterEllipsis"
+                                                                           Text="{Binding SailingStatusIndicator}"
+                                                                           HorizontalAlignment="Center"
                                                                            ToolTip.Tip="{Binding SailingStatus}" />
                                                             </Grid>
                                                         </Border>
@@ -552,6 +557,11 @@
                                                                TextTrimming="CharacterEllipsis"
                                                                ToolTip.Tip="{Binding History.SelectedHistory.LatestSourceReference}"
                                                                IsVisible="{Binding History.SelectedHistory.HasLatestSourceReference}" />
+                                                    <Button Content="Open at TUI"
+                                                            Classes="secondary"
+                                                            HorizontalAlignment="Left"
+                                                            Command="{Binding OpenSelectedHistoryAtTuiCommand}"
+                                                            IsVisible="{Binding CanOpenSelectedHistoryAtTui}" />
                                                 </StackPanel>
                                             </ScrollViewer>
                                         </Border>

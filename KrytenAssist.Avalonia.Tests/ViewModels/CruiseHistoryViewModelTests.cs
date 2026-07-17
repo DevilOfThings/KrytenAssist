@@ -468,14 +468,19 @@ public sealed class CruiseHistoryViewModelTests
 
         Assert.Equal("EUR 1,100 total", higherItem.CurrentPrice);
         Assert.Equal("Up EUR 100", higherItem.Trend);
+        Assert.Equal("📈", higherItem.TrendIndicator);
         Assert.Equal("1 night", higherItem.Duration);
         Assert.Equal("Upcoming sailing", higherItem.SailingStatus);
+        Assert.Equal("🗓️", higherItem.SailingStatusIndicator);
         Assert.Equal("First observation", firstItem.Trend);
+        Assert.Equal("🆕", firstItem.TrendIndicator);
         Assert.Equal("Unchanged", unchangedItem.Trend);
+        Assert.Equal("➖", unchangedItem.TrendIndicator);
         Assert.Equal("Source unavailable", firstItem.RetailSource);
         Assert.False(firstItem.HasLatestSourceReference);
         Assert.Equal("Comparable price unavailable", unavailableItem.CurrentPrice);
         Assert.Equal("Comparable price unavailable", unavailableItem.Trend);
+        Assert.Equal("❔", unavailableItem.TrendIndicator);
         Assert.DoesNotContain("discount", higherItem.CurrentPrice, StringComparison.OrdinalIgnoreCase);
     }
 

@@ -7,7 +7,7 @@
     <Grid RowDefinitions="Auto,*">
         <ScrollViewer Grid.Row="0"
                       MaxHeight="220"
-                      IsVisible="{Binding !BrowserFeasibility.HasStarted}"
+                      IsVisible="False"
                       VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled">
         <StackPanel Margin="20"

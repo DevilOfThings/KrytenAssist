@@ -52,6 +52,14 @@ public sealed class CruiseHistoryItemViewModel
     public string LowestPrice { get; }
     public string HighestPrice { get; }
     public string Trend { get; }
+    public string TrendIndicator => Details.Summary.Movement.Direction switch
+    {
+        CruisePriceTrendDirection.FirstObservation => "🆕",
+        CruisePriceTrendDirection.Lower => "📉",
+        CruisePriceTrendDirection.Higher => "📈",
+        CruisePriceTrendDirection.Unchanged => "➖",
+        _ => "❔"
+    };
     public string FirstObserved { get; }
     public string LastObserved { get; }
     public string LastSeen { get; }
@@ -62,6 +70,7 @@ public sealed class CruiseHistoryItemViewModel
     public bool HasComparablePrice { get; }
     public bool IsPastSailing { get; }
     public string SailingStatus { get; }
+    public string SailingStatusIndicator => IsPastSailing ? "⌛" : "🗓️";
 
     public bool Matches(CruiseSailingKey sailingKey, CruiseSource? source) =>
         Details.History.SailingKey == sailingKey

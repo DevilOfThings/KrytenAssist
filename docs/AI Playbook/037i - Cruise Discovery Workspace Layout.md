@@ -310,47 +310,79 @@ Prompt 037i is complete only when:
 
 ### Status
 
-Not started.
+Complete.
 
 ### Workspace Layout
 
-To be completed.
+The active workspace is a resizable two-panel layout with Cruise controls on
+the left and a persistent interactive TUI browser on the right. The default
+desktop window was enlarged to give both panels useful initial space.
 
 ### Trusted Address Navigation
 
-To be completed.
+Robin can paste a trusted HTTPS TUI address and deliberately use Go or Enter.
+Typing alone does not navigate; malformed and untrusted values retain the
+current trusted page and receive controlled feedback.
 
 ### Compact Panels
 
-To be completed.
+Navigation history is a bounded one-line list with full URLs on hover. Capture
+review and batch cards are bounded. Recorded Cruise History is compact,
+independently scrollable, available before browser selection and provides a
+trusted external Open at TUI action for a selected recorded offer.
 
 ### Build
 
-Not run.
+Passed with 0 errors. Existing SQLite package advisory and unused command-event
+warnings remain.
 
 ### Tests
 
-Not run.
+Focused Cruise workspace regression: 100 passed, 0 failed, 0 skipped.
+
+Complete offline regression:
+
+```text
+Core: 105 passed
+Avalonia: 427 passed
+API: 9 passed
+Total: 541 passed, 0 failed, 0 skipped
+```
 
 ### Manual Verification
 
-Not performed.
+Passed. Robin confirmed the larger workspace, browser behaviour, trusted
+navigation, local History before opening TUI, compact History indicators and
+trusted recorded-offer links work as intended.
 
 ### Files Created
 
-To be completed.
+- `KrytenAssist.Avalonia/ViewModels/CruiseNavigationHistoryEntryViewModel.cs`
+- `KrytenAssist.Avalonia/Views/CruiseHistoryPanelView.axaml`
+- `KrytenAssist.Avalonia/Views/CruiseHistoryPanelView.axaml.cs`
 
 ### Files Updated
 
-To be completed.
+- `KrytenAssist.Avalonia/MainWindow.axaml`
+- `KrytenAssist.Avalonia/ViewModels/CruiseBrowserFeasibilityViewModel.cs`
+- `KrytenAssist.Avalonia/ViewModels/CruiseHistoryItemViewModel.cs`
+- `KrytenAssist.Avalonia/Views/CruiseBrowserFeasibilityView.axaml`
+- `KrytenAssist.Avalonia/Views/CruiseOfTheWeekView.axaml`
+- focused Cruise browser and History tests
 
 ### Production Corrections
 
-To be completed.
+Recorded Cruise History was made available without source selection or opening
+TUI after manual verification identified the original inactive-screen gap. The
+obsolete HTTP retrieval controls were removed from the visible Cruise screen.
 
 ---
 
 ## Lessons Learned
 
-> Complete after implementation and verification. Do not begin Prompt 038 until
-> this section and Results have been updated.
+- A browser-free local History entry point is essential for an offline-first
+  Cruise workflow; it cannot be hidden behind source activation.
+- Compact grid indicators work well when their full controlled meaning remains
+  available by hover and in the selected detail.
+- Separating browser, capture and History regions makes refinement incremental
+  without widening the TUI extraction boundary.

@@ -296,8 +296,8 @@ Those belong to 037i-d.
 
 ### Status
 
-Implementation and automated verification complete. Awaiting Robin's manual
-desktop verification.
+Complete. Robin manually verified the compact workspace and subsequent local
+History refinements on 17 July 2026.
 
 ### Compact Navigation History
 
@@ -362,7 +362,8 @@ Total: 541 passed, 0 failed, 0 skipped
 
 ### Manual Verification
 
-Pending Robin's desktop verification using the eight checks above.
+Passed. The compact browser workspace, History sizing, browser-free local
+History, source-reference links and compact indicators were confirmed.
 
 ---
 
