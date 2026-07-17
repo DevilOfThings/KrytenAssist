@@ -10,7 +10,7 @@ Phase 7 – Cruise Assistant
 
 Current Prompt
 --------------
-Prompt 038 – Saved Cruises and Preferences (next)
+Prompt 037i – Cruise Discovery Workspace Layout (next)
 
 Prompt 037 – Cruise History and Price Tracking, including its 037h Multiple
 Cruise Deals extension, is complete. Kryten can explicitly capture currently
@@ -18,7 +18,10 @@ loaded supported TUI deal cards, review and record observations independently,
 preserve meaningful price changes in local SQLite history and revisit that
 history after restart without loading TUI.
 
-Prompt 038 is the recommended next task. It has not started.
+Prompt 037i is the recommended next task. It improves the Cruise Discovery
+workspace before additional TUI page-template support or Prompt 038 begins.
+
+Prompt 038 – Saved Cruises and Preferences remains unstarted.
 
 ### Phase 1 – API Foundation
 
@@ -404,8 +407,9 @@ Marella Cruises as operator separately from TUI as retail source. Trusted-host
 navigation, cancellation, stale-result rejection and controlled failure states
 are covered by deterministic offline tests.
 
-Prompt 037 – Cruise History and Price Tracking is complete. Prompt 038 – Saved
-Cruises and Preferences is next and has not started.
+Prompt 037 – Cruise History and Price Tracking is complete. Prompt 037i –
+Cruise Discovery Workspace Layout is next; Prompt 038 – Saved Cruises and
+Preferences remains unstarted.
 
 Allow Robin to:
 
@@ -485,6 +489,37 @@ incompatible TUI pages. Treat this as a future presentation refinement. Also,
 destination pages using TUI's separate `small-product-card` template are not
 yet supported; they require a separately tested extension rather than a broad
 selector fallback.
+
+---
+
+## Prompt 037i – Cruise Discovery Workspace Layout
+
+Current status: Next. Improve the Cruise Discovery workspace before extending
+capture to further TUI page templates.
+
+The priority is a durable two-panel layout:
+
+- Cruise controls, capture review and recorded history occupy the left working
+  panel.
+- The interactive TUI browser occupies a separate, resizable right panel and
+  is never squeezed behind or beneath long capture/history content.
+
+Also make the active trusted address editable so Robin can paste a known TUI
+page and explicitly navigate to it. The existing trusted-host policy,
+cancellation boundaries and explicit browser action must remain in force.
+
+Navigation history should use a compact one-line-per-entry scrollable list,
+rather than consuming the height required for review and browser content.
+
+Captured Cruise deals and Recorded Cruise History need independent bounded,
+scrollable areas so a ten-card review remains usable without pushing the TUI
+page off-screen.
+
+This is a presentation and workspace-navigation prompt. It must not alter the
+capture contract, TUI extraction script, persistence schema, recording rules,
+or introduce support for the separate `small-product-card` template.
+
+Prompt 038 follows this layout work and remains unstarted.
 
 ---
 
