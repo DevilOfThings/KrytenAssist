@@ -23,7 +23,7 @@ public sealed class CruiseHistoryItemViewModel
         Operator = offer.Provider.Name;
         Ship = offer.ShipName;
         DepartureDate = offer.DepartureDate.ToString("d MMMM yyyy", DisplayCulture);
-        Duration = $"{offer.DurationNights} nights";
+        Duration = $"{offer.DurationNights} {(offer.DurationNights == 1 ? "night" : "nights")}";
         RetailSource = details.History.Source?.Name ?? "Source unavailable";
         CurrentPrice = FormatPrice(details.Summary.CurrentPrice);
         LowestPrice = FormatPrice(details.Summary.LowestPrice);

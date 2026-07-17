@@ -16,6 +16,7 @@ internal sealed class FakeCruiseObservationRepository : Repository
     internal CruiseObservationFingerprint? RecordedFingerprint { get; private set; }
     internal CruiseObservation? RecordedObservation { get; private set; }
     internal CancellationToken RecordedToken { get; private set; }
+    internal CancellationToken ListToken { get; private set; }
     internal CruiseSailingKey? RequestedKey { get; private set; }
     internal CruiseSource? RequestedSource { get; private set; }
 
@@ -25,6 +26,8 @@ internal sealed class FakeCruiseObservationRepository : Repository
     internal Exception? RecordException { get; set; }
     internal Exception? GetException { get; set; }
     internal Exception? ListException { get; set; }
+    internal Func<CruiseSailingKey, CruiseObservationFingerprint, CruiseObservation, CancellationToken, Task<RepositoryResult>>? RecordHandler { get; set; }
+    internal Func<CancellationToken, Task<IReadOnlyList<RecordedHistory>>>? ListHandler { get; set; }
 
     public Task<RepositoryResult> RecordAsync(
         CruiseSailingKey sailingKey,
@@ -37,6 +40,11 @@ internal sealed class FakeCruiseObservationRepository : Repository
         RecordedFingerprint = fingerprint;
         RecordedObservation = observation;
         RecordedToken = cancellationToken;
+        if (RecordHandler is not null)
+        {
+            return RecordHandler(sailingKey, fingerprint, observation, cancellationToken);
+        }
+
         return RecordException is null
             ? Task.FromResult(RecordResult!)
             : Task.FromException<RepositoryResult>(RecordException);
@@ -59,6 +67,12 @@ internal sealed class FakeCruiseObservationRepository : Repository
         CancellationToken cancellationToken = default)
     {
         ListCalls++;
+        ListToken = cancellationToken;
+        if (ListHandler is not null)
+        {
+            return ListHandler(cancellationToken);
+        }
+
         return ListException is null
             ? Task.FromResult(ListResult)
             : Task.FromException<IReadOnlyList<RecordedHistory>>(ListException);

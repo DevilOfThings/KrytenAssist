@@ -175,6 +175,7 @@ public sealed class CruiseHistoryViewModel : INotifyPropertyChanged
         _recordCancellation?.Cancel();
         _recordCancellation?.Dispose();
         _recordCancellation = null;
+        _recordCommand.ResetExecution();
         _capturedObservation = observation;
         _completedFingerprint = null;
         IsRecording = false;
@@ -329,6 +330,7 @@ public sealed class CruiseHistoryViewModel : INotifyPropertyChanged
         _loadCancellation?.Cancel();
         _loadCancellation?.Dispose();
         _loadCancellation = null;
+        _refreshHistoryCommand.ResetExecution();
         IsLoadingHistory = false;
         HistoryMessage = "Loading recorded cruise history was cancelled.";
         OnPropertyChanged(nameof(IsHistoryEmpty));
@@ -418,6 +420,7 @@ public sealed class CruiseHistoryViewModel : INotifyPropertyChanged
         private readonly Func<Task> _execute;
         private readonly Func<bool> _canExecute;
         private bool _isExecuting;
+        private int _executionGeneration;
 
         public AsyncCommand(Func<Task> execute, Func<bool> canExecute)
         {
@@ -436,6 +439,7 @@ public sealed class CruiseHistoryViewModel : INotifyPropertyChanged
             }
 
             _isExecuting = true;
+            var generation = ++_executionGeneration;
             RaiseCanExecuteChanged();
             try
             {
@@ -447,8 +451,11 @@ public sealed class CruiseHistoryViewModel : INotifyPropertyChanged
             }
             finally
             {
-                _isExecuting = false;
-                RaiseCanExecuteChanged();
+                if (generation == _executionGeneration)
+                {
+                    _isExecuting = false;
+                    RaiseCanExecuteChanged();
+                }
             }
         }
 
@@ -459,6 +466,13 @@ public sealed class CruiseHistoryViewModel : INotifyPropertyChanged
         }
 
         public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+
+        public void ResetExecution()
+        {
+            _executionGeneration++;
+            _isExecuting = false;
+            RaiseCanExecuteChanged();
+        }
     }
 
     private sealed class DelegateCommand : ICommand
