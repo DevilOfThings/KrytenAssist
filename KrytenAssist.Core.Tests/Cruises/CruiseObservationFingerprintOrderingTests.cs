@@ -19,4 +19,19 @@ public sealed class CruiseObservationFingerprintOrderingTests
         Math.Sign(first.CompareTo(changed)).Should().Be(-Math.Sign(changed.CompareTo(first)));
         first.CompareTo(null).Should().BePositive();
     }
+
+    [Fact]
+    public void PersistenceEvidence_IsStableAndUsesCanonicalSourceIdentity()
+    {
+        var first = CruiseObservationFingerprint.From(CruiseHistoryTestData.Observation());
+        var equal = CruiseObservationFingerprint.From(CruiseHistoryTestData.Observation(
+            observedAt: CruiseHistoryTestData.FirstObserved.AddDays(2),
+            providerOfferId: "changed evidence"));
+
+        first.PersistenceKey.Should().Be(equal.PersistenceKey);
+        first.PersistenceKey.Should().NotBeNullOrWhiteSpace();
+        CruiseObservationFingerprint.RetailSourceKey(new CruiseSource("  TUI  ", "TUI"))
+            .Should().Be("tui");
+        CruiseObservationFingerprint.RetailSourceKey(null).Should().BeNull();
+    }
 }

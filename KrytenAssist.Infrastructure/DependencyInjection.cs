@@ -18,6 +18,7 @@ public static class DependencyInjection
         databaseInitializer.Initialise();
 
         services.AddScoped<IPromptCardRepository, SqlitePromptCardRepository>();
+        services.AddScoped<ICruiseObservationRepository, SqliteCruiseObservationRepository>();
         return services;
     }
 }

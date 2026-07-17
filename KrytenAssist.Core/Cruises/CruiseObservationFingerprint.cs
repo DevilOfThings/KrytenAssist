@@ -68,11 +68,18 @@ public sealed class CruiseObservationFingerprint :
 
     internal string ComparisonKey => _comparisonKey;
 
+    public string PersistenceKey => _comparisonKey;
+
     public static CruiseObservationFingerprint From(CruiseObservation observation)
     {
         ArgumentNullException.ThrowIfNull(observation);
         return new CruiseObservationFingerprint(observation);
     }
+
+    public static string? RetailSourceKey(CruiseSource? source) =>
+        source is null
+            ? null
+            : CruiseHistoryText.NormalizeRequired(source.Id, nameof(source));
 
     public bool Equals(CruiseObservationFingerprint? other) =>
         other is not null && string.Equals(_comparisonKey, other._comparisonKey, StringComparison.Ordinal);
