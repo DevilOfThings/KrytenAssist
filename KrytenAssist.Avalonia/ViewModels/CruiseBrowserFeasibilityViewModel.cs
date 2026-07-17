@@ -12,7 +12,10 @@ using KrytenAssist.Avalonia.Cruises.Discovery;
 using KrytenAssist.Avalonia.Tools;
 using KrytenAssist.Core.Cruises;
 using CruiseCaptureStatus = KrytenApplication::KrytenAssist.Application.Cruises.CruiseCaptureStatus;
+using CruiseCaptureBatchResult = KrytenApplication::KrytenAssist.Application.Cruises.CruiseCaptureBatchResult;
+using CruiseCaptureBatchStatus = KrytenApplication::KrytenAssist.Application.Cruises.CruiseCaptureBatchStatus;
 using CruisePageCaptureRequest = KrytenApplication::KrytenAssist.Application.Cruises.CruisePageCaptureRequest;
+using ICruisePageBatchCaptureService = KrytenApplication::KrytenAssist.Application.Cruises.ICruisePageBatchCaptureService;
 using ICruisePageCaptureService = KrytenApplication::KrytenAssist.Application.Cruises.ICruisePageCaptureService;
 
 namespace KrytenAssist.Avalonia.ViewModels;
@@ -32,7 +35,10 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     private readonly DelegateCommand _captureCommand;
     private readonly DelegateCommand _cancelCaptureCommand;
     private readonly DelegateCommand _openExternalCommand;
+    private readonly DelegateCommand _selectAllReadyCommand;
+    private readonly DelegateCommand _clearSelectionCommand;
     private readonly ICruisePageCaptureService? _captureService;
+    private readonly ICruisePageBatchCaptureService? _batchCaptureService;
     private readonly IClock? _clock;
     private bool _hasStarted;
     private bool _isNavigating;
@@ -57,6 +63,10 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     private IReadOnlyList<string> _captureMissingFields = Array.Empty<string>();
     private CancellationTokenSource? _captureCancellation;
     private int _captureGeneration;
+    private CruiseCaptureBatchStatus? _batchCaptureStatus;
+    private IReadOnlyList<CruiseCaptureCandidateReviewItemViewModel> _capturedCandidates =
+        Array.Empty<CruiseCaptureCandidateReviewItemViewModel>();
+    private bool _wasCaptureTruncated;
 
     public CruiseBrowserFeasibilityViewModel()
         : this(new CruiseDiscoverySourceCatalog(), new CruiseTrustedHostPolicy())
@@ -68,13 +78,15 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         CruiseTrustedHostPolicy trustedHostPolicy,
         ICruisePageCaptureService? captureService = null,
         IClock? clock = null,
-        CruiseHistoryViewModel? history = null)
+        CruiseHistoryViewModel? history = null,
+        ICruisePageBatchCaptureService? batchCaptureService = null)
     {
         ArgumentNullException.ThrowIfNull(sourceCatalog);
         ArgumentNullException.ThrowIfNull(trustedHostPolicy);
 
         _trustedHostPolicy = trustedHostPolicy;
         _captureService = captureService;
+        _batchCaptureService = batchCaptureService;
         _clock = clock;
         History = history;
         AvailableSources = sourceCatalog.Sources;
@@ -99,6 +111,12 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         _captureCommand = new DelegateCommand(RequestCapture, () => CanCapture);
         _cancelCaptureCommand = new DelegateCommand(CancelCapture, () => IsCapturing);
         _openExternalCommand = new DelegateCommand(RequestExternalOpen, () => CanOpenExternal);
+        _selectAllReadyCommand = new DelegateCommand(
+            SelectAllReady,
+            () => CanSelectAllReady);
+        _clearSelectionCommand = new DelegateCommand(
+            ClearSelection,
+            () => CanClearSelection);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -169,6 +187,10 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
 
     public ICommand OpenExternalCommand => _openExternalCommand;
 
+    public ICommand SelectAllReadyCommand => _selectAllReadyCommand;
+
+    public ICommand ClearSelectionCommand => _clearSelectionCommand;
+
     public bool IsCapturing
     {
         get => _isCapturing;
@@ -181,12 +203,48 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         }
     }
 
-    public bool CanCapture => _captureService is not null &&
+    public bool CanCapture => (_batchCaptureService is not null || _captureService is not null) &&
                               _clock is not null &&
                               IsPageReady &&
                               HasSelectedSource &&
                               !HasUnsupportedHost &&
                               !IsCapturing;
+
+    public string CaptureButtonText => _batchCaptureService is null
+        ? "Capture Displayed Cruise"
+        : "Capture Loaded Cruises";
+
+    public CruiseCaptureBatchStatus? BatchCaptureStatus => _batchCaptureStatus;
+
+    public IReadOnlyList<CruiseCaptureCandidateReviewItemViewModel> CapturedCandidates =>
+        _capturedCandidates;
+
+    public bool HasCapturedCandidates => CapturedCandidates.Count > 0;
+
+    public int ReadyCandidateCount => CapturedCandidates.Count(candidate => candidate.IsReady);
+
+    public int IncompleteCandidateCount =>
+        CapturedCandidates.Count(candidate => candidate.IsIncomplete);
+
+    public int FailedCandidateCount => CapturedCandidates.Count(candidate => candidate.IsFailed);
+
+    public int SelectedCandidateCount =>
+        CapturedCandidates.Count(candidate => candidate.IsSelected);
+
+    public bool HasSelectedCandidates => SelectedCandidateCount > 0;
+
+    public bool CanSelectAllReady =>
+        CapturedCandidates.Any(candidate => candidate.IsReady && !candidate.IsSelected);
+
+    public bool CanClearSelection => HasSelectedCandidates;
+
+    public bool WasCaptureTruncated => _wasCaptureTruncated;
+
+    public string? BatchCaptureSummary => !HasCapturedCandidates
+        ? null
+        : BuildBatchCaptureSummary();
+
+    public bool HasBatchCaptureSummary => !string.IsNullOrWhiteSpace(BatchCaptureSummary);
 
     public bool CanOpenExternal => HasSelectedSource &&
                                    !HasUnsupportedHost &&
@@ -635,7 +693,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     public async Task ProcessCapturePayloadAsync(string payload, Uri sourceReference)
     {
         if (!IsCapturing ||
-            _captureService is null ||
+            (_batchCaptureService is null && _captureService is null) ||
             _clock is null ||
             SelectedSource is null)
         {
@@ -659,7 +717,21 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
                 sourceReference.AbsoluteUri,
                 _clock.Now,
                 payload);
-            var result = await _captureService.CaptureAsync(request, cancellation.Token);
+            if (_batchCaptureService is not null)
+            {
+                var batchResult = await _batchCaptureService.CaptureAsync(
+                    request,
+                    cancellation.Token);
+                if (generation != _captureGeneration || cancellation.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                SetBatchCaptureResult(batchResult);
+                return;
+            }
+
+            var result = await _captureService!.CaptureAsync(request, cancellation.Token);
             if (generation != _captureGeneration || cancellation.IsCancellationRequested)
             {
                 return;
@@ -729,6 +801,55 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         }
     }
 
+    private void RequestCandidateExternalOpen(Uri address)
+    {
+        if (SelectedSource is not null &&
+            _trustedHostPolicy.Classify(address, SelectedSource) == CruiseAddressTrust.Trusted)
+        {
+            ExternalOpenRequested?.Invoke(this, new BrowserNavigationRequestedEventArgs(address));
+        }
+    }
+
+    private void SelectAllReady()
+    {
+        foreach (var candidate in CapturedCandidates)
+        {
+            if (candidate.IsReady)
+            {
+                candidate.IsSelected = true;
+            }
+        }
+
+        OnSelectionChanged();
+    }
+
+    private void ClearSelection()
+    {
+        foreach (var candidate in CapturedCandidates)
+        {
+            candidate.IsSelected = false;
+        }
+
+        OnSelectionChanged();
+    }
+
+    private void OnCandidateSelectionChanged(
+        CruiseCaptureCandidateReviewItemViewModel candidate)
+    {
+        ArgumentNullException.ThrowIfNull(candidate);
+        OnSelectionChanged();
+    }
+
+    private void OnSelectionChanged()
+    {
+        OnPropertyChanged(nameof(SelectedCandidateCount));
+        OnPropertyChanged(nameof(HasSelectedCandidates));
+        OnPropertyChanged(nameof(CanSelectAllReady));
+        OnPropertyChanged(nameof(CanClearSelection));
+        _selectAllReadyCommand.RaiseCanExecuteChanged();
+        _clearSelectionCommand.RaiseCanExecuteChanged();
+    }
+
     private void ClearCaptureState(bool cancelActive)
     {
         if (cancelActive)
@@ -749,6 +870,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         IReadOnlyList<string> missingFields,
         CruiseObservation? observation = null)
     {
+        ClearBatchReviewState();
         _captureStatus = status;
         _captureMessage = message;
         _captureMissingFields = missingFields;
@@ -780,6 +902,82 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(HasCapturedPromotion));
     }
 
+    private void SetBatchCaptureResult(CruiseCaptureBatchResult result)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+
+        if (result.IsCompleted &&
+            !result.WasTruncated &&
+            result.Candidates.Count == 1 &&
+            result.ReadyCount == 1)
+        {
+            SetCaptureResult(
+                CruiseCaptureStatus.Success,
+                null,
+                Array.Empty<string>(),
+                result.Candidates[0].Observation);
+            return;
+        }
+
+        SetCaptureResult(null, result.IsCompleted ? null : result.Message, Array.Empty<string>());
+        _batchCaptureStatus = result.Status;
+        _wasCaptureTruncated = result.WasTruncated;
+        if (result.IsCompleted)
+        {
+            _capturedCandidates = result.Candidates
+                .Select(candidate => new CruiseCaptureCandidateReviewItemViewModel(
+                    candidate,
+                    CanOpenCandidateAtTui(candidate.SourceReference),
+                    RequestCandidateExternalOpen,
+                    OnCandidateSelectionChanged))
+                .ToList()
+                .AsReadOnly();
+        }
+
+        NotifyBatchReviewChanged();
+    }
+
+    private bool CanOpenCandidateAtTui(string sourceReference) =>
+        SelectedSource is not null &&
+        Uri.TryCreate(sourceReference, UriKind.Absolute, out var address) &&
+        _trustedHostPolicy.Classify(address, SelectedSource) == CruiseAddressTrust.Trusted;
+
+    private void ClearBatchReviewState()
+    {
+        _batchCaptureStatus = null;
+        _wasCaptureTruncated = false;
+        _capturedCandidates = Array.Empty<CruiseCaptureCandidateReviewItemViewModel>();
+        NotifyBatchReviewChanged();
+    }
+
+    private void NotifyBatchReviewChanged()
+    {
+        OnPropertyChanged(nameof(BatchCaptureStatus));
+        OnPropertyChanged(nameof(CapturedCandidates));
+        OnPropertyChanged(nameof(HasCapturedCandidates));
+        OnPropertyChanged(nameof(ReadyCandidateCount));
+        OnPropertyChanged(nameof(IncompleteCandidateCount));
+        OnPropertyChanged(nameof(FailedCandidateCount));
+        OnPropertyChanged(nameof(WasCaptureTruncated));
+        OnPropertyChanged(nameof(BatchCaptureSummary));
+        OnPropertyChanged(nameof(HasBatchCaptureSummary));
+        OnSelectionChanged();
+    }
+
+    private string BuildBatchCaptureSummary()
+    {
+        var total = CapturedCandidates.Count;
+        var summary = $"Captured {total} loaded cruise {(total == 1 ? "deal" : "deals")}. " +
+                      $"{ReadyCandidateCount} ready, " +
+                      $"{IncompleteCandidateCount} incomplete, " +
+                      $"{FailedCandidateCount} failed.";
+        return WasCaptureTruncated
+            ? summary + Environment.NewLine +
+              "Kryten captured the first 10 loaded cruise deals. " +
+              "Refine the TUI results or capture another page to review more."
+            : summary;
+    }
+
     private void OnCommandStateChanged()
     {
         OnPropertyChanged(nameof(CanLoad));
@@ -789,6 +987,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(CanGoForward));
         OnPropertyChanged(nameof(CanCapture));
         OnPropertyChanged(nameof(CanOpenExternal));
+        OnPropertyChanged(nameof(CaptureButtonText));
         _loadCommand.RaiseCanExecuteChanged();
         _backCommand.RaiseCanExecuteChanged();
         _forwardCommand.RaiseCanExecuteChanged();
@@ -799,6 +998,8 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         _captureCommand.RaiseCanExecuteChanged();
         _cancelCaptureCommand.RaiseCanExecuteChanged();
         _openExternalCommand.RaiseCanExecuteChanged();
+        _selectAllReadyCommand.RaiseCanExecuteChanged();
+        _clearSelectionCommand.RaiseCanExecuteChanged();
     }
 
     private void RecordNavigationAddress(Uri? address)

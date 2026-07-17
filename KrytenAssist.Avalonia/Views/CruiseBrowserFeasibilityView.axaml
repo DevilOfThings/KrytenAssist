@@ -67,7 +67,7 @@
                         Classes="secondary"
                         Command="{Binding VerifyReadAccessCommand}"
                         IsVisible="{Binding HasStarted}" />
-                <Button Content="Capture Displayed Cruise"
+                <Button Content="{Binding CaptureButtonText}"
                         Classes="primary"
                         Command="{Binding CaptureCommand}"
                         IsVisible="{Binding HasStarted}" />
@@ -262,6 +262,93 @@
                                        IsVisible="{Binding History.HasRecordMessage}" />
                         </StackPanel>
                     </ScrollViewer>
+                </Border>
+
+                <Border Grid.Row="2"
+                        Classes="workspace-surface"
+                        Padding="12"
+                        IsVisible="{Binding HasCapturedCandidates}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Captured cruise deals"
+                                   FontSize="16"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding BatchCaptureSummary}"
+                                   TextWrapping="Wrap" />
+                        <WrapPanel Orientation="Horizontal"
+                                   ItemSpacing="8"
+                                   LineSpacing="8">
+                            <Button Content="Select All Ready"
+                                    Classes="secondary"
+                                    Command="{Binding SelectAllReadyCommand}" />
+                            <Button Content="Clear Selection"
+                                    Classes="secondary"
+                                    Command="{Binding ClearSelectionCommand}" />
+                            <TextBlock Text="{Binding SelectedCandidateCount, StringFormat='Selected: {0}'}"
+                                       VerticalAlignment="Center" />
+                        </WrapPanel>
+                        <ScrollViewer MaxHeight="330"
+                                      VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding CapturedCandidates}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="viewModels:CruiseCaptureCandidateReviewItemViewModel">
+                                        <Border Classes="status-surface"
+                                                Padding="10"
+                                                Margin="0,0,0,7">
+                                            <Grid ColumnDefinitions="Auto,*"
+                                                  ColumnSpacing="10">
+                                                <CheckBox Grid.Column="0"
+                                                          IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                          IsEnabled="{Binding CanSelect}"
+                                                          VerticalAlignment="Top" />
+                                                <StackPanel Grid.Column="1"
+                                                            Spacing="3">
+                                                    <TextBlock Text="{Binding StatusText}"
+                                                               FontWeight="SemiBold" />
+                                                    <TextBlock Text="{Binding DisplayLabel}"
+                                                               FontSize="16"
+                                                               FontWeight="SemiBold"
+                                                               TextWrapping="Wrap" />
+                                                    <TextBlock Text="{Binding Operator, StringFormat='Operator: {0}'}"
+                                                               IsVisible="{Binding IsReady}" />
+                                                    <TextBlock Text="{Binding RetailSource, StringFormat='Source: {0}'}"
+                                                               IsVisible="{Binding IsReady}" />
+                                                    <TextBlock Text="{Binding Ship, StringFormat='Ship: {0}'}"
+                                                               IsVisible="{Binding IsReady}" />
+                                                    <TextBlock Text="{Binding DepartureDateText, StringFormat='Departure: {0}'}"
+                                                               IsVisible="{Binding IsReady}" />
+                                                    <TextBlock Text="{Binding DurationText, StringFormat='Duration: {0}'}"
+                                                               IsVisible="{Binding IsReady}" />
+                                                    <TextBlock Text="{Binding DeparturePort, StringFormat='Departure port: {0}'}"
+                                                               IsVisible="{Binding HasDeparturePort}" />
+                                                    <TextBlock Text="{Binding PricesText, StringFormat='Price: {0}'}"
+                                                               TextWrapping="Wrap"
+                                                               IsVisible="{Binding HasPrices}" />
+                                                    <TextBlock Text="{Binding PromotionSummary, StringFormat='Promotion: {0}'}"
+                                                               TextWrapping="Wrap"
+                                                               IsVisible="{Binding HasPromotion}" />
+                                                    <TextBlock Text="{Binding Message}"
+                                                               TextWrapping="Wrap"
+                                                               IsVisible="{Binding HasMessage}" />
+                                                    <TextBlock Text="{Binding MissingFieldsText, StringFormat='Missing: {0}'}"
+                                                               Classes="secondary-text"
+                                                               TextWrapping="Wrap"
+                                                               IsVisible="{Binding HasMissingFields}" />
+                                                    <TextBlock Text="{Binding SourceReference}"
+                                                               Classes="secondary-text"
+                                                               TextWrapping="Wrap" />
+                                                    <Button Content="Open at TUI"
+                                                            Classes="secondary"
+                                                            HorizontalAlignment="Left"
+                                                            Command="{Binding OpenAtTuiCommand}"
+                                                            IsVisible="{Binding CanOpenAtTui}" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </StackPanel>
                 </Border>
 
                 <NativeWebView x:Name="EmbeddedBrowser"
