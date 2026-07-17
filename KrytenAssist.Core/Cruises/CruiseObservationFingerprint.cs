@@ -2,7 +2,9 @@ using System.Globalization;
 
 namespace KrytenAssist.Core.Cruises;
 
-public sealed class CruiseObservationFingerprint : IEquatable<CruiseObservationFingerprint>
+public sealed class CruiseObservationFingerprint :
+    IEquatable<CruiseObservationFingerprint>,
+    IComparable<CruiseObservationFingerprint>
 {
     private readonly string _comparisonKey;
 
@@ -78,6 +80,11 @@ public sealed class CruiseObservationFingerprint : IEquatable<CruiseObservationF
     public override bool Equals(object? obj) => Equals(obj as CruiseObservationFingerprint);
 
     public override int GetHashCode() => StringComparer.Ordinal.GetHashCode(_comparisonKey);
+
+    public int CompareTo(CruiseObservationFingerprint? other) =>
+        other is null
+            ? 1
+            : StringComparer.Ordinal.Compare(_comparisonKey, other._comparisonKey);
 
     private sealed class PriceFingerprint : IEquatable<PriceFingerprint>
     {
