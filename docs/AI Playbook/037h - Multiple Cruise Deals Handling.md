@@ -635,7 +635,9 @@ Prompt 037h is complete only when:
 - no browser/DOM/TUI type leaks into Application/Core
 - no test contacts TUI, launches a browser or accesses Robin's database
 - complete solution builds and all tests pass
-- Robin manually verifies the supported live workflow
+- Robin manually verifies the supported live multi-deal workflow; if the
+  originally demonstrated retailer URL has changed, record the replacement
+  supported page and the external volatility honestly
 - Results and Lessons Learned are complete
 - Prompt 038 remains unstarted
 
@@ -643,68 +645,142 @@ Prompt 037h is complete only when:
 
 ## Results
 
-> Complete after implementation and verification.
+> Completed after implementation and verification on 17 July 2026.
 
 ### Status
 
-Not started.
+Complete.
 
 ### Live Page Shape
 
-The 17 July 2026 feasibility evidence is recorded above. Implementation and final
-manual verification remain to be completed.
+The demonstrated Voyager page used `tui-product-cards` with ten loaded
+`[data-testid="product-card"]` cards. The fixed extraction script scopes all
+evidence to that exact card boundary.
+
+During final manual verification the original Voyager page was no longer
+discoverable. Robin instead verified the equivalent multi-deal workflow on:
+
+```text
+https://www.tui.co.uk/destinations/deals
+```
+
+Robin successfully captured multiple deals and explicitly recorded
+observations. This is live functional evidence, while the volatile Voyager page
+shape remains covered by fictional deterministic tests.
 
 ### Batch Contract
 
-To be completed.
+Application owns bounded ordered batch and candidate result contracts. Ready,
+Incomplete, Failed, Unsupported and Cancelled states remain distinct; each
+Ready candidate requires its own exact HTTPS itinerary reference.
 
 ### TUI Card Isolation
 
-To be completed.
+The TUI adapter extracts only demonstrated `product-card` containers within the
+open `tui-product-cards` shadow root. It removes duplicate exact itinerary
+references, preserves first-seen card order, limits capture to ten cards and
+retains truncation evidence. Fixed fictional-payload tests prove a card cannot
+receive another card's ship, price or promotion evidence.
 
 ### Review and Selection
 
-To be completed.
+Avalonia displays deterministic Ready, Incomplete and Failed review rows. Only
+Ready rows can be selected or opened at their independently validated trusted
+TUI address. One clean untruncated candidate preserves the existing single
+Cruise of the Week workflow; a genuine batch remains a batch.
 
 ### Batch Recording
 
-To be completed.
+Record Selected and Record All Observations process a stable sequential snapshot
+through the existing Application record use case. Each row retains its own
+First, Changed, Already Current, Failed or Cancelled outcome. Useful outcomes
+refresh Cruise History exactly once; failed, cancelled and unattempted rows
+remain retryable.
 
 ### Single-Cruise Compatibility
 
-To be completed.
+Single-Cruise capture, review and Record Observation behavior remains covered
+by focused lifecycle and History tests. Robin also confirmed the broader
+multi-deal capture-and-record workflow remains usable in the desktop app.
 
 ### Files Created
 
-To be completed.
+- Application batch contracts and batch capture service interface
+- TUI batch adapter tests
+- Avalonia candidate review and batch recording presentation types/tests
+- Codex prompts 037h-a through 037h-e
+- `docs/Session Handovers/2026-07-17 Session 019.md`
 
 ### Files Updated
 
-To be completed.
+- TUI fixed capture script, adapter and dependency registration
+- Cruise browser/review/History ViewModels and passive review view
+- Roadmap and this Playbook
 
 ### Production Corrections
 
-To be completed.
+None during final verification.
 
 ### Build
 
-Not run.
+Passed:
+
+```text
+dotnet build KrytenAssist.sln --no-restore
+```
+
+Result: 0 errors. The five existing NU1903 warnings concern the known
+`SQLitePCLRaw.lib.e_sqlite3` advisory.
 
 ### Tests
 
-Not run.
+Focused multi-Cruise verification passed: 164 passed, 0 failed, 0 skipped.
+
+Complete offline regression passed using the stable single-worker runner:
+
+```text
+dotnet test KrytenAssist.sln --no-build --no-restore --disable-build-servers -m:1
+```
+
+- Core: 105 passed
+- Avalonia: 415 passed
+- API: 9 passed
+- Total: 529 passed, 0 failed, 0 skipped
+
+Tests use fictional bounded payloads, fakes and isolated persistence only. No
+test contacts TUI, launches a browser or accesses Robin's local database.
 
 ### Manual Verification
 
-Not performed.
+Passed on 17 July 2026. Robin could not locate the volatile Voyager page but
+used `https://www.tui.co.uk/destinations/deals` to capture multiple offers and
+record observations successfully.
+
+An Italy destination page subsequently demonstrated a different TUI template:
+`[data-testid="small-product-card"]`. Kryten reported that page as unsupported
+instead of guessing across card boundaries, which is the intended safety
+behavior. Supporting that template requires a later tested extension.
 
 ### Git Commits
 
-Not created.
+Implementation commits:
+
+- `726804d` – 037h-a Multi Cruise Capture Contract
+- `b974ff5` – 037h-b TUI Multi card capture Adapter
+- `f78a426` – 037h-c Multi Cruise Capture Review
+- `c3fece1` – 037h-d Batch Observation Recording
 
 ---
 
 ## Lessons Learned
 
-> Complete after implementation and verification. Do not begin Prompt 038 until
-> this section and Results have been updated.
+- TUI pages can use separate card templates inside the same component. Support
+  must be added per demonstrated template with fixed fixtures; a generic
+  fallback would risk cross-card evidence leakage.
+- Live retailer pages are volatile. Their manual results are useful evidence,
+  but durable behavioral guarantees belong in offline fictional-payload tests.
+- Explicit sequential batch recording gives Robin controlled outcomes and
+  preserves the existing single-observation history model without pretending
+  unrelated sailings form one transaction.
+- The multi-Cruise review needs a future layout refinement so source navigation
+  remains comfortable while comparing supported and unsupported pages.

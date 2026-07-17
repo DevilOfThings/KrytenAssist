@@ -12,9 +12,11 @@ Current Prompt
 --------------
 Prompt 038 – Saved Cruises and Preferences (next)
 
-Prompt 037 – Cruise History and Price Tracking is complete. Kryten can explicitly
-record captured Cruise observations, preserve meaningful price changes in local
-SQLite history and revisit that history after restart without loading TUI.
+Prompt 037 – Cruise History and Price Tracking, including its 037h Multiple
+Cruise Deals extension, is complete. Kryten can explicitly capture currently
+loaded supported TUI deal cards, review and record observations independently,
+preserve meaningful price changes in local SQLite history and revisit that
+history after restart without loading TUI.
 
 Prompt 038 is the recommended next task. It has not started.
 
@@ -461,6 +463,28 @@ available after restarting Kryten. The verified solution baseline is 450 tests:
 
 The current captured price remains neutral; original price, discounted price,
 per-person discount and booking-level discount require a later explicit model.
+
+### Prompt 037h – Multiple Cruise Deals Handling
+
+Current status: Complete. On a supported TUI product-card page, Kryten can
+explicitly capture up to ten currently loaded deals, independently validate and
+review them, then record selected or all Ready observations sequentially.
+
+Each candidate keeps its own trusted itinerary reference. Duplicate references,
+incomplete cards, bounded capture, truncation, cancellation and independent
+recording outcomes are handled honestly. Useful batch outcomes refresh Recorded
+Cruise History once.
+
+Robin manually verified multi-deal capture and observation recording on
+`https://www.tui.co.uk/destinations/deals` on 17 July 2026. The originally
+demonstrated Voyager page was no longer discoverable during final verification;
+this is recorded as volatile external page evidence, not a product failure.
+
+The multi-Cruise review layout makes source navigation awkward while checking
+incompatible TUI pages. Treat this as a future presentation refinement. Also,
+destination pages using TUI's separate `small-product-card` template are not
+yet supported; they require a separately tested extension rather than a broad
+selector fallback.
 
 ---
 
