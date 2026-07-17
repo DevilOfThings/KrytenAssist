@@ -10,11 +10,13 @@ Phase 7 – Cruise Assistant
 
 Current Prompt
 --------------
-Prompt 036 – Cruise Discovery and Capture
+Prompt 038 – Saved Cruises and Preferences (next)
 
-Allow Robin to browse trusted cruise offer pages from Kryten, beginning with
-TUI's Marella Cruise of the Week, and explicitly capture interesting cruises for
-later saving, rating and price comparison.
+Prompt 037 – Cruise History and Price Tracking is complete. Kryten can explicitly
+record captured Cruise observations, preserve meaningful price changes in local
+SQLite history and revisit that history after restart without loading TUI.
+
+Prompt 038 is the recommended next task. It has not started.
 
 ### Phase 1 – API Foundation
 
@@ -400,8 +402,8 @@ Marella Cruises as operator separately from TUI as retail source. Trusted-host
 navigation, cancellation, stale-result rejection and controlled failure states
 are covered by deterministic offline tests.
 
-Prompt 037 – Cruise History and Price Tracking is the next step. It has not
-started.
+Prompt 037 – Cruise History and Price Tracking is complete. Prompt 038 – Saved
+Cruises and Preferences is next and has not started.
 
 Allow Robin to:
 
@@ -430,11 +432,18 @@ it.
 
 ## Prompt 037 – Cruise History and Price Tracking
 
-Persist explicitly captured Cruise observations locally.
+Current status: Complete. Robin can explicitly choose `Record Observation` after
+a successful capture, and Kryten persists the provider-independent evidence in
+the existing EF Core SQLite database.
 
-Store a new snapshot only when meaningful observable values change.
+Stable sailing identity uses operator, ship, departure date and duration, while
+retail source remains a separate history dimension. Meaningful advertised
+changes create chronological snapshots; identical evidence advances last-seen
+and latest evidence without creating duplicates. Transactions, cancellation,
+concurrent writers, migrations and full restart persistence are covered by
+isolated deterministic tests.
 
-Display historical pricing including:
+Recorded Cruise History loads locally without opening TUI and displays:
 
 - First observed
 - Current price
@@ -445,6 +454,13 @@ Display historical pricing including:
 
 Preserve observations even when Robin never books the cruise so that later
 offers can be compared with prices seen previously.
+
+Robin manually confirmed that a captured price could be recorded and remained
+available after restarting Kryten. The verified solution baseline is 450 tests:
+105 Core, 336 Avalonia and 9 API, with 0 failures and 0 skipped.
+
+The current captured price remains neutral; original price, discounted price,
+per-person discount and booking-level discount require a later explicit model.
 
 ---
 

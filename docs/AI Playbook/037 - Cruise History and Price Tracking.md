@@ -993,39 +993,172 @@ Prompt 037 is complete only when:
 
 ### Status
 
-Not started.
+Complete and verified on 17 July 2026.
+
+Kryten now records explicitly accepted Cruise observations into durable local
+history, creates snapshots only for meaningful advertised changes, calculates a
+compatible price-history summary and revisits recorded cruises after restart
+without loading TUI.
 
 ### Identity and Change Rules
 
-To be completed.
+`CruiseSailingKey` identifies a physical sailing by normalized operator id, ship
+name, departure date and duration. Retail source is deliberately separate, so
+the same sailing advertised by TUI and another retailer has independent history
+and price series. Retail package/offer id, source reference, price, promotion and
+observation timestamp are evidence rather than sailing identity.
+
+`CruiseObservationFingerprint` canonicalizes advertised offer facts, prices,
+promotion and source identity. Equivalent case/whitespace, price order and
+duplicate price representations do not fabricate change. Meaningful offer,
+price or promotion changes create a new chronological snapshot. An identical
+current observation adds no snapshot but can advance last-seen and latest offer
+evidence. Returning to a previously seen meaningful state after an intervening
+state creates a new chronological snapshot.
+
+Comparable price selection prefers one unambiguous GBP per-person price and
+otherwise accepts only one price with an explicit basis. Unlike currency or
+basis is never mixed. Current, lowest and highest use the current compatible
+series, and trend compares with the immediately previous observation. First,
+Higher, Lower, Unchanged and Unavailable remain distinct.
 
 ### Files Created
 
-To be completed.
+Core production and tests:
+
+- `KrytenAssist.Core/Cruises/CruiseHistoryText.cs`
+- `KrytenAssist.Core/Cruises/CruiseSailingKey.cs`
+- `KrytenAssist.Core/Cruises/CruiseObservationFingerprint.cs`
+- `KrytenAssist.Core/Cruises/CruisePriceTrendDirection.cs`
+- `KrytenAssist.Core/Cruises/CruisePriceMovement.cs`
+- `KrytenAssist.Core/Cruises/CruisePriceHistorySummary.cs`
+- `KrytenAssist.Core/Cruises/CruisePriceHistoryAnalyzer.cs`
+- the matching sailing-key, fingerprint, ordering and price-history Core tests
+
+Application production and tests:
+
+- `KrytenAssist.Application/Abstractions/Persistence/ICruiseObservationRepository.cs`
+- Cruise History details, list/query/record results and statuses under
+  `KrytenAssist.Application/Cruises/`
+- `CruiseRecordedHistory`, `CruiseLatestEvidence`, `RecordCruiseObservation`,
+  `GetCruiseHistory` and `ListCruiseHistories`
+- the matching Application contract, use-case and hand-written repository tests
+
+Infrastructure production and tests:
+
+- normalized Cruise history, observation and price entities/configurations
+- `KrytenAssist.Infrastructure/Persistence/CruisePersistenceConversions.cs`
+- `KrytenAssist.Infrastructure/Persistence/SqliteCruiseObservationRepository.cs`
+- migrations `20260717082520_AddCruiseHistoryPersistence` and
+  `20260717090431_HardenCruiseHistoryRecording`, including designers
+- schema/migration, round-trip, cancellation, concurrency, restart and hardening
+  test fixtures under `KrytenAssist.Avalonia.Tests/Infrastructure/Persistence/`
+
+Avalonia production and tests:
+
+- `KrytenAssist.Avalonia/DependencyInjection/DesktopPersistenceServiceCollectionExtensions.cs`
+- `KrytenAssist.Avalonia/ViewModels/CruiseHistoryViewModel.cs`
+- `KrytenAssist.Avalonia/ViewModels/CruiseHistoryItemViewModel.cs`
+- desktop composition, ViewModel and cross-layer restart workflow tests
+
+Documentation:
+
+- `docs/AI Playbook/037 - Cruise History and Price Tracking.md`
+- Codex prompts 037a–037g
+- `docs/Session Handovers/2026-07-17 Session 018.md`
 
 ### Files Updated
 
-To be completed.
+- `KrytenAssist.Application/DependencyInjection.cs`
+- `KrytenAssist.Infrastructure/DependencyInjection.cs`
+- `KrytenAssist.Infrastructure/Persistence/KrytenAssistDbContext.cs`
+- `KrytenAssist.Infrastructure/Persistence/Migrations/KrytenAssistDbContextModelSnapshot.cs`
+- Cruise persistence entities, configurations and repository during 037d
+  hardening
+- `KrytenAssist.Avalonia/Program.cs`
+- `KrytenAssist.Avalonia/ViewModels/CruiseBrowserFeasibilityViewModel.cs`
+- `KrytenAssist.Avalonia/ViewModels/CruiseOfTheWeekViewModel.cs`
+- `KrytenAssist.Avalonia/ViewModels/ShellViewModel.cs`
+- `KrytenAssist.Avalonia/Views/CruiseBrowserFeasibilityView.axaml`
+- focused Core, Application, Infrastructure and Avalonia tests as recorded in
+  prompts 037a–037f
+- `docs/Roadmap.md`
 
 ### Database and Migration
 
-To be completed.
+The existing `KrytenAssistDbContext` now includes normalized `CruiseHistories`,
+`CruiseObservations` and `CruiseObservationPrices` tables while retaining Prompt
+Cards. `AddCruiseHistoryPersistence` introduced sailing/source uniqueness,
+ordered prices, constraints and cascading aggregate ownership.
+`HardenCruiseHistoryRecording` replaced history-wide fingerprint uniqueness with
+positive per-history sequence uniqueness, retained a fingerprint lookup index
+and added latest provider offer/reference/time evidence.
+
+Tests prove migration from the initial Prompt Card schema, migration through
+every checked-in version, 037c-to-037d data preservation, constraints, cascade,
+transaction rollback, concurrent writers and complete provider/database
+recreation. Recording uses an explicit transaction and at most three attempts
+for demonstrated SQLite busy/locked or uniqueness concurrency conflicts.
+
+Avalonia composes the existing Application and Infrastructure extensions and
+uses a deterministic writable database at the platform Local Application Data
+path under `KrytenAssist/krytenassist.db`. Tests always override this with
+in-memory or uniquely named temporary databases.
 
 ### Build
 
-Not run.
+Passed:
+
+```text
+dotnet build KrytenAssist.sln --no-restore
+```
+
+0 errors and 5 existing NU1903 warnings for the known
+`SQLitePCLRaw.lib.e_sqlite3` 2.1.11 advisory.
 
 ### Tests
 
-Not run.
+Focused verification passed:
+
+- Core Cruise History group: 58 passed, 0 failed, 0 skipped
+- Application/Infrastructure/Avalonia Cruise History group: 54 passed, 0
+  failed, 0 skipped
+
+Complete regression suite passed:
+
+```text
+dotnet test KrytenAssist.sln --no-build --no-restore
+```
+
+- Core: 105 passed, 0 failed, 0 skipped
+- Avalonia: 336 passed, 0 failed, 0 skipped
+- API: 9 passed, 0 failed, 0 skipped
+- Total: 450 passed, 0 failed, 0 skipped
+
+All Cruise History tests are offline and use fixed clocks, hand-written fakes,
+in-memory SQLite or unique temporary file databases. They do not contact TUI,
+open a browser or access Robin's desktop database.
 
 ### Manual Verification
 
-Not performed.
+Passed on 17 July 2026. Robin captured a Cruise, chose Record Observation,
+confirmed that its price appeared in Recorded Cruise History, restarted Kryten
+and confirmed that the history remained available.
+
+037f later changed only one-night wording and cancellation/replacement command
+generation. Normal successful record, persistence and restart loading did not
+change, so the existing manual evidence remains valid.
 
 ### Git Commits
 
-Not created.
+- `a868133` – 037a Cruise History Domain
+- `b776b9a` – 037b Cruise History Application Contract
+- `a3e3038` – 037c Cruise History SQLite Persistence
+- `394f5b3` – 037d Observation Recording and History Queries
+- `74078c1` – 037e Cruise History Presentation
+- `5bb399a` – 037f Cruise History Tests
+
+037g verification documentation remains uncommitted for Robin to review.
 
 ---
 
@@ -1033,3 +1166,28 @@ Not created.
 
 > Complete after implementation and verification. Do not begin Prompt 038 until
 > this section and Results have been updated.
+
+- Physical sailing identity must remain smaller and more stable than retailer
+  evidence; retail source then provides the correct boundary for independent
+  advertised price series.
+- Fingerprints answer whether advertised facts changed, while observation time,
+  latest offer reference and last-seen metadata answer when and where equivalent
+  evidence was seen. Combining those concerns would either lose evidence or
+  create duplicate snapshots.
+- Price history is trustworthy only when ambiguity is represented explicitly and
+  unlike currency or basis is never compared.
+- A first persistence migration can establish normalized storage, but realistic
+  chronological return-to-prior-state and latest-evidence rules may require a
+  focused hardening migration before presentation is exposed.
+- SQLite concurrency correctness needs database constraints, transactions,
+  separate contexts in tests and bounded retry for demonstrated conflict codes;
+  in-memory orchestration alone cannot prove it.
+- The strongest restart proof recreates the complete desktop service provider
+  against an isolated file, not merely a repository instance.
+- Capture review and persisted history are separate lifecycle states. Browser
+  navigation may clear the former but must never clear the latter.
+- The neutral current price model is sufficient for factual history but not for
+  explaining original price, discounted price, per-person discount and an extra
+  booking-level discount. That richer model should be designed explicitly later.
+- Prompt 038 can now add Robin's ratings, notes and preferences without mixing
+  subjective evaluation into provider observations.
