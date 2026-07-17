@@ -1,6 +1,7 @@
 using KrytenAssist.Application.Abstractions.Persistence;
 using KrytenAssist.Application.Cruises;
 using KrytenAssist.Core.Cruises;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
 namespace KrytenAssist.Infrastructure.Persistence;
@@ -8,6 +9,7 @@ namespace KrytenAssist.Infrastructure.Persistence;
 public sealed class SqliteCruiseObservationRepository : ICruiseObservationRepository
 {
     private const string NoRetailSource = "";
+    private const int MaximumRecordAttempts = 3;
     private readonly KrytenAssistDbContext _dbContext;
 
     public SqliteCruiseObservationRepository(KrytenAssistDbContext dbContext)
@@ -37,40 +39,24 @@ public sealed class SqliteCruiseObservationRepository : ICruiseObservationReposi
             throw new ArgumentException("Observation evidence must match the supplied fingerprint.", nameof(fingerprint));
         }
 
-        var retailSourceId = fingerprint.RetailSourceId ?? NoRetailSource;
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
-        var history = await LoadEntityAsync(sailingKey, retailSourceId, tracking: true, cancellationToken);
-        CruiseObservationRepositoryRecordState state;
-        if (history is null)
+        for (var attempt = 1; ; attempt++)
         {
-            history = CreateHistory(sailingKey, fingerprint, observation);
-            history.Observations.Add(CreateObservation(fingerprint, observation));
-            _dbContext.CruiseHistories.Add(history);
-            state = CruiseObservationRepositoryRecordState.FirstObservationRecorded;
-        }
-        else
-        {
-            var latest = history.Observations
-                .OrderBy(item => item.ObservedAt)
-                .ThenBy(item => item.Fingerprint, StringComparer.Ordinal)
-                .Last();
-            if (string.Equals(latest.Fingerprint, fingerprint.PersistenceKey, StringComparison.Ordinal))
+            try
             {
-                state = CruiseObservationRepositoryRecordState.AlreadyCurrent;
+                return await RecordAttemptAsync(
+                    sailingKey,
+                    fingerprint,
+                    observation,
+                    cancellationToken);
             }
-            else
+            catch (Exception exception) when (
+                attempt < MaximumRecordAttempts
+                && IsTransientConcurrencyFailure(exception))
             {
-                history.Observations.Add(CreateObservation(fingerprint, observation));
-                history.FirstObservedAt = Earlier(history.FirstObservedAt, observation.ObservedAt);
-                state = CruiseObservationRepositoryRecordState.ChangedObservationRecorded;
+                _dbContext.ChangeTracker.Clear();
+                await Task.Delay(TimeSpan.FromMilliseconds(10 * attempt), cancellationToken);
             }
-
-            history.LastSeenAt = Later(history.LastSeenAt, observation.ObservedAt);
         }
-
-        await _dbContext.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
-        return new CruiseObservationRepositoryRecordResult(state, MapHistory(history));
     }
 
     public async Task<CruiseRecordedHistory?> GetAsync(
@@ -126,6 +112,48 @@ public sealed class SqliteCruiseObservationRepository : ICruiseObservationReposi
                 cancellationToken);
     }
 
+    private async Task<CruiseObservationRepositoryRecordResult> RecordAttemptAsync(
+        CruiseSailingKey sailingKey,
+        CruiseObservationFingerprint fingerprint,
+        CruiseObservation observation,
+        CancellationToken cancellationToken)
+    {
+        var retailSourceId = fingerprint.RetailSourceId ?? NoRetailSource;
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        var history = await LoadEntityAsync(sailingKey, retailSourceId, tracking: true, cancellationToken);
+        CruiseObservationRepositoryRecordState state;
+        if (history is null)
+        {
+            history = CreateHistory(sailingKey, fingerprint, observation);
+            history.Observations.Add(CreateObservation(fingerprint, observation, sequence: 1));
+            _dbContext.CruiseHistories.Add(history);
+            state = CruiseObservationRepositoryRecordState.FirstObservationRecorded;
+        }
+        else
+        {
+            var latest = CurrentObservation(history.Observations);
+            if (string.Equals(latest.Fingerprint, fingerprint.PersistenceKey, StringComparison.Ordinal))
+            {
+                state = CruiseObservationRepositoryRecordState.AlreadyCurrent;
+            }
+            else
+            {
+                var nextSequence = history.Observations.Max(item => item.Sequence) + 1;
+                history.Observations.Add(CreateObservation(fingerprint, observation, nextSequence));
+                history.FirstObservedAt = Earlier(history.FirstObservedAt, observation.ObservedAt);
+                state = CruiseObservationRepositoryRecordState.ChangedObservationRecorded;
+            }
+
+            history.LastSeenAt = Later(history.LastSeenAt, observation.ObservedAt);
+            UpdateLatestEvidence(history, observation);
+        }
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+        await transaction.CommitAsync(cancellationToken);
+        return new CruiseObservationRepositoryRecordResult(state, MapHistory(history));
+    }
+
     private static CruiseHistoryEntity CreateHistory(
         CruiseSailingKey sailingKey,
         CruiseObservationFingerprint fingerprint,
@@ -139,16 +167,21 @@ public sealed class SqliteCruiseObservationRepository : ICruiseObservationReposi
             RetailSourceId = fingerprint.RetailSourceId ?? NoRetailSource,
             RetailSourceName = observation.Source?.Name,
             FirstObservedAt = observation.ObservedAt,
-            LastSeenAt = observation.ObservedAt
+            LastSeenAt = observation.ObservedAt,
+            LatestProviderOfferId = observation.Snapshot.Offer.ProviderOfferId,
+            LatestSourceReference = observation.SourceReference,
+            LatestEvidenceObservedAt = observation.ObservedAt
         };
 
     private static CruiseObservationEntity CreateObservation(
         CruiseObservationFingerprint fingerprint,
-        CruiseObservation observation)
+        CruiseObservation observation,
+        int sequence)
     {
         var offer = observation.Snapshot.Offer;
         var entity = new CruiseObservationEntity
         {
+            Sequence = sequence,
             Fingerprint = fingerprint.PersistenceKey,
             ProviderOfferId = offer.ProviderOfferId,
             OperatorName = offer.Provider.Name,
@@ -190,7 +223,11 @@ public sealed class SqliteCruiseObservationRepository : ICruiseObservationReposi
                 history.DepartureDate,
                 history.DurationNights),
             history.LastSeenAt,
-            observations);
+            observations,
+            new CruiseLatestEvidence(
+                history.LatestProviderOfferId,
+                history.LatestSourceReference,
+                history.LatestEvidenceObservedAt));
     }
 
     private static CruiseObservation MapObservation(
@@ -220,4 +257,67 @@ public sealed class SqliteCruiseObservationRepository : ICruiseObservationReposi
 
     private static DateTimeOffset Earlier(DateTimeOffset left, DateTimeOffset right) => left <= right ? left : right;
     private static DateTimeOffset Later(DateTimeOffset left, DateTimeOffset right) => left >= right ? left : right;
+
+    private static CruiseObservationEntity CurrentObservation(IEnumerable<CruiseObservationEntity> observations) =>
+        observations
+            .OrderBy(item => item.ObservedAt)
+            .ThenBy(item => item.Fingerprint, StringComparer.Ordinal)
+            .Last();
+
+    private static void UpdateLatestEvidence(
+        CruiseHistoryEntity history,
+        CruiseObservation observation)
+    {
+        if (!ShouldReplaceLatestEvidence(history, observation))
+        {
+            return;
+        }
+
+        history.LatestProviderOfferId = observation.Snapshot.Offer.ProviderOfferId;
+        history.LatestSourceReference = observation.SourceReference;
+        history.LatestEvidenceObservedAt = observation.ObservedAt;
+    }
+
+    private static bool ShouldReplaceLatestEvidence(
+        CruiseHistoryEntity history,
+        CruiseObservation observation)
+    {
+        if (observation.ObservedAt != history.LatestEvidenceObservedAt)
+        {
+            return observation.ObservedAt > history.LatestEvidenceObservedAt;
+        }
+
+        var existingKey = string.Join('\n', history.LatestProviderOfferId, history.LatestSourceReference ?? string.Empty);
+        var candidateKey = string.Join(
+            '\n',
+            observation.Snapshot.Offer.ProviderOfferId,
+            observation.SourceReference ?? string.Empty);
+        return StringComparer.Ordinal.Compare(candidateKey, existingKey) > 0;
+    }
+
+    private static bool IsTransientConcurrencyFailure(Exception exception)
+    {
+        var sqlite = FindSqliteException(exception);
+        return sqlite is not null
+            && (sqlite.SqliteErrorCode is 5 or 6
+                || sqlite.SqliteExtendedErrorCode is 1555 or 2067);
+    }
+
+    private static SqliteException? FindSqliteException(Exception exception)
+    {
+        for (var current = exception; current is not null; current = current.InnerException!)
+        {
+            if (current is SqliteException sqlite)
+            {
+                return sqlite;
+            }
+
+            if (current.InnerException is null)
+            {
+                break;
+            }
+        }
+
+        return null;
+    }
 }

@@ -2,6 +2,7 @@ extern alias KrytenInfrastructure;
 
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using DatabaseContext = KrytenInfrastructure::KrytenAssist.Infrastructure.Persistence.KrytenAssistDbContext;
 
 namespace KrytenAssist.Avalonia.Tests.Infrastructure.Persistence;
@@ -21,13 +22,17 @@ internal sealed class CruisePersistenceTestDatabase : IAsyncDisposable
 
     public SqliteConnection Connection => _connection;
 
-    public DatabaseContext CreateContext()
+    public DatabaseContext CreateContext(params IInterceptor[] interceptors)
     {
-        var options = new DbContextOptionsBuilder<DatabaseContext>()
+        var builder = new DbContextOptionsBuilder<DatabaseContext>()
             .UseSqlite(_connection)
-            .EnableDetailedErrors()
-            .Options;
-        return new DatabaseContext(options);
+            .EnableDetailedErrors();
+        if (interceptors.Length > 0)
+        {
+            builder.AddInterceptors(interceptors);
+        }
+
+        return new DatabaseContext(builder.Options);
     }
 
     public async ValueTask DisposeAsync() => await _connection.DisposeAsync();

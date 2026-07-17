@@ -2,6 +2,7 @@ extern alias KrytenApplication;
 
 using KrytenAssist.Core.Cruises;
 using RecordedHistory = KrytenApplication::KrytenAssist.Application.Cruises.CruiseRecordedHistory;
+using LatestEvidence = KrytenApplication::KrytenAssist.Application.Cruises.CruiseLatestEvidence;
 using RepositoryResult = KrytenApplication::KrytenAssist.Application.Cruises.CruiseObservationRepositoryRecordResult;
 using RepositoryState = KrytenApplication::KrytenAssist.Application.Cruises.CruiseObservationRepositoryRecordState;
 
@@ -50,6 +51,28 @@ public sealed class CruiseRecordedHistoryTests
             CruiseSailingKey.From(observation), observation.ObservedAt, [observation]);
 
         Assert.Null(history.Source);
+    }
+
+    [Fact]
+    public void Constructor_RetainsExplicitLatestEvidenceSeparately()
+    {
+        var observation = CruiseHistoryApplicationTestData.Observation();
+        var lastSeen = observation.ObservedAt.AddDays(2);
+        var evidence = new LatestEvidence("new-package", "https://example.test/latest", lastSeen);
+
+        var history = new RecordedHistory(
+            CruiseSailingKey.From(observation),
+            lastSeen,
+            [observation],
+            evidence);
+
+        Assert.Same(evidence, history.LatestEvidence);
+        Assert.Equal(observation.Snapshot.Offer.ProviderOfferId, history.Observations[0].Snapshot.Offer.ProviderOfferId);
+        Assert.Throws<ArgumentException>(() => new RecordedHistory(
+            CruiseSailingKey.From(observation),
+            lastSeen,
+            [observation],
+            new LatestEvidence("future", null, lastSeen.AddTicks(1))));
     }
 
     [Fact]

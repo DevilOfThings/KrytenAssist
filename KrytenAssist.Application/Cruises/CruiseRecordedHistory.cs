@@ -7,7 +7,8 @@ public sealed record CruiseRecordedHistory
     public CruiseRecordedHistory(
         CruiseSailingKey sailingKey,
         DateTimeOffset lastSeenAt,
-        IEnumerable<CruiseObservation> observations)
+        IEnumerable<CruiseObservation> observations,
+        CruiseLatestEvidence? latestEvidence = null)
     {
         ArgumentNullException.ThrowIfNull(sailingKey);
         ArgumentNullException.ThrowIfNull(observations);
@@ -48,8 +49,20 @@ public sealed record CruiseRecordedHistory
                 nameof(lastSeenAt));
         }
 
+        latestEvidence ??= new CruiseLatestEvidence(
+            ordered[^1].Observation.Snapshot.Offer.ProviderOfferId,
+            ordered[^1].Observation.SourceReference,
+            ordered[^1].Observation.ObservedAt);
+        if (latestEvidence.ObservedAt > lastSeenAt)
+        {
+            throw new ArgumentException(
+                "Latest evidence time cannot follow the last seen time.",
+                nameof(latestEvidence));
+        }
+
         SailingKey = sailingKey;
         LastSeenAt = lastSeenAt;
+        LatestEvidence = latestEvidence;
         Observations = Array.AsReadOnly(ordered.Select(item => item.Observation).ToArray());
         Source = Observations[^1].Source;
     }
@@ -57,6 +70,7 @@ public sealed record CruiseRecordedHistory
     public CruiseSailingKey SailingKey { get; }
     public CruiseSource? Source { get; }
     public DateTimeOffset LastSeenAt { get; }
+    public CruiseLatestEvidence LatestEvidence { get; }
     public IReadOnlyList<CruiseObservation> Observations { get; }
 
     public CruisePriceHistorySummary Analyze(CruisePriceHistoryAnalyzer analyzer)

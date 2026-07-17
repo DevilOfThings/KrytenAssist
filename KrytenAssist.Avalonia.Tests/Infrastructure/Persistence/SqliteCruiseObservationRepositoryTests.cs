@@ -98,6 +98,106 @@ public sealed class SqliteCruiseObservationRepositoryTests
         Assert.Equal(2, olderResult.History.Observations.Count);
         Assert.Equal(repeat.ObservedAt, olderResult.History.LastSeenAt);
         Assert.Equal(2, await context.CruiseObservations.CountAsync());
+        Assert.Equal("different-package", olderResult.History.LatestEvidence.ProviderOfferId);
+        Assert.Equal("https://example.test/new-reference", olderResult.History.LatestEvidence.SourceReference);
+    }
+
+    [Fact]
+    public async Task Record_ReturnToPriorStateCreatesNewSnapshot()
+    {
+        await using var database = new CruisePersistenceTestDatabase();
+        await database.OpenAndMigrateAsync();
+        var first = CruisePersistenceTestData.Observation(amount: 988m);
+        var lower = CruisePersistenceTestData.Observation(
+            amount: 949m,
+            observedAt: first.ObservedAt.AddDays(1));
+        var returned = CruisePersistenceTestData.Observation(
+            amount: 988m,
+            observedAt: first.ObservedAt.AddDays(2));
+        await using var context = database.CreateContext();
+        RepositoryContract repository = new Repository(context);
+
+        await RecordAsync(repository, first);
+        await RecordAsync(repository, lower);
+        var result = await RecordAsync(repository, returned);
+        var sequences = await context.CruiseObservations
+            .OrderBy(item => item.Sequence)
+            .Select(item => item.Sequence)
+            .ToArrayAsync();
+
+        Assert.Equal(RecordState.ChangedObservationRecorded, result.State);
+        Assert.Equal([988m, 949m, 988m], result.History.Observations.Select(item => item.Snapshot.Prices[0].Amount));
+        Assert.Equal([1, 2, 3], sequences);
+    }
+
+    [Fact]
+    public async Task Record_OlderEvidenceCannotReplaceLatestEvidence()
+    {
+        await using var database = new CruisePersistenceTestDatabase();
+        await database.OpenAndMigrateAsync();
+        var first = CruisePersistenceTestData.Observation();
+        var newer = CruisePersistenceTestData.Observation(
+            observedAt: first.ObservedAt.AddDays(3),
+            providerOfferId: "newest-package",
+            sourceReference: "https://example.test/newest");
+        var older = CruisePersistenceTestData.Observation(
+            observedAt: first.ObservedAt.AddDays(2),
+            providerOfferId: "older-package",
+            sourceReference: "https://example.test/older");
+        await using var context = database.CreateContext();
+        RepositoryContract repository = new Repository(context);
+
+        await RecordAsync(repository, first);
+        await RecordAsync(repository, newer);
+        var result = await RecordAsync(repository, older);
+
+        Assert.Equal(RecordState.AlreadyCurrent, result.State);
+        Assert.Equal("newest-package", result.History.LatestEvidence.ProviderOfferId);
+        Assert.Equal("https://example.test/newest", result.History.LatestEvidence.SourceReference);
+        Assert.Equal(newer.ObservedAt, result.History.LatestEvidence.ObservedAt);
+    }
+
+    [Fact]
+    public async Task Record_EqualTimeLatestEvidenceUsesDeterministicOrdinalTieBreaker()
+    {
+        await using var database = new CruisePersistenceTestDatabase();
+        await database.OpenAndMigrateAsync();
+        var first = CruisePersistenceTestData.Observation(
+            providerOfferId: "z-package",
+            sourceReference: "https://example.test/z");
+        var lowerEvidence = CruisePersistenceTestData.Observation(
+            providerOfferId: "a-package",
+            sourceReference: "https://example.test/a");
+        await using var context = database.CreateContext();
+        RepositoryContract repository = new Repository(context);
+
+        await RecordAsync(repository, first);
+        var result = await RecordAsync(repository, lowerEvidence);
+
+        Assert.Equal(RecordState.AlreadyCurrent, result.State);
+        Assert.Equal("z-package", result.History.LatestEvidence.ProviderOfferId);
+        Assert.Equal("https://example.test/z", result.History.LatestEvidence.SourceReference);
+        Assert.Single(result.History.Observations);
+    }
+
+    [Fact]
+    public async Task Get_NormalizesTypedSourceAndDoesNotMutateDatabase()
+    {
+        await using var database = new CruisePersistenceTestDatabase();
+        await database.OpenAndMigrateAsync();
+        var observation = CruisePersistenceTestData.Observation();
+        await using var context = database.CreateContext();
+        RepositoryContract repository = new Repository(context);
+        await RecordAsync(repository, observation);
+        var before = context.ChangeTracker.Entries().Count();
+
+        var history = await repository.GetAsync(
+            CruiseSailingKey.From(observation),
+            new CruiseSource("  TUI  ", "Different display name"));
+
+        Assert.NotNull(history);
+        Assert.Equal("tui", history.Source!.Id);
+        Assert.Equal(before, context.ChangeTracker.Entries().Count());
     }
 
     [Fact]

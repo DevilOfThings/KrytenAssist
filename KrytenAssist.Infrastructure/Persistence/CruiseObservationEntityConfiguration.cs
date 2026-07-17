@@ -10,6 +10,7 @@ public sealed class CruiseObservationEntityConfiguration : IEntityTypeConfigurat
         builder.ToTable("CruiseObservations", table =>
         {
             table.HasCheckConstraint("CK_CruiseObservations_DurationNights", "\"DurationNights\" > 0");
+            table.HasCheckConstraint("CK_CruiseObservations_Sequence", "\"Sequence\" > 0");
             AddRequiredLength(table, "Fingerprint", 16000);
             AddRequiredLength(table, "ProviderOfferId", 1000);
             AddRequiredLength(table, "OperatorName", 500);
@@ -36,9 +37,11 @@ public sealed class CruiseObservationEntityConfiguration : IEntityTypeConfigurat
             .WithMany(history => history.Observations)
             .HasForeignKey(entity => entity.CruiseHistoryId)
             .OnDelete(DeleteBehavior.Cascade);
-        builder.HasIndex(entity => new { entity.CruiseHistoryId, entity.Fingerprint })
+        builder.HasIndex(entity => new { entity.CruiseHistoryId, entity.Sequence })
             .IsUnique()
-            .HasDatabaseName("UX_CruiseObservations_History_Fingerprint");
+            .HasDatabaseName("UX_CruiseObservations_History_Sequence");
+        builder.HasIndex(entity => new { entity.CruiseHistoryId, entity.Fingerprint })
+            .HasDatabaseName("IX_CruiseObservations_History_Fingerprint");
         builder.HasIndex(entity => new { entity.CruiseHistoryId, entity.ObservedAt, entity.Id })
             .HasDatabaseName("IX_CruiseObservations_History_ObservedAt");
     }

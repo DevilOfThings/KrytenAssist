@@ -4,6 +4,7 @@ public sealed class CruiseObservationEntity
 {
     public long Id { get; set; }
     public long CruiseHistoryId { get; set; }
+    public int Sequence { get; set; }
     public CruiseHistoryEntity History { get; set; } = null!;
     public string Fingerprint { get; set; } = string.Empty;
     public string ProviderOfferId { get; set; } = string.Empty;

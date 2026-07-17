@@ -31,7 +31,9 @@ public sealed class CruisePersistenceSchemaAndMigrationTests
         Assert.Contains("CK_CruiseObservations_Fingerprint_Length", schema["CruiseObservations"]);
         Assert.Contains("CK_CruiseObservationPrices_Amount", schema["CruiseObservationPrices"]);
         Assert.Contains("UX_CruiseHistories_Sailing_Source", indexes.Keys);
-        Assert.Contains("UX_CruiseObservations_History_Fingerprint", indexes.Keys);
+        Assert.Contains("IX_CruiseObservations_History_Fingerprint", indexes.Keys);
+        Assert.Contains("UX_CruiseObservations_History_Sequence", indexes.Keys);
+        Assert.DoesNotContain("UX_CruiseObservations_History_Fingerprint", indexes.Keys);
         Assert.Contains("UX_CruiseObservationPrices_Observation_Order", indexes.Keys);
     }
 
@@ -78,9 +80,10 @@ public sealed class CruisePersistenceSchemaAndMigrationTests
         await context.Database.MigrateAsync();
         var applied = await context.Database.GetAppliedMigrationsAsync();
 
-        Assert.Equal(2, applied.Count());
+        Assert.Equal(3, applied.Count());
         Assert.Contains(InitialMigration, applied);
         Assert.Contains(applied, migration => migration.EndsWith("_AddCruiseHistoryPersistence", StringComparison.Ordinal));
+        Assert.Contains(applied, migration => migration.EndsWith("_HardenCruiseHistoryRecording", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -110,7 +113,10 @@ public sealed class CruisePersistenceSchemaAndMigrationTests
                 RetailSourceId = stored.RetailSourceId,
                 RetailSourceName = stored.RetailSourceName,
                 FirstObservedAt = stored.FirstObservedAt,
-                LastSeenAt = stored.LastSeenAt
+                LastSeenAt = stored.LastSeenAt,
+                LatestProviderOfferId = stored.LatestProviderOfferId,
+                LatestSourceReference = stored.LatestSourceReference,
+                LatestEvidenceObservedAt = stored.LatestEvidenceObservedAt
             });
             await Assert.ThrowsAsync<DbUpdateException>(() => duplicateContext.SaveChangesAsync());
         }

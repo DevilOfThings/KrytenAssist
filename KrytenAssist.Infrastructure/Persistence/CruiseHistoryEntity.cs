@@ -11,5 +11,8 @@ public sealed class CruiseHistoryEntity
     public string? RetailSourceName { get; set; }
     public DateTimeOffset FirstObservedAt { get; set; }
     public DateTimeOffset LastSeenAt { get; set; }
+    public string LatestProviderOfferId { get; set; } = string.Empty;
+    public string? LatestSourceReference { get; set; }
+    public DateTimeOffset LatestEvidenceObservedAt { get; set; }
     public List<CruiseObservationEntity> Observations { get; set; } = [];
 }

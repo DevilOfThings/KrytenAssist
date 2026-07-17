@@ -14,6 +14,8 @@ public sealed class CruiseHistoryEntityConfiguration : IEntityTypeConfiguration<
             table.HasCheckConstraint("CK_CruiseHistories_ShipName_Length", "length(\"NormalizedShipName\") BETWEEN 1 AND 500");
             table.HasCheckConstraint("CK_CruiseHistories_SourceId_Length", "length(\"RetailSourceId\") <= 200");
             table.HasCheckConstraint("CK_CruiseHistories_SourceName_Length", "\"RetailSourceName\" IS NULL OR length(\"RetailSourceName\") BETWEEN 1 AND 500");
+            table.HasCheckConstraint("CK_CruiseHistories_LatestProviderOfferId_Length", "length(\"LatestProviderOfferId\") BETWEEN 1 AND 1000");
+            table.HasCheckConstraint("CK_CruiseHistories_LatestSourceReference_Length", "\"LatestSourceReference\" IS NULL OR length(\"LatestSourceReference\") BETWEEN 1 AND 4000");
         });
         builder.HasKey(entity => entity.Id);
         builder.Property(entity => entity.OperatorId).HasMaxLength(200).IsRequired();
@@ -23,6 +25,9 @@ public sealed class CruiseHistoryEntityConfiguration : IEntityTypeConfiguration<
         builder.Property(entity => entity.RetailSourceName).HasMaxLength(500);
         builder.Property(entity => entity.FirstObservedAt).HasConversion(CruisePersistenceConversions.DateTimeOffset).HasMaxLength(35).IsRequired();
         builder.Property(entity => entity.LastSeenAt).HasConversion(CruisePersistenceConversions.DateTimeOffset).HasMaxLength(35).IsRequired();
+        builder.Property(entity => entity.LatestProviderOfferId).HasMaxLength(1000).IsRequired();
+        builder.Property(entity => entity.LatestSourceReference).HasMaxLength(4000);
+        builder.Property(entity => entity.LatestEvidenceObservedAt).HasConversion(CruisePersistenceConversions.DateTimeOffset).HasMaxLength(35).IsRequired();
         builder.HasIndex(entity => new
             {
                 entity.OperatorId,
