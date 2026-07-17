@@ -11,6 +11,10 @@ using CruiseCaptureCandidateResult =
     KrytenApplication::KrytenAssist.Application.Cruises.CruiseCaptureCandidateResult;
 using CruiseCaptureCandidateStatus =
     KrytenApplication::KrytenAssist.Application.Cruises.CruiseCaptureCandidateStatus;
+using RecordResult =
+    KrytenApplication::KrytenAssist.Application.Cruises.CruiseObservationRecordResult;
+using RecordStatus =
+    KrytenApplication::KrytenAssist.Application.Cruises.CruiseObservationRecordStatus;
 
 namespace KrytenAssist.Avalonia.ViewModels;
 
@@ -18,6 +22,9 @@ public sealed class CruiseCaptureCandidateReviewItemViewModel : INotifyPropertyC
 {
     private readonly Action<CruiseCaptureCandidateReviewItemViewModel> _selectionChanged;
     private bool _isSelected;
+    private bool _isSelectionLocked;
+    private CruiseBatchRecordingStatus _recordingStatus;
+    private string? _recordingMessage;
 
     public CruiseCaptureCandidateReviewItemViewModel(
         CruiseCaptureCandidateResult candidate,
@@ -111,7 +118,7 @@ public sealed class CruiseCaptureCandidateReviewItemViewModel : INotifyPropertyC
 
     public bool IsFailed => Status == CruiseCaptureCandidateStatus.Failed;
 
-    public bool CanSelect => IsReady;
+    public bool CanSelect => IsReady && !_isSelectionLocked;
 
     public bool IsSelected
     {
@@ -133,6 +140,101 @@ public sealed class CruiseCaptureCandidateReviewItemViewModel : INotifyPropertyC
     public bool CanOpenAtTui { get; }
 
     public ICommand OpenAtTuiCommand { get; }
+
+    public CruiseBatchRecordingStatus RecordingStatus => _recordingStatus;
+
+    public string RecordingStatusText => RecordingStatus switch
+    {
+        CruiseBatchRecordingStatus.NotAttempted => "Not recorded",
+        CruiseBatchRecordingStatus.Recording => "Recording…",
+        CruiseBatchRecordingStatus.FirstObservationRecorded => "First observation recorded",
+        CruiseBatchRecordingStatus.ChangedObservationRecorded => "Changed observation recorded",
+        CruiseBatchRecordingStatus.AlreadyCurrent => "Already current",
+        CruiseBatchRecordingStatus.Cancelled => "Recording cancelled",
+        CruiseBatchRecordingStatus.Failed => "Recording failed",
+        _ => "Not recorded"
+    };
+
+    public string? RecordingMessage => _recordingMessage;
+
+    public bool HasRecordingMessage => !string.IsNullOrWhiteSpace(RecordingMessage);
+
+    public bool IsRecording => RecordingStatus == CruiseBatchRecordingStatus.Recording;
+
+    public bool IsRecordingComplete => RecordingStatus is
+        CruiseBatchRecordingStatus.FirstObservationRecorded or
+        CruiseBatchRecordingStatus.ChangedObservationRecorded or
+        CruiseBatchRecordingStatus.AlreadyCurrent;
+
+    public bool IsRetryable => IsReady && RecordingStatus is
+        CruiseBatchRecordingStatus.NotAttempted or
+        CruiseBatchRecordingStatus.Cancelled or
+        CruiseBatchRecordingStatus.Failed;
+
+    public bool CanRecord => Observation is not null && IsRetryable;
+
+    public void SetSelectionLocked(bool isLocked)
+    {
+        if (_isSelectionLocked == isLocked)
+        {
+            return;
+        }
+
+        _isSelectionLocked = isLocked;
+        OnPropertyChanged(nameof(CanSelect));
+    }
+
+    public void MarkRecording()
+    {
+        if (!CanRecord)
+        {
+            return;
+        }
+
+        SetRecordingState(CruiseBatchRecordingStatus.Recording, "Recording this observation…");
+    }
+
+    public void ApplyRecordingResult(RecordResult result)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+        var status = result.Status switch
+        {
+            RecordStatus.FirstObservationRecorded =>
+                CruiseBatchRecordingStatus.FirstObservationRecorded,
+            RecordStatus.ChangedObservationRecorded =>
+                CruiseBatchRecordingStatus.ChangedObservationRecorded,
+            RecordStatus.AlreadyCurrent => CruiseBatchRecordingStatus.AlreadyCurrent,
+            RecordStatus.Cancelled => CruiseBatchRecordingStatus.Cancelled,
+            _ => CruiseBatchRecordingStatus.Failed
+        };
+        var message = status switch
+        {
+            CruiseBatchRecordingStatus.FirstObservationRecorded =>
+                "Observation recorded as the first evidence for this sailing.",
+            CruiseBatchRecordingStatus.ChangedObservationRecorded =>
+                "A changed observation was recorded.",
+            CruiseBatchRecordingStatus.AlreadyCurrent =>
+                "No new snapshot was needed; this observation is already current.",
+            CruiseBatchRecordingStatus.Cancelled =>
+                "Recording was cancelled. You can try this observation again.",
+            _ => "The observation could not be recorded. You can try it again."
+        };
+        SetRecordingState(status, message);
+    }
+
+    private void SetRecordingState(CruiseBatchRecordingStatus status, string message)
+    {
+        _recordingStatus = status;
+        _recordingMessage = message;
+        OnPropertyChanged(nameof(RecordingStatus));
+        OnPropertyChanged(nameof(RecordingStatusText));
+        OnPropertyChanged(nameof(RecordingMessage));
+        OnPropertyChanged(nameof(HasRecordingMessage));
+        OnPropertyChanged(nameof(IsRecording));
+        OnPropertyChanged(nameof(IsRecordingComplete));
+        OnPropertyChanged(nameof(IsRetryable));
+        OnPropertyChanged(nameof(CanRecord));
+    }
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

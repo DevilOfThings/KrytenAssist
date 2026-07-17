@@ -169,6 +169,14 @@ public sealed class CruiseHistoryViewModel : INotifyPropertyChanged
 
     public void Deactivate() => CancelHistoryLoading();
 
+    public Task RefreshAfterBatchRecordingAsync(CruiseObservation preferredObservation)
+    {
+        ArgumentNullException.ThrowIfNull(preferredObservation);
+        return LoadHistoryAsync(
+            CruiseSailingKey.From(preferredObservation),
+            preferredObservation.Source);
+    }
+
     public void SetCapturedObservation(CruiseObservation? observation)
     {
         _captureGeneration++;

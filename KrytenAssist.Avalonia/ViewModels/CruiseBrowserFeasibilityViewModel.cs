@@ -17,6 +17,8 @@ using CruiseCaptureBatchStatus = KrytenApplication::KrytenAssist.Application.Cru
 using CruisePageCaptureRequest = KrytenApplication::KrytenAssist.Application.Cruises.CruisePageCaptureRequest;
 using ICruisePageBatchCaptureService = KrytenApplication::KrytenAssist.Application.Cruises.ICruisePageBatchCaptureService;
 using ICruisePageCaptureService = KrytenApplication::KrytenAssist.Application.Cruises.ICruisePageCaptureService;
+using RecordObservation = KrytenApplication::KrytenAssist.Application.Cruises.RecordCruiseObservation;
+using RecordStatus = KrytenApplication::KrytenAssist.Application.Cruises.CruiseObservationRecordStatus;
 
 namespace KrytenAssist.Avalonia.ViewModels;
 
@@ -37,9 +39,13 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     private readonly DelegateCommand _openExternalCommand;
     private readonly DelegateCommand _selectAllReadyCommand;
     private readonly DelegateCommand _clearSelectionCommand;
+    private readonly DelegateCommand _recordSelectedCommand;
+    private readonly DelegateCommand _recordAllObservationsCommand;
+    private readonly DelegateCommand _cancelBatchRecordingCommand;
     private readonly ICruisePageCaptureService? _captureService;
     private readonly ICruisePageBatchCaptureService? _batchCaptureService;
     private readonly IClock? _clock;
+    private readonly RecordObservation? _recordObservation;
     private bool _hasStarted;
     private bool _isNavigating;
     private bool _isPageReady;
@@ -67,6 +73,11 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     private IReadOnlyList<CruiseCaptureCandidateReviewItemViewModel> _capturedCandidates =
         Array.Empty<CruiseCaptureCandidateReviewItemViewModel>();
     private bool _wasCaptureTruncated;
+    private bool _isBatchRecording;
+    private string? _batchRecordingProgressText;
+    private string? _batchRecordingSummary;
+    private CancellationTokenSource? _batchRecordingCancellation;
+    private int _batchRecordingGeneration;
 
     public CruiseBrowserFeasibilityViewModel()
         : this(new CruiseDiscoverySourceCatalog(), new CruiseTrustedHostPolicy())
@@ -79,7 +90,8 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         ICruisePageCaptureService? captureService = null,
         IClock? clock = null,
         CruiseHistoryViewModel? history = null,
-        ICruisePageBatchCaptureService? batchCaptureService = null)
+        ICruisePageBatchCaptureService? batchCaptureService = null,
+        RecordObservation? recordObservation = null)
     {
         ArgumentNullException.ThrowIfNull(sourceCatalog);
         ArgumentNullException.ThrowIfNull(trustedHostPolicy);
@@ -88,6 +100,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         _captureService = captureService;
         _batchCaptureService = batchCaptureService;
         _clock = clock;
+        _recordObservation = recordObservation;
         History = history;
         AvailableSources = sourceCatalog.Sources;
         var sourceOptions = new List<CruiseDiscoverySourceOptionViewModel>(AvailableSources.Count);
@@ -117,6 +130,15 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         _clearSelectionCommand = new DelegateCommand(
             ClearSelection,
             () => CanClearSelection);
+        _recordSelectedCommand = new DelegateCommand(
+            () => StartBatchRecording(selectedOnly: true),
+            () => CanRecordSelected);
+        _recordAllObservationsCommand = new DelegateCommand(
+            () => StartBatchRecording(selectedOnly: false),
+            () => CanRecordAllObservations);
+        _cancelBatchRecordingCommand = new DelegateCommand(
+            CancelBatchRecording,
+            () => IsBatchRecording);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -191,6 +213,12 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
 
     public ICommand ClearSelectionCommand => _clearSelectionCommand;
 
+    public ICommand RecordSelectedCommand => _recordSelectedCommand;
+
+    public ICommand RecordAllObservationsCommand => _recordAllObservationsCommand;
+
+    public ICommand CancelBatchRecordingCommand => _cancelBatchRecordingCommand;
+
     public bool IsCapturing
     {
         get => _isCapturing;
@@ -208,7 +236,8 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
                               IsPageReady &&
                               HasSelectedSource &&
                               !HasUnsupportedHost &&
-                              !IsCapturing;
+                              !IsCapturing &&
+                              !IsBatchRecording;
 
     public string CaptureButtonText => _batchCaptureService is null
         ? "Capture Displayed Cruise"
@@ -234,9 +263,65 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     public bool HasSelectedCandidates => SelectedCandidateCount > 0;
 
     public bool CanSelectAllReady =>
+        !IsBatchRecording &&
         CapturedCandidates.Any(candidate => candidate.IsReady && !candidate.IsSelected);
 
-    public bool CanClearSelection => HasSelectedCandidates;
+    public bool CanClearSelection => !IsBatchRecording && HasSelectedCandidates;
+
+    public bool CanRecordSelected =>
+        _recordObservation is not null &&
+        !IsCapturing &&
+        !IsBatchRecording &&
+        CapturedCandidates.Any(candidate => candidate.IsSelected && candidate.CanRecord);
+
+    public bool CanRecordAllObservations =>
+        _recordObservation is not null &&
+        !IsCapturing &&
+        !IsBatchRecording &&
+        CapturedCandidates.Any(candidate => candidate.CanRecord);
+
+    public bool IsBatchRecording
+    {
+        get => _isBatchRecording;
+        private set
+        {
+            if (!SetField(ref _isBatchRecording, value))
+            {
+                return;
+            }
+
+            foreach (var candidate in CapturedCandidates)
+            {
+                candidate.SetSelectionLocked(value);
+            }
+
+            OnBatchRecordingCommandStateChanged();
+        }
+    }
+
+    public string? BatchRecordingProgressText
+    {
+        get => _batchRecordingProgressText;
+        private set => SetField(ref _batchRecordingProgressText, value);
+    }
+
+    public bool HasBatchRecordingProgress =>
+        !string.IsNullOrWhiteSpace(BatchRecordingProgressText);
+
+    public string? BatchRecordingSummary
+    {
+        get => _batchRecordingSummary;
+        private set
+        {
+            if (SetField(ref _batchRecordingSummary, value))
+            {
+                OnPropertyChanged(nameof(HasBatchRecordingSummary));
+            }
+        }
+    }
+
+    public bool HasBatchRecordingSummary =>
+        !string.IsNullOrWhiteSpace(BatchRecordingSummary);
 
     public bool WasCaptureTruncated => _wasCaptureTruncated;
 
@@ -848,10 +933,191 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(CanClearSelection));
         _selectAllReadyCommand.RaiseCanExecuteChanged();
         _clearSelectionCommand.RaiseCanExecuteChanged();
+        _recordSelectedCommand.RaiseCanExecuteChanged();
+    }
+
+    private void StartBatchRecording(bool selectedOnly)
+    {
+        if (_recordObservation is null || IsBatchRecording)
+        {
+            return;
+        }
+
+        var items = CapturedCandidates
+            .Where(candidate => candidate.CanRecord && (!selectedOnly || candidate.IsSelected))
+            .ToArray();
+        if (items.Length == 0)
+        {
+            return;
+        }
+
+        _batchRecordingCancellation?.Cancel();
+        _batchRecordingCancellation?.Dispose();
+        _batchRecordingCancellation = new CancellationTokenSource();
+        var generation = ++_batchRecordingGeneration;
+        BatchRecordingSummary = null;
+        IsBatchRecording = true;
+        _ = RecordBatchAsync(items, generation, _batchRecordingCancellation);
+    }
+
+    private async Task RecordBatchAsync(
+        IReadOnlyList<CruiseCaptureCandidateReviewItemViewModel> items,
+        int generation,
+        CancellationTokenSource cancellation)
+    {
+        CruiseObservation? preferredObservation = null;
+        var usefulOutcome = false;
+        try
+        {
+            for (var index = 0; index < items.Count; index++)
+            {
+                if (cancellation.IsCancellationRequested || generation != _batchRecordingGeneration)
+                {
+                    break;
+                }
+
+                var item = items[index];
+                if (!item.CanRecord || item.Observation is null)
+                {
+                    continue;
+                }
+
+                BatchRecordingProgressText =
+                    $"Recording observation {index + 1} of {items.Count}…";
+                OnPropertyChanged(nameof(HasBatchRecordingProgress));
+                item.MarkRecording();
+                var result = await _recordObservation!.ExecuteAsync(
+                    item.Observation,
+                    cancellation.Token);
+                if (generation != _batchRecordingGeneration)
+                {
+                    return;
+                }
+
+                item.ApplyRecordingResult(result);
+                if (result.Status is RecordStatus.FirstObservationRecorded
+                    or RecordStatus.ChangedObservationRecorded
+                    or RecordStatus.AlreadyCurrent)
+                {
+                    usefulOutcome = true;
+                    preferredObservation ??= item.Observation;
+                }
+
+                NotifyBatchRecordingCountsChanged();
+                if (result.Status == RecordStatus.Cancelled || cancellation.IsCancellationRequested)
+                {
+                    break;
+                }
+            }
+
+            if (generation == _batchRecordingGeneration &&
+                usefulOutcome &&
+                preferredObservation is not null &&
+                History is not null)
+            {
+                await History.RefreshAfterBatchRecordingAsync(preferredObservation);
+            }
+        }
+        catch (Exception)
+        {
+            if (generation == _batchRecordingGeneration)
+            {
+                BatchRecordingSummary =
+                    "Batch recording stopped unexpectedly. Retry any observation not completed.";
+            }
+        }
+        finally
+        {
+            if (generation == _batchRecordingGeneration)
+            {
+                BatchRecordingProgressText = null;
+                OnPropertyChanged(nameof(HasBatchRecordingProgress));
+                BatchRecordingSummary ??= BuildBatchRecordingSummary(
+                    cancellation.IsCancellationRequested);
+                if (ReferenceEquals(_batchRecordingCancellation, cancellation))
+                {
+                    cancellation.Dispose();
+                    _batchRecordingCancellation = null;
+                }
+
+                IsBatchRecording = false;
+                NotifyBatchRecordingCountsChanged();
+            }
+        }
+    }
+
+    private void CancelBatchRecording()
+    {
+        if (!IsBatchRecording)
+        {
+            return;
+        }
+
+        _batchRecordingCancellation?.Cancel();
+        BatchRecordingProgressText = "Cancelling batch recording…";
+        OnPropertyChanged(nameof(HasBatchRecordingProgress));
+    }
+
+    private void InvalidateBatchRecording()
+    {
+        _batchRecordingGeneration++;
+        _batchRecordingCancellation?.Cancel();
+        _batchRecordingCancellation?.Dispose();
+        _batchRecordingCancellation = null;
+        _isBatchRecording = false;
+        _batchRecordingProgressText = null;
+        _batchRecordingSummary = null;
+    }
+
+    private string BuildBatchRecordingSummary(bool wasCancelled)
+    {
+        var first = CapturedCandidates.Count(candidate =>
+            candidate.RecordingStatus == CruiseBatchRecordingStatus.FirstObservationRecorded);
+        var changed = CapturedCandidates.Count(candidate =>
+            candidate.RecordingStatus == CruiseBatchRecordingStatus.ChangedObservationRecorded);
+        var current = CapturedCandidates.Count(candidate =>
+            candidate.RecordingStatus == CruiseBatchRecordingStatus.AlreadyCurrent);
+        var failed = CapturedCandidates.Count(candidate =>
+            candidate.RecordingStatus == CruiseBatchRecordingStatus.Failed);
+        var cancelled = CapturedCandidates.Count(candidate =>
+            candidate.RecordingStatus == CruiseBatchRecordingStatus.Cancelled);
+        var notAttempted = CapturedCandidates.Count(candidate =>
+            candidate.IsReady &&
+            candidate.RecordingStatus == CruiseBatchRecordingStatus.NotAttempted);
+        var checkedCount = first + changed + current + failed + cancelled;
+        var prefix = wasCancelled ? "Recording cancelled. " : string.Empty;
+        return prefix +
+               $"{checkedCount} observations checked against local history. " +
+               $"{first} first, {changed} changed, {current} already current, " +
+               $"{failed} failed, {cancelled} cancelled, {notAttempted} not attempted.";
+    }
+
+    private void NotifyBatchRecordingCountsChanged()
+    {
+        OnPropertyChanged(nameof(CanRecordSelected));
+        OnPropertyChanged(nameof(CanRecordAllObservations));
+        _recordSelectedCommand.RaiseCanExecuteChanged();
+        _recordAllObservationsCommand.RaiseCanExecuteChanged();
+    }
+
+    private void OnBatchRecordingCommandStateChanged()
+    {
+        OnPropertyChanged(nameof(CanRecordSelected));
+        OnPropertyChanged(nameof(CanRecordAllObservations));
+        OnPropertyChanged(nameof(CanCapture));
+        OnPropertyChanged(nameof(CanSelectAllReady));
+        OnPropertyChanged(nameof(CanClearSelection));
+        _recordSelectedCommand.RaiseCanExecuteChanged();
+        _recordAllObservationsCommand.RaiseCanExecuteChanged();
+        _cancelBatchRecordingCommand.RaiseCanExecuteChanged();
+        _captureCommand.RaiseCanExecuteChanged();
+        _selectAllReadyCommand.RaiseCanExecuteChanged();
+        _clearSelectionCommand.RaiseCanExecuteChanged();
     }
 
     private void ClearCaptureState(bool cancelActive)
     {
+        InvalidateBatchRecording();
         if (cancelActive)
         {
             _captureGeneration++;
@@ -944,6 +1210,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
 
     private void ClearBatchReviewState()
     {
+        InvalidateBatchRecording();
         _batchCaptureStatus = null;
         _wasCaptureTruncated = false;
         _capturedCandidates = Array.Empty<CruiseCaptureCandidateReviewItemViewModel>();
@@ -962,6 +1229,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(BatchCaptureSummary));
         OnPropertyChanged(nameof(HasBatchCaptureSummary));
         OnSelectionChanged();
+        NotifyBatchRecordingCountsChanged();
     }
 
     private string BuildBatchCaptureSummary()
@@ -1000,6 +1268,9 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         _openExternalCommand.RaiseCanExecuteChanged();
         _selectAllReadyCommand.RaiseCanExecuteChanged();
         _clearSelectionCommand.RaiseCanExecuteChanged();
+        _recordSelectedCommand.RaiseCanExecuteChanged();
+        _recordAllObservationsCommand.RaiseCanExecuteChanged();
+        _cancelBatchRecordingCommand.RaiseCanExecuteChanged();
     }
 
     private void RecordNavigationAddress(Uri? address)

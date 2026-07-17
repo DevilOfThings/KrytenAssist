@@ -286,6 +286,27 @@
                             <TextBlock Text="{Binding SelectedCandidateCount, StringFormat='Selected: {0}'}"
                                        VerticalAlignment="Center" />
                         </WrapPanel>
+                        <WrapPanel Orientation="Horizontal"
+                                   ItemSpacing="8"
+                                   LineSpacing="8">
+                            <Button Content="Record Selected"
+                                    Classes="primary"
+                                    Command="{Binding RecordSelectedCommand}" />
+                            <Button Content="Record All Observations"
+                                    Classes="secondary"
+                                    Command="{Binding RecordAllObservationsCommand}" />
+                            <Button Content="Cancel Recording"
+                                    Classes="secondary"
+                                    Command="{Binding CancelBatchRecordingCommand}"
+                                    IsVisible="{Binding IsBatchRecording}" />
+                        </WrapPanel>
+                        <TextBlock Text="{Binding BatchRecordingProgressText}"
+                                   TextWrapping="Wrap"
+                                   IsVisible="{Binding HasBatchRecordingProgress}" />
+                        <TextBlock Text="{Binding BatchRecordingSummary}"
+                                   Classes="secondary-text"
+                                   TextWrapping="Wrap"
+                                   IsVisible="{Binding HasBatchRecordingSummary}" />
                         <ScrollViewer MaxHeight="330"
                                       VerticalScrollBarVisibility="Auto">
                             <ItemsControl ItemsSource="{Binding CapturedCandidates}">
@@ -333,6 +354,13 @@
                                                                Classes="secondary-text"
                                                                TextWrapping="Wrap"
                                                                IsVisible="{Binding HasMissingFields}" />
+                                                    <TextBlock Text="{Binding RecordingStatusText}"
+                                                               FontWeight="SemiBold"
+                                                               IsVisible="{Binding IsReady}" />
+                                                    <TextBlock Text="{Binding RecordingMessage}"
+                                                               Classes="secondary-text"
+                                                               TextWrapping="Wrap"
+                                                               IsVisible="{Binding HasRecordingMessage}" />
                                                     <TextBlock Text="{Binding SourceReference}"
                                                                Classes="secondary-text"
                                                                TextWrapping="Wrap" />

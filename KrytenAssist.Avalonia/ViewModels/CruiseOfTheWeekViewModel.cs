@@ -14,6 +14,7 @@ using KrytenAssist.Avalonia.Tools;
 using KrytenAssist.Core.Cruises;
 using ICruisePageCaptureService = KrytenApplication::KrytenAssist.Application.Cruises.ICruisePageCaptureService;
 using ICruisePageBatchCaptureService = KrytenApplication::KrytenAssist.Application.Cruises.ICruisePageBatchCaptureService;
+using RecordObservation = KrytenApplication::KrytenAssist.Application.Cruises.RecordCruiseObservation;
 
 namespace KrytenAssist.Avalonia.ViewModels;
 
@@ -41,7 +42,8 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
         CruiseTrustedHostPolicy? trustedHostPolicy = null,
         ICruisePageCaptureService? captureService = null,
         CruiseHistoryViewModel? history = null,
-        ICruisePageBatchCaptureService? batchCaptureService = null)
+        ICruisePageBatchCaptureService? batchCaptureService = null,
+        RecordObservation? recordObservation = null)
     {
         ArgumentNullException.ThrowIfNull(skillRegistry);
         ArgumentNullException.ThrowIfNull(clock);
@@ -54,7 +56,8 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
             captureService,
             clock,
             history,
-            batchCaptureService);
+            batchCaptureService,
+            recordObservation);
         _retrieveCommand = new AsyncCommand(RetrieveAsync, () => CanRetrieve);
         _cancelCommand = new DelegateCommand(Cancel, () => IsBusy);
     }
