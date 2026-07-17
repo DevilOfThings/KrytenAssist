@@ -9,7 +9,11 @@ public static class TuiCruiseCaptureServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.AddSingleton<ICruisePageCaptureService, TuiCruisePageCaptureService>();
+        services.AddSingleton<TuiCruisePageCaptureService>();
+        services.AddSingleton<ICruisePageCaptureService>(provider =>
+            provider.GetRequiredService<TuiCruisePageCaptureService>());
+        services.AddSingleton<ICruisePageBatchCaptureService>(provider =>
+            provider.GetRequiredService<TuiCruisePageCaptureService>());
         return services;
     }
 }

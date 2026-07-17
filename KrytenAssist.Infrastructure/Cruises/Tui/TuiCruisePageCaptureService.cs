@@ -5,12 +5,26 @@ using KrytenAssist.Core.Cruises;
 
 namespace KrytenAssist.Infrastructure.Cruises.Tui;
 
-public sealed class TuiCruisePageCaptureService : ICruisePageCaptureService
+public sealed class TuiCruisePageCaptureService :
+    ICruisePageCaptureService,
+    ICruisePageBatchCaptureService
 {
     public const string SupportedSourceIdentifier = "marella-cruise-of-the-week";
     public const string SupportedRetailSourceIdentifier = "tui";
     public const string SupportedHost = "www.tui.co.uk";
     public const int SupportedPayloadVersion = 1;
+    public const int MaximumPayloadFieldLength = 512;
+
+    private const string UnsupportedSourceMessage =
+        "This cruise source is not supported for TUI capture.";
+    private const string UnsupportedPayloadMessage =
+        "This version of the TUI page data is not supported.";
+    private const string InvalidPayloadMessage =
+        "The TUI page data could not be read. Refresh the page and try again.";
+    private const string MissingCandidateMessage =
+        "Kryten could not identify a cruise on this TUI page.";
+    private const string MissingCandidateBatchMessage =
+        "Kryten could not identify supported cruise deal cards on this TUI page.";
 
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
@@ -25,48 +39,40 @@ public sealed class TuiCruisePageCaptureService : ICruisePageCaptureService
 
         if (cancellationToken.IsCancellationRequested)
         {
-            return Task.FromResult(Cancelled());
+            return Task.FromResult(SingleCancelled());
         }
 
-        var unsupported = ValidateSource(request);
-        if (unsupported is not null)
+        if (!IsSupportedSource(request))
         {
-            return Task.FromResult(unsupported);
+            return Task.FromResult(CruiseCaptureResult.Unsupported(UnsupportedSourceMessage));
         }
 
-        TuiCapturePayload? payload;
-        try
+        var read = ReadPayload(request.PagePayload);
+        if (read.IsMalformed)
         {
-            payload = JsonSerializer.Deserialize<TuiCapturePayload>(
-                request.PagePayload,
-                SerializerOptions);
-        }
-        catch (JsonException)
-        {
-            return Task.FromResult(CruiseCaptureResult.Failed(
-                "The TUI page data could not be read. Refresh the page and try again."));
+            return Task.FromResult(CruiseCaptureResult.Failed(InvalidPayloadMessage));
         }
 
-        if (payload?.Version != SupportedPayloadVersion)
+        if (read.Payload?.Version != SupportedPayloadVersion)
         {
-            return Task.FromResult(CruiseCaptureResult.Unsupported(
-                "This version of the TUI page data is not supported."));
+            return Task.FromResult(CruiseCaptureResult.Unsupported(UnsupportedPayloadMessage));
         }
 
-        if (payload.Candidates is null || payload.Candidates.Count == 0)
+        var candidates = read.Payload.Candidates;
+        if (candidates is null || candidates.Count == 0)
         {
             return Task.FromResult(CruiseCaptureResult.Incomplete(
-                "Kryten could not identify a cruise on this TUI page.",
+                MissingCandidateMessage,
                 ["candidates"]));
         }
 
-        if (payload.Candidates.Count > 1)
+        if (candidates.Count > 1)
         {
             return Task.FromResult(CruiseCaptureResult.Ambiguous(
                 "More than one cruise was found. Open a specific itinerary and try again."));
         }
 
-        if (payload.Candidates[0] is not { } candidate)
+        if (candidates[0] is not { } candidate)
         {
             return Task.FromResult(CruiseCaptureResult.Failed(
                 "The TUI page returned invalid cruise data. Refresh the page and try again."));
@@ -74,13 +80,13 @@ public sealed class TuiCruisePageCaptureService : ICruisePageCaptureService
 
         if (cancellationToken.IsCancellationRequested)
         {
-            return Task.FromResult(Cancelled());
+            return Task.FromResult(SingleCancelled());
         }
 
         var missingFields = FindMissingFields(candidate, cancellationToken);
         if (cancellationToken.IsCancellationRequested)
         {
-            return Task.FromResult(Cancelled());
+            return Task.FromResult(SingleCancelled());
         }
 
         if (missingFields.Count > 0)
@@ -92,7 +98,7 @@ public sealed class TuiCruisePageCaptureService : ICruisePageCaptureService
 
         try
         {
-            var observation = MapObservation(candidate, request);
+            var observation = MapObservation(candidate, request, request.SourceReference);
             return Task.FromResult(CruiseCaptureResult.Succeeded(observation));
         }
         catch (Exception) when (!cancellationToken.IsCancellationRequested)
@@ -102,26 +108,210 @@ public sealed class TuiCruisePageCaptureService : ICruisePageCaptureService
         }
     }
 
-    private static CruiseCaptureResult? ValidateSource(CruisePageCaptureRequest request)
+    Task<CruiseCaptureBatchResult> ICruisePageBatchCaptureService.CaptureAsync(
+        CruisePageCaptureRequest request,
+        CancellationToken cancellationToken)
     {
-        if (!string.Equals(
-                request.SourceIdentifier,
-                SupportedSourceIdentifier,
-                StringComparison.OrdinalIgnoreCase) ||
-            !string.Equals(
-                request.Source.Id,
-                SupportedRetailSourceIdentifier,
-                StringComparison.OrdinalIgnoreCase) ||
-            !string.Equals(request.Source.Name, "TUI", StringComparison.OrdinalIgnoreCase) ||
-            !Uri.TryCreate(request.SourceReference, UriKind.Absolute, out var address) ||
-            address.Scheme != Uri.UriSchemeHttps ||
-            !string.Equals(address.Host, SupportedHost, StringComparison.OrdinalIgnoreCase))
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (cancellationToken.IsCancellationRequested)
         {
-            return CruiseCaptureResult.Unsupported(
-                "This cruise source is not supported for TUI capture.");
+            return Task.FromResult(BatchCancelled());
         }
 
-        return null;
+        if (!IsSupportedSource(request))
+        {
+            return Task.FromResult(CruiseCaptureBatchResult.Unsupported(UnsupportedSourceMessage));
+        }
+
+        var read = ReadPayload(request.PagePayload);
+        if (read.IsMalformed)
+        {
+            return Task.FromResult(CruiseCaptureBatchResult.Failed(InvalidPayloadMessage));
+        }
+
+        if (read.Payload?.Version != SupportedPayloadVersion)
+        {
+            return Task.FromResult(CruiseCaptureBatchResult.Unsupported(UnsupportedPayloadMessage));
+        }
+
+        var candidates = read.Payload.Candidates;
+        if (candidates is null || candidates.Count == 0)
+        {
+            return Task.FromResult(CruiseCaptureBatchResult.Incomplete(
+                MissingCandidateBatchMessage));
+        }
+
+        if (candidates.Count > CruiseCaptureBatchResult.MaximumCandidateCount)
+        {
+            return Task.FromResult(CruiseCaptureBatchResult.Failed(
+                "The TUI page returned more cruise cards than Kryten can capture safely."));
+        }
+
+        var results = new List<CruiseCaptureCandidateResult>(candidates.Count);
+        var seenReferences = new HashSet<string>(StringComparer.Ordinal);
+
+        for (var index = 0; index < candidates.Count; index++)
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return Task.FromResult(BatchCancelled());
+            }
+
+            var candidate = candidates[index];
+            if (candidate is null)
+            {
+                return Task.FromResult(CruiseCaptureBatchResult.Failed(
+                    "The TUI page returned invalid cruise-card data."));
+            }
+
+            if (!TryGetTrustedCandidateReference(candidate.SourceReference, out var sourceReference))
+            {
+                return Task.FromResult(CruiseCaptureBatchResult.Failed(
+                    "A TUI cruise card did not contain a trusted itinerary address."));
+            }
+
+            if (!seenReferences.Add(sourceReference))
+            {
+                continue;
+            }
+
+            results.Add(MapCandidate(candidate, request, sourceReference, index, cancellationToken));
+        }
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return Task.FromResult(BatchCancelled());
+        }
+
+        if (results.Count == 0)
+        {
+            return Task.FromResult(CruiseCaptureBatchResult.Incomplete(
+                MissingCandidateBatchMessage));
+        }
+
+        return Task.FromResult(CruiseCaptureBatchResult.Completed(
+            results,
+            read.Payload.WasTruncated));
+    }
+
+    private static CruiseCaptureCandidateResult MapCandidate(
+        TuiCruiseCandidate candidate,
+        CruisePageCaptureRequest request,
+        string sourceReference,
+        int index,
+        CancellationToken cancellationToken)
+    {
+        var displayLabel = SafeDisplayLabel(candidate.Title, index);
+        if (HasOversizedOptionalField(candidate))
+        {
+            return CruiseCaptureCandidateResult.Failed(
+                displayLabel,
+                sourceReference,
+                "The TUI cruise card contained details that could not be mapped safely.");
+        }
+
+        var missingFields = FindMissingFields(candidate, cancellationToken);
+        if (missingFields.Count > 0)
+        {
+            return CruiseCaptureCandidateResult.Incomplete(
+                displayLabel,
+                sourceReference,
+                "The TUI cruise card did not provide all required cruise details.",
+                missingFields);
+        }
+
+        try
+        {
+            var observation = MapObservation(candidate, request, sourceReference);
+            return CruiseCaptureCandidateResult.Ready(
+                displayLabel,
+                sourceReference,
+                observation);
+        }
+        catch (Exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            return CruiseCaptureCandidateResult.Failed(
+                displayLabel,
+                sourceReference,
+                "The TUI cruise card could not be mapped safely.");
+        }
+    }
+
+    private static PayloadReadResult ReadPayload(string pagePayload)
+    {
+        try
+        {
+            return new PayloadReadResult(
+                JsonSerializer.Deserialize<TuiCapturePayload>(pagePayload, SerializerOptions),
+                false);
+        }
+        catch (JsonException)
+        {
+            return new PayloadReadResult(null, true);
+        }
+    }
+
+    private static bool IsSupportedSource(CruisePageCaptureRequest request) =>
+        string.Equals(
+            request.SourceIdentifier,
+            SupportedSourceIdentifier,
+            StringComparison.OrdinalIgnoreCase) &&
+        string.Equals(
+            request.Source.Id,
+            SupportedRetailSourceIdentifier,
+            StringComparison.OrdinalIgnoreCase) &&
+        string.Equals(request.Source.Name, "TUI", StringComparison.OrdinalIgnoreCase) &&
+        Uri.TryCreate(request.SourceReference, UriKind.Absolute, out var address) &&
+        address.Scheme == Uri.UriSchemeHttps &&
+        string.Equals(address.Host, SupportedHost, StringComparison.OrdinalIgnoreCase);
+
+    private static bool TryGetTrustedCandidateReference(
+        string? value,
+        out string sourceReference)
+    {
+        sourceReference = string.Empty;
+        try
+        {
+            if (string.IsNullOrWhiteSpace(value) ||
+                value.Length > CruiseCaptureCandidateResult.MaximumSourceReferenceLength ||
+                !Uri.TryCreate(value, UriKind.Absolute, out var address) ||
+                address.Scheme != Uri.UriSchemeHttps ||
+                !string.Equals(address.Host, SupportedHost, StringComparison.OrdinalIgnoreCase) ||
+                !address.AbsolutePath.StartsWith(
+                    "/cruise/bookitineraries/",
+                    StringComparison.OrdinalIgnoreCase) ||
+                !(HasQueryValue(address, "itineraryCodeOne") ||
+                  HasQueryValue(address, "itineraryCode")))
+            {
+                return false;
+            }
+
+            sourceReference = value;
+            return true;
+        }
+        catch (UriFormatException)
+        {
+            return false;
+        }
+    }
+
+    private static bool HasQueryValue(Uri address, string name)
+    {
+        var query = address.Query.AsSpan().TrimStart('?');
+        foreach (var item in query.ToString().Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var separator = item.IndexOf('=');
+            var key = separator < 0 ? item : item[..separator];
+            var value = separator < 0 ? string.Empty : item[(separator + 1)..];
+            if (string.Equals(Uri.UnescapeDataString(key), name, StringComparison.OrdinalIgnoreCase) &&
+                !string.IsNullOrWhiteSpace(Uri.UnescapeDataString(value)))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static IReadOnlyList<string> FindMissingFields(
@@ -129,9 +319,9 @@ public sealed class TuiCruisePageCaptureService : ICruisePageCaptureService
         CancellationToken cancellationToken)
     {
         var missing = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        AddIfBlank(missing, candidate.ProviderOfferId, "providerOfferId");
-        AddIfBlank(missing, candidate.Title, "title");
-        AddIfBlank(missing, candidate.ShipName, "shipName");
+        AddIfBlankOrTooLong(missing, candidate.ProviderOfferId, "providerOfferId");
+        AddIfBlankOrTooLong(missing, candidate.Title, "title");
+        AddIfBlankOrTooLong(missing, candidate.ShipName, "shipName");
 
         if (string.IsNullOrWhiteSpace(candidate.DepartureDate) ||
             !DateOnly.TryParseExact(
@@ -179,7 +369,8 @@ public sealed class TuiCruisePageCaptureService : ICruisePageCaptureService
 
     private static CruiseObservation MapObservation(
         TuiCruiseCandidate candidate,
-        CruisePageCaptureRequest request)
+        CruisePageCaptureRequest request,
+        string sourceReference)
     {
         var departureDate = DateOnly.ParseExact(
             candidate.DepartureDate!,
@@ -208,17 +399,41 @@ public sealed class TuiCruisePageCaptureService : ICruisePageCaptureService
         return new CruiseObservation(
             snapshot,
             request.ObservedAt,
-            request.SourceReference,
+            sourceReference,
             request.Source);
     }
 
-    private static void AddIfBlank(HashSet<string> fields, string? value, string name)
+    private static string SafeDisplayLabel(string? title, int index)
     {
-        if (string.IsNullOrWhiteSpace(value))
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return $"Cruise candidate {index + 1}";
+        }
+
+        return title.Length <= CruiseCaptureCandidateResult.MaximumDisplayLabelLength
+            ? title
+            : title[..CruiseCaptureCandidateResult.MaximumDisplayLabelLength];
+    }
+
+    private static void AddIfBlankOrTooLong(
+        HashSet<string> fields,
+        string? value,
+        string name)
+    {
+        if (string.IsNullOrWhiteSpace(value) || value.Length > MaximumPayloadFieldLength)
         {
             fields.Add(name);
         }
     }
+
+    private static bool HasOversizedOptionalField(TuiCruiseCandidate candidate) =>
+        IsOversized(candidate.DeparturePort) ||
+        IsOversized(candidate.ItinerarySummary) ||
+        IsOversized(candidate.PromotionSummary) ||
+        (candidate.Prices?.Any(price => IsOversized(price?.Basis)) ?? false);
+
+    private static bool IsOversized(string? value) =>
+        value?.Length > MaximumPayloadFieldLength;
 
     private static bool IsValidCurrency(string? value) =>
         value is { Length: 3 } && value.All(char.IsAsciiLetter);
@@ -226,18 +441,27 @@ public sealed class TuiCruisePageCaptureService : ICruisePageCaptureService
     private static string? Optional(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value;
 
-    private static CruiseCaptureResult Cancelled() =>
+    private static CruiseCaptureResult SingleCancelled() =>
         CruiseCaptureResult.Cancelled("Cruise capture was cancelled.");
+
+    private static CruiseCaptureBatchResult BatchCancelled() =>
+        CruiseCaptureBatchResult.Cancelled("Cruise capture was cancelled.");
+
+    private sealed record PayloadReadResult(TuiCapturePayload? Payload, bool IsMalformed);
 
     private sealed class TuiCapturePayload
     {
         public int? Version { get; init; }
+
+        public bool WasTruncated { get; init; }
 
         public List<TuiCruiseCandidate?>? Candidates { get; init; }
     }
 
     private sealed class TuiCruiseCandidate
     {
+        public string? SourceReference { get; init; }
+
         public string? ProviderOfferId { get; init; }
 
         public string? Title { get; init; }

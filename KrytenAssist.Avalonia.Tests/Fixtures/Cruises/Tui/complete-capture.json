@@ -2,6 +2,7 @@
   "version": 1,
   "candidates": [
     {
+      "sourceReference": "https://www.tui.co.uk/cruise/bookitineraries/Island-Discovery-1001?itineraryCodeOne=1001",
       "providerOfferId": "fictional-offer-001",
       "title": "Island Discovery",
       "shipName": "Marella Example",

@@ -61,11 +61,8 @@ public sealed class CruiseCaptureReviewViewModelTests
     {
         Assert.Contains("slice(0, 10)", TuiCruiseCaptureScript.Script);
         Assert.Contains("slice(0, 512)", TuiCruiseCaptureScript.Script);
-        Assert.Contains("[role=\"tab\"]", TuiCruiseCaptureScript.Script);
-        Assert.Contains("h1,h2,h3,h4,h5,h6,dt,dd,label,strong,p,span", TuiCruiseCaptureScript.Script);
-        Assert.Contains("value.length <= 160", TuiCruiseCaptureScript.Script);
-        Assert.Contains("displayed price", TuiCruiseCaptureScript.Script);
-        Assert.Contains("discount|saving", TuiCruiseCaptureScript.Script);
+        Assert.Contains("slice(0, 4000)", TuiCruiseCaptureScript.Script);
+        Assert.Contains("slice(0, 100)", TuiCruiseCaptureScript.Script);
         Assert.Contains("a[href],[data-href],[data-url]", TuiCruiseCaptureScript.Script);
         Assert.Contains("url.searchParams.has('itineraryCodeOne')", TuiCruiseCaptureScript.Script);
         Assert.Contains("'150013': 'Marella Discovery 2'", TuiCruiseCaptureScript.Script);
@@ -76,7 +73,15 @@ public sealed class CruiseCaptureReviewViewModelTests
         Assert.Contains(".slice(0, 3)", TuiCruiseCaptureScript.Script);
         Assert.Contains("new URL(value, document.location.href)", TuiCruiseCaptureScript.Script);
         Assert.Contains("items.findIndex", TuiCruiseCaptureScript.Script);
-        Assert.Contains("JSON.stringify({version: 1, candidates})", TuiCruiseCaptureScript.Script);
+        Assert.Contains("element.closest('[data-testid=\"product-card\"]')", TuiCruiseCaptureScript.Script);
+        Assert.Contains("sourceReference: boundedReference(url.href)", TuiCruiseCaptureScript.Script);
+        Assert.Contains("const wasTruncated = uniqueLinks.length > 10", TuiCruiseCaptureScript.Script);
+        Assert.Contains("JSON.stringify({version: 1, wasTruncated, candidates})", TuiCruiseCaptureScript.Script);
+        Assert.DoesNotContain("closest('article,[data-testid],[data-cruise-card],li')", TuiCruiseCaptureScript.Script);
+        Assert.DoesNotContain("shipEvidence", TuiCruiseCaptureScript.Script);
+        Assert.DoesNotContain("priceEvidence", TuiCruiseCaptureScript.Script);
+        Assert.DoesNotContain("promotionEvidence", TuiCruiseCaptureScript.Script);
+        Assert.DoesNotContain("[document].concat", TuiCruiseCaptureScript.Script);
         Assert.DoesNotContain("document.cookie", TuiCruiseCaptureScript.Script, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("localStorage", TuiCruiseCaptureScript.Script, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("sessionStorage", TuiCruiseCaptureScript.Script, StringComparison.OrdinalIgnoreCase);
@@ -87,6 +92,8 @@ public sealed class CruiseCaptureReviewViewModelTests
         Assert.DoesNotContain(".submit(", TuiCruiseCaptureScript.Script, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain(".focus(", TuiCruiseCaptureScript.Script, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("scroll", TuiCruiseCaptureScript.Script, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("fetch(", TuiCruiseCaptureScript.Script, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("XMLHttpRequest", TuiCruiseCaptureScript.Script, StringComparison.OrdinalIgnoreCase);
     }
 
     private sealed class StubCaptureService(CaptureResult result) : CaptureService
