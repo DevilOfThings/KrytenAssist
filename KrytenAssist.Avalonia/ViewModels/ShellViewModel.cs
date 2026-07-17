@@ -14,6 +14,10 @@ public sealed class ShellViewModel : INotifyPropertyChanged
     private const string DashboardNavigationId = "navigation.dashboard";
     private const string AssistantNavigationId = "navigation.assistant";
     private const string SkillNavigationIdPrefix = "navigation.skill:";
+    private const string CruiseOfTheWeekSkillId = "cruise.of-the-week";
+    private const string CruiseDiscoveryDisplayName = "Cruise Discovery";
+    private const string CruiseDiscoveryDisplayDescription =
+        "Browse trusted TUI cruise pages, capture displayed deals and revisit local price history.";
 
     private readonly Dictionary<string, SkillManifest> _manifestsBySkillId;
     private NavigationItem _selectedNavigationItem;
@@ -48,16 +52,17 @@ public sealed class ShellViewModel : INotifyPropertyChanged
         foreach (var skill in skills)
         {
             var manifest = skill.Manifest;
+            var (displayName, displayDescription) = GetDisplayIdentity(manifest);
 
             navigationItems.Add(new NavigationItem(
                 $"{SkillNavigationIdPrefix}{manifest.Id}",
-                manifest.Name,
+                displayName,
                 NavigationDestinationKind.Skill,
                 manifest.Id));
             dashboardCards.Add(new DashboardSkillCard(
                 manifest.Id,
-                manifest.Name,
-                manifest.Description,
+                displayName,
+                displayDescription,
                 manifest.Version));
             _manifestsBySkillId.Add(manifest.Id, manifest);
         }
@@ -180,6 +185,11 @@ public sealed class ShellViewModel : INotifyPropertyChanged
             CruiseOfTheWeek.Deactivate();
         }
     }
+
+    private static (string Name, string Description) GetDisplayIdentity(SkillManifest manifest) =>
+        string.Equals(manifest.Id, CruiseOfTheWeekSkillId, StringComparison.Ordinal)
+            ? (CruiseDiscoveryDisplayName, CruiseDiscoveryDisplayDescription)
+            : (manifest.Name, manifest.Description);
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {

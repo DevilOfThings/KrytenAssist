@@ -165,6 +165,7 @@ public sealed class CruiseHistoryViewModelTests
         var item = new CruiseHistoryItemViewModel(details, new FixedClock());
 
         Assert.Equal("£949 per person", item.CurrentPrice);
+        Assert.Equal("£949 pp", item.GridCurrentPrice);
         Assert.Equal("£949 per person", item.LowestPrice);
         Assert.Equal("£988 per person", item.HighestPrice);
         Assert.Equal("Down £39", item.Trend);

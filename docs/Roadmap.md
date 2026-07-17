@@ -10,7 +10,7 @@ Phase 7 – Cruise Assistant
 
 Current Prompt
 --------------
-Prompt 037i – Cruise Discovery Workspace Layout ✅
+Prompt 037j – Cruise Discovery Workspace Refinements (next)
 
 Prompt 037 – Cruise History and Price Tracking, including its 037h Multiple
 Cruise Deals extension, is complete. Kryten can explicitly capture currently
@@ -23,8 +23,9 @@ Discovery workspace with trusted paste-and-Go navigation, compact diagnostic
 history, bounded review panels, persistent local Cruise History and direct
 trusted links back to recorded TUI offers.
 
-The next task is to plan a small Cruise Discovery workspace-refinement prompt
-for deferred visual improvements. Prompt 038 remains unstarted.
+Prompt 037j is the recommended next task. It refines visible Cruise Discovery
+identity, local History presentation and explicit mobile browser presentation.
+Prompt 038 remains unstarted.
 
 Prompt 038 – Saved Cruises and Preferences remains unstarted.
 

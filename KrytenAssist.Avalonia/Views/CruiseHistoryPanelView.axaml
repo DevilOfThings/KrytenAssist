@@ -96,9 +96,10 @@
                                                    TextWrapping="NoWrap"
                                                    TextTrimming="CharacterEllipsis" />
                                         <TextBlock Grid.Column="3"
-                                                   Text="{Binding CurrentPrice}"
+                                                   Text="{Binding GridCurrentPrice}"
                                                    TextWrapping="NoWrap"
-                                                   TextTrimming="CharacterEllipsis" />
+                                                   TextTrimming="CharacterEllipsis"
+                                                   ToolTip.Tip="{Binding CurrentPrice}" />
                                         <TextBlock Grid.Column="4"
                                                    Text="{Binding TrendIndicator}"
                                                    HorizontalAlignment="Center"
@@ -120,9 +121,17 @@
                         IsVisible="{Binding History.HasSelectedHistory}">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Spacing="4">
-                            <TextBlock Text="Price History"
-                                       FontSize="16"
-                                       FontWeight="SemiBold" />
+                            <Grid ColumnDefinitions="*,Auto"
+                                  ColumnSpacing="8">
+                                <TextBlock Text="Price History"
+                                           FontSize="16"
+                                           FontWeight="SemiBold" />
+                                <Button Grid.Column="1"
+                                        Content="Open at TUI"
+                                        Classes="secondary"
+                                        Command="{Binding OpenSelectedHistoryAtTuiCommand}"
+                                        IsVisible="{Binding CanOpenSelectedHistoryAtTui}" />
+                            </Grid>
                             <TextBlock Text="{Binding History.SelectedHistory.Title}"
                                        FontSize="17"
                                        FontWeight="SemiBold"
@@ -148,11 +157,6 @@
                                        TextTrimming="CharacterEllipsis"
                                        ToolTip.Tip="{Binding History.SelectedHistory.LatestSourceReference}"
                                        IsVisible="{Binding History.SelectedHistory.HasLatestSourceReference}" />
-                            <Button Content="Open at TUI"
-                                    Classes="secondary"
-                                    HorizontalAlignment="Left"
-                                    Command="{Binding OpenSelectedHistoryAtTuiCommand}"
-                                    IsVisible="{Binding CanOpenSelectedHistoryAtTui}" />
                         </StackPanel>
                     </ScrollViewer>
                 </Border>

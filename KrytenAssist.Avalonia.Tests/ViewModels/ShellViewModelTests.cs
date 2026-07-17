@@ -311,6 +311,15 @@ public sealed class ShellViewModelTests
             cruiseViewModel,
             registry);
 
+        Assert.Equal("Cruise Discovery", viewModel.NavigationItems[2].Title);
+        Assert.Equal("cruise.of-the-week", viewModel.NavigationItems[2].SkillId);
+        Assert.Equal("Cruise Discovery", viewModel.DashboardCards[0].Name);
+        Assert.Equal(
+            "Browse trusted TUI cruise pages, capture displayed deals and revisit local price history.",
+            viewModel.DashboardCards[0].Description);
+        Assert.Equal("Cruise of the Week", cruiseManifest.Name);
+        Assert.Equal("Cruise capability", cruiseManifest.Description);
+
         viewModel.NavigateCommand.Execute(viewModel.NavigationItems[2]);
 
         Assert.True(viewModel.IsSkillSelected);

@@ -460,7 +460,7 @@
                                           IsVisible="{Binding History.HasHistories}">
                                         <Grid RowDefinitions="Auto,*"
                                               RowSpacing="4">
-                                            <Grid ColumnDefinitions="2.4*,1.4*,1.2*,1*,1.2*,1.2*"
+                                            <Grid ColumnDefinitions="2.4*,1.4*,1.2*,1*"
                                                   ColumnSpacing="8">
                                                 <TextBlock Text="Cruise"
                                                            FontWeight="SemiBold" />
@@ -473,12 +473,6 @@
                                                 <TextBlock Grid.Column="3"
                                                            Text="Current"
                                                            FontWeight="SemiBold" />
-                                                <TextBlock Grid.Column="4"
-                                                           Text="Trend"
-                                                           FontWeight="SemiBold" />
-                                                <TextBlock Grid.Column="5"
-                                                           Text="Status"
-                                                           FontWeight="SemiBold" />
                                             </Grid>
                                             <ListBox ItemsSource="{Binding History.Histories}"
                                                      Grid.Row="1"
@@ -487,7 +481,7 @@
                                                 <ListBox.ItemTemplate>
                                                     <DataTemplate x:DataType="viewModels:CruiseHistoryItemViewModel">
                                                         <Border Padding="6,3">
-                                                            <Grid ColumnDefinitions="2.4*,1.4*,1.2*,1*,1.2*,1.2*"
+                                                            <Grid ColumnDefinitions="2.4*,1.4*,1.2*,1*"
                                                                   ColumnSpacing="8">
                                                                 <TextBlock Text="{Binding Title}"
                                                                            FontWeight="SemiBold"
@@ -505,17 +499,10 @@
                                                                            TextWrapping="NoWrap"
                                                                            TextTrimming="CharacterEllipsis" />
                                                                 <TextBlock Grid.Column="3"
-                                                                           Text="{Binding CurrentPrice}"
+                                                                           Text="{Binding GridCurrentPrice}"
                                                                            TextWrapping="NoWrap"
-                                                                           TextTrimming="CharacterEllipsis" />
-                                                                <TextBlock Grid.Column="4"
-                                                                           Text="{Binding TrendIndicator}"
-                                                                           HorizontalAlignment="Center"
-                                                                           ToolTip.Tip="{Binding Trend}" />
-                                                                <TextBlock Grid.Column="5"
-                                                                           Text="{Binding SailingStatusIndicator}"
-                                                                           HorizontalAlignment="Center"
-                                                                           ToolTip.Tip="{Binding SailingStatus}" />
+                                                                           TextTrimming="CharacterEllipsis"
+                                                                           ToolTip.Tip="{Binding CurrentPrice}" />
                                                             </Grid>
                                                         </Border>
                                                     </DataTemplate>
@@ -529,9 +516,17 @@
                                                 IsVisible="{Binding History.HasSelectedHistory}">
                                             <ScrollViewer VerticalScrollBarVisibility="Auto">
                                                 <StackPanel Spacing="4">
-                                                    <TextBlock Text="Price History"
-                                                               FontSize="16"
-                                                               FontWeight="SemiBold" />
+                                                    <Grid ColumnDefinitions="*,Auto"
+                                                          ColumnSpacing="8">
+                                                        <TextBlock Text="Price History"
+                                                                   FontSize="16"
+                                                                   FontWeight="SemiBold" />
+                                                        <Button Grid.Column="1"
+                                                                Content="Open at TUI"
+                                                                Classes="secondary"
+                                                                Command="{Binding OpenSelectedHistoryAtTuiCommand}"
+                                                                IsVisible="{Binding CanOpenSelectedHistoryAtTui}" />
+                                                    </Grid>
                                                     <TextBlock Text="{Binding History.SelectedHistory.Title}"
                                                                FontSize="17"
                                                                FontWeight="SemiBold"
@@ -557,11 +552,6 @@
                                                                TextTrimming="CharacterEllipsis"
                                                                ToolTip.Tip="{Binding History.SelectedHistory.LatestSourceReference}"
                                                                IsVisible="{Binding History.SelectedHistory.HasLatestSourceReference}" />
-                                                    <Button Content="Open at TUI"
-                                                            Classes="secondary"
-                                                            HorizontalAlignment="Left"
-                                                            Command="{Binding OpenSelectedHistoryAtTuiCommand}"
-                                                            IsVisible="{Binding CanOpenSelectedHistoryAtTui}" />
                                                 </StackPanel>
                                             </ScrollViewer>
                                         </Border>

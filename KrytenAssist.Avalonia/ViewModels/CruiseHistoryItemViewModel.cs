@@ -49,6 +49,8 @@ public sealed class CruiseHistoryItemViewModel
     public string Duration { get; }
     public string RetailSource { get; }
     public string CurrentPrice { get; }
+    public string GridCurrentPrice =>
+        CurrentPrice.Replace(" per person", " pp", StringComparison.OrdinalIgnoreCase);
     public string LowestPrice { get; }
     public string HighestPrice { get; }
     public string Trend { get; }
