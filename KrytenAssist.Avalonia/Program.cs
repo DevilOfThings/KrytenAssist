@@ -46,6 +46,7 @@ class Program
         services.Configure<ConversationOptions>(configuration.GetSection("Conversation"));
 
         services.AddSingleton<IPromptCardStore, JsonPromptCardStore>();
+        services.AddDesktopPersistence(configuration);
         
         services.AddSingleton<OpenAIEmbeddingService>();
         services.AddSingleton<DeterministicEmbeddingService>();

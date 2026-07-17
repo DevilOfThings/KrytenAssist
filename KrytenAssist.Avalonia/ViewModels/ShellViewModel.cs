@@ -155,6 +155,7 @@ public sealed class ShellViewModel : INotifyPropertyChanged
             ? manifest
             : null;
         var manifestChanged = !ReferenceEquals(selectedManifest, _selectedSkillManifest);
+        var wasCruiseSelected = IsCruiseOfTheWeekSelected;
 
         _selectedNavigationItem = canonicalItem;
         _selectedSkillManifest = selectedManifest;
@@ -168,6 +169,15 @@ public sealed class ShellViewModel : INotifyPropertyChanged
         if (manifestChanged)
         {
             OnPropertyChanged(nameof(SelectedSkillManifest));
+        }
+
+        if (IsCruiseOfTheWeekSelected)
+        {
+            CruiseOfTheWeek.Activate();
+        }
+        else if (wasCruiseSelected)
+        {
+            CruiseOfTheWeek.Deactivate();
         }
     }
 

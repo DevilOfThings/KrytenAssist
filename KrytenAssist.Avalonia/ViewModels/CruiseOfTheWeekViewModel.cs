@@ -38,7 +38,8 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
         IClock clock,
         CruiseDiscoverySourceCatalog? sourceCatalog = null,
         CruiseTrustedHostPolicy? trustedHostPolicy = null,
-        ICruisePageCaptureService? captureService = null)
+        ICruisePageCaptureService? captureService = null,
+        CruiseHistoryViewModel? history = null)
     {
         ArgumentNullException.ThrowIfNull(skillRegistry);
         ArgumentNullException.ThrowIfNull(clock);
@@ -49,7 +50,8 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
             sourceCatalog ?? new CruiseDiscoverySourceCatalog(),
             trustedHostPolicy ?? new CruiseTrustedHostPolicy(),
             captureService,
-            clock);
+            clock,
+            history);
         _retrieveCommand = new AsyncCommand(RetrieveAsync, () => CanRetrieve);
         _cancelCommand = new DelegateCommand(Cancel, () => IsBusy);
     }
@@ -61,6 +63,12 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
     public ICommand CancelCommand => _cancelCommand;
 
     public CruiseBrowserFeasibilityViewModel BrowserFeasibility { get; }
+
+    public CruiseHistoryViewModel? History => BrowserFeasibility.History;
+
+    public void Activate() => History?.Activate();
+
+    public void Deactivate() => History?.Deactivate();
 
     public CruiseObservation? Observation
     {

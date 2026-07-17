@@ -67,7 +67,8 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         CruiseDiscoverySourceCatalog sourceCatalog,
         CruiseTrustedHostPolicy trustedHostPolicy,
         ICruisePageCaptureService? captureService = null,
-        IClock? clock = null)
+        IClock? clock = null,
+        CruiseHistoryViewModel? history = null)
     {
         ArgumentNullException.ThrowIfNull(sourceCatalog);
         ArgumentNullException.ThrowIfNull(trustedHostPolicy);
@@ -75,6 +76,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         _trustedHostPolicy = trustedHostPolicy;
         _captureService = captureService;
         _clock = clock;
+        History = history;
         AvailableSources = sourceCatalog.Sources;
         var sourceOptions = new List<CruiseDiscoverySourceOptionViewModel>(AvailableSources.Count);
         foreach (var source in AvailableSources)
@@ -122,6 +124,8 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     public event EventHandler<BrowserNavigationRequestedEventArgs>? ExternalOpenRequested;
 
     public IReadOnlyList<CruiseDiscoverySource> AvailableSources { get; }
+
+    public CruiseHistoryViewModel? History { get; }
 
     public IReadOnlyList<CruiseDiscoverySourceOptionViewModel> SourceOptions { get; }
 
@@ -556,6 +560,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
             return;
         }
 
+        ClearCaptureState(cancelActive: true);
         SelectedSource = source;
         _wasNavigationStopped = false;
         HasStarted = true;
@@ -748,6 +753,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         _captureMessage = message;
         _captureMissingFields = missingFields;
         _capturedObservation = observation;
+        History?.SetCapturedObservation(observation);
         OnPropertyChanged(nameof(CaptureStatus));
         OnPropertyChanged(nameof(CaptureMessage));
         OnPropertyChanged(nameof(HasCaptureMessage));
