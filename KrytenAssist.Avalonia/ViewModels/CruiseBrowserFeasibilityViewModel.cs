@@ -58,6 +58,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     private string? _pageTitle;
     private bool _hasVisibleTextSample;
     private readonly List<string> _navigationHistory = [];
+    private readonly List<CruiseNavigationHistoryEntryViewModel> _navigationHistoryEntries = [];
     private readonly List<string> _cruiseLinks = [];
     private CruiseDiscoverySource? _selectedSource;
     private bool _canGoBack;
@@ -520,6 +521,9 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
 
     public string NavigationHistory => string.Join(Environment.NewLine, _navigationHistory);
 
+    public IReadOnlyList<CruiseNavigationHistoryEntryViewModel> NavigationHistoryEntries =>
+        _navigationHistoryEntries;
+
     public bool HasNavigationHistory => _navigationHistory.Count > 0;
 
     public string CruiseLinks => string.Join(Environment.NewLine, _cruiseLinks);
@@ -703,6 +707,8 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         _wasNavigationStopped = false;
         _navigationHistory.Clear();
         OnPropertyChanged(nameof(NavigationHistory));
+        _navigationHistoryEntries.Clear();
+        OnPropertyChanged(nameof(NavigationHistoryEntries));
         OnPropertyChanged(nameof(HasNavigationHistory));
         _cruiseLinks.Clear();
         OnPropertyChanged(nameof(CruiseLinks));
@@ -1360,12 +1366,15 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         }
 
         _navigationHistory.Add(value);
+        _navigationHistoryEntries.Add(new CruiseNavigationHistoryEntryViewModel(address));
         if (_navigationHistory.Count > MaximumNavigationHistoryEntries)
         {
             _navigationHistory.RemoveAt(0);
+            _navigationHistoryEntries.RemoveAt(0);
         }
 
         OnPropertyChanged(nameof(NavigationHistory));
+        OnPropertyChanged(nameof(NavigationHistoryEntries));
         OnPropertyChanged(nameof(HasNavigationHistory));
     }
 

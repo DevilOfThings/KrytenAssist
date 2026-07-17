@@ -356,6 +356,24 @@ public sealed class CruiseBrowserFeasibilityViewModelTests
 
         Assert.False(viewModel.HasNavigationHistory);
         Assert.Empty(viewModel.NavigationHistory);
+        Assert.Empty(viewModel.NavigationHistoryEntries);
+    }
+
+    [Fact]
+    public void NavigationHistoryEntries_PreserveFullAddressesAndPresentCompactPaths()
+    {
+        var viewModel = new CruiseBrowserFeasibilityViewModel();
+        var address = new Uri(
+            "https://www.tui.co.uk/cruise/deals/voyager-cruises?when=18-12-2026&adults=2");
+
+        viewModel.LoadCommand.Execute(null);
+        viewModel.ReportNavigationStarted(address);
+
+        var entry = Assert.Single(viewModel.NavigationHistoryEntries.Skip(1));
+
+        Assert.Equal(address.AbsoluteUri, entry.FullAddress);
+        Assert.Equal("www.tui.co.uk/cruise/deals/voyager-cruises …", entry.DisplayAddress);
+        Assert.DoesNotContain("when=", entry.DisplayAddress);
     }
 
     [Fact]
@@ -438,6 +456,9 @@ public sealed class CruiseBrowserFeasibilityViewModelTests
         Assert.Equal(12, history.Length);
         Assert.EndsWith("offer-3", history[0]);
         Assert.EndsWith("offer-14", history[^1]);
+        Assert.Equal(12, viewModel.NavigationHistoryEntries.Count);
+        Assert.EndsWith("offer-3", viewModel.NavigationHistoryEntries[0].FullAddress);
+        Assert.EndsWith("offer-14", viewModel.NavigationHistoryEntries[^1].FullAddress);
     }
 
     [Fact]

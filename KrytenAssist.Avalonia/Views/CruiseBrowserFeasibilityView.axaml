@@ -49,10 +49,14 @@
                                           MinWidth="520" />
                     </Grid.ColumnDefinitions>
 
-                    <ScrollViewer Grid.Column="0"
-                                  Margin="0,0,12,0"
-                                  VerticalScrollBarVisibility="Auto"
-                                  HorizontalScrollBarVisibility="Disabled">
+                    <Grid Grid.Column="0"
+                          Margin="0,0,12,0"
+                          RowDefinitions="Auto,*"
+                          RowSpacing="10">
+                        <ScrollViewer Grid.Row="0"
+                                      MaxHeight="360"
+                                      VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Spacing="10">
                             <WrapPanel Orientation="Horizontal"
                                        ItemSpacing="8"
@@ -163,15 +167,22 @@
                                            Text="Navigation history"
                                            FontWeight="SemiBold"
                                            IsVisible="{Binding HasNavigationHistory}" />
-                                <TextBox Grid.Row="6"
-                                         Grid.Column="1"
-                                         Text="{Binding NavigationHistory, Mode=OneWay}"
-                                         IsReadOnly="True"
-                                         AcceptsReturn="True"
-                                         TextWrapping="Wrap"
-                                         MaxHeight="110"
-                                         ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                         IsVisible="{Binding HasNavigationHistory}" />
+                                <ScrollViewer Grid.Row="6"
+                                              Grid.Column="1"
+                                              MaxHeight="104"
+                                              VerticalScrollBarVisibility="Auto"
+                                              IsVisible="{Binding HasNavigationHistory}">
+                                    <ItemsControl ItemsSource="{Binding NavigationHistoryEntries}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="viewModels:CruiseNavigationHistoryEntryViewModel">
+                                                <TextBlock Text="{Binding DisplayAddress}"
+                                                           TextWrapping="NoWrap"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           ToolTip.Tip="{Binding FullAddress}" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
 
                                 <TextBlock Grid.Row="7"
                                            Text="Cruise links found"
@@ -219,7 +230,7 @@
                             <Border Classes="workspace-surface"
                                     Padding="12"
                                     IsVisible="{Binding HasCapturedObservation}">
-                                <ScrollViewer MaxHeight="260"
+                                <ScrollViewer MaxHeight="230"
                                               VerticalScrollBarVisibility="Auto">
                                     <StackPanel Spacing="5">
                                         <TextBlock Text="Captured cruise review"
@@ -248,7 +259,9 @@
                                         <TextBlock Text="{Binding CapturedObservedAt, StringFormat='Observed: {0}'}" />
                                         <TextBlock Text="{Binding CapturedSourceReference}"
                                                    Classes="secondary-text"
-                                                   TextWrapping="Wrap" />
+                                                   TextWrapping="NoWrap"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   ToolTip.Tip="{Binding CapturedSourceReference}" />
                                         <TextBlock Text="{Binding History.ReviewStatusText}"
                                                    Classes="secondary-text" />
                                         <WrapPanel Orientation="Horizontal"
@@ -314,7 +327,7 @@
                                                Classes="secondary-text"
                                                TextWrapping="Wrap"
                                                IsVisible="{Binding HasBatchRecordingSummary}" />
-                                    <ScrollViewer MaxHeight="330"
+                                    <ScrollViewer MaxHeight="300"
                                                   VerticalScrollBarVisibility="Auto">
                                         <ItemsControl ItemsSource="{Binding CapturedCandidates}">
                                             <ItemsControl.ItemTemplate>
@@ -370,7 +383,9 @@
                                                                            IsVisible="{Binding HasRecordingMessage}" />
                                                                 <TextBlock Text="{Binding SourceReference}"
                                                                            Classes="secondary-text"
-                                                                           TextWrapping="Wrap" />
+                                                                           TextWrapping="NoWrap"
+                                                                           TextTrimming="CharacterEllipsis"
+                                                                           ToolTip.Tip="{Binding SourceReference}" />
                                                                 <Button Content="Open at TUI"
                                                                         Classes="secondary"
                                                                         HorizontalAlignment="Left"
@@ -386,10 +401,16 @@
                                 </StackPanel>
                             </Border>
 
-                            <Border Classes="workspace-surface"
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <Border Grid.Row="1"
+                                Classes="workspace-surface"
                                     Padding="12">
-                                <StackPanel Spacing="8">
-                                    <Grid ColumnDefinitions="*,Auto,Auto"
+                                <Grid RowDefinitions="Auto,Auto,Auto,Auto,*"
+                                      RowSpacing="8">
+                                    <Grid Grid.Row="0"
+                                          ColumnDefinitions="*,Auto,Auto"
                                           ColumnSpacing="8">
                                         <StackPanel Spacing="2">
                                             <TextBlock Text="Recorded Cruise History"
@@ -410,12 +431,15 @@
                                                 IsVisible="{Binding History.IsLoadingHistory}" />
                                     </Grid>
 
-                                    <TextBlock Text="Loading recorded cruise history..."
+                                    <TextBlock Grid.Row="1"
+                                               Text="Loading recorded cruise history..."
                                                IsVisible="{Binding History.IsLoadingHistory}" />
-                                    <TextBlock Text="{Binding History.HistoryMessage}"
+                                    <TextBlock Grid.Row="2"
+                                               Text="{Binding History.HistoryMessage}"
                                                Classes="secondary-text"
                                                TextWrapping="Wrap" />
-                                    <Border Classes="status-surface"
+                                    <Border Grid.Row="3"
+                                            Classes="status-surface"
                                             Padding="8"
                                             IsVisible="{Binding History.HasHistoryError}">
                                         <TextBlock Text="{Binding History.HistoryErrorMessage}"
@@ -423,42 +447,82 @@
                                                    TextWrapping="Wrap" />
                                     </Border>
 
-                                    <Grid ColumnDefinitions="2*,3*"
-                                          ColumnSpacing="12"
+                                    <Grid Grid.Row="4"
+                                          RowDefinitions="2*,*"
+                                          RowSpacing="10"
                                           IsVisible="{Binding History.HasHistories}">
-                                        <ListBox ItemsSource="{Binding History.Histories}"
-                                                 SelectedItem="{Binding History.SelectedHistory, Mode=TwoWay}"
-                                                 MaxHeight="310"
-                                                 ScrollViewer.VerticalScrollBarVisibility="Auto">
-                                            <ListBox.ItemTemplate>
-                                                <DataTemplate x:DataType="viewModels:CruiseHistoryItemViewModel">
-                                                    <Border Classes="status-surface"
-                                                            Padding="9"
-                                                            Margin="0,0,0,5">
-                                                        <StackPanel Spacing="2">
-                                                            <TextBlock Text="{Binding Title}"
-                                                                       FontWeight="SemiBold"
-                                                                       TextWrapping="Wrap" />
-                                                            <TextBlock Text="{Binding Ship}"
-                                                                       Classes="secondary-text" />
-                                                            <TextBlock Text="{Binding DepartureDate, StringFormat='Departure: {0}'}" />
-                                                            <TextBlock Text="{Binding RetailSource, StringFormat='Source: {0}'}" />
-                                                            <TextBlock Text="{Binding CurrentPrice, StringFormat='Current: {0}'}" />
-                                                            <TextBlock Text="{Binding Trend, StringFormat='Trend: {0}'}" />
-                                                            <TextBlock Text="{Binding SailingStatus}"
-                                                                       Classes="secondary-text" />
-                                                        </StackPanel>
-                                                    </Border>
-                                                </DataTemplate>
-                                            </ListBox.ItemTemplate>
-                                        </ListBox>
+                                        <Grid RowDefinitions="Auto,*"
+                                              RowSpacing="4">
+                                            <Grid ColumnDefinitions="2.4*,1.4*,1.2*,1*,1.2*,1.2*"
+                                                  ColumnSpacing="8">
+                                                <TextBlock Text="Cruise"
+                                                           FontWeight="SemiBold" />
+                                                <TextBlock Grid.Column="1"
+                                                           Text="Ship"
+                                                           FontWeight="SemiBold" />
+                                                <TextBlock Grid.Column="2"
+                                                           Text="Departure"
+                                                           FontWeight="SemiBold" />
+                                                <TextBlock Grid.Column="3"
+                                                           Text="Current"
+                                                           FontWeight="SemiBold" />
+                                                <TextBlock Grid.Column="4"
+                                                           Text="Trend"
+                                                           FontWeight="SemiBold" />
+                                                <TextBlock Grid.Column="5"
+                                                           Text="Status"
+                                                           FontWeight="SemiBold" />
+                                            </Grid>
+                                            <ListBox ItemsSource="{Binding History.Histories}"
+                                                     Grid.Row="1"
+                                                     SelectedItem="{Binding History.SelectedHistory, Mode=TwoWay}"
+                                                     ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                                <ListBox.ItemTemplate>
+                                                    <DataTemplate x:DataType="viewModels:CruiseHistoryItemViewModel">
+                                                        <Border Padding="6,3">
+                                                            <Grid ColumnDefinitions="2.4*,1.4*,1.2*,1*,1.2*,1.2*"
+                                                                  ColumnSpacing="8">
+                                                                <TextBlock Text="{Binding Title}"
+                                                                           FontWeight="SemiBold"
+                                                                           TextWrapping="NoWrap"
+                                                                           TextTrimming="CharacterEllipsis"
+                                                                           ToolTip.Tip="{Binding Title}" />
+                                                                <TextBlock Grid.Column="1"
+                                                                           Text="{Binding Ship}"
+                                                                           Classes="secondary-text"
+                                                                           TextWrapping="NoWrap"
+                                                                           TextTrimming="CharacterEllipsis"
+                                                                           ToolTip.Tip="{Binding Ship}" />
+                                                                <TextBlock Grid.Column="2"
+                                                                           Text="{Binding DepartureDate}"
+                                                                           TextWrapping="NoWrap"
+                                                                           TextTrimming="CharacterEllipsis" />
+                                                                <TextBlock Grid.Column="3"
+                                                                           Text="{Binding CurrentPrice}"
+                                                                           TextWrapping="NoWrap"
+                                                                           TextTrimming="CharacterEllipsis" />
+                                                                <TextBlock Grid.Column="4"
+                                                                           Text="{Binding Trend}"
+                                                                           TextWrapping="NoWrap"
+                                                                           TextTrimming="CharacterEllipsis" />
+                                                                <TextBlock Grid.Column="5"
+                                                                           Text="{Binding SailingStatus}"
+                                                                           Classes="secondary-text"
+                                                                           TextWrapping="NoWrap"
+                                                                           TextTrimming="CharacterEllipsis"
+                                                                           ToolTip.Tip="{Binding SailingStatus}" />
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ListBox.ItemTemplate>
+                                            </ListBox>
+                                        </Grid>
 
-                                        <Border Grid.Column="1"
+                                        <Border Grid.Row="1"
                                                 Classes="status-surface"
                                                 Padding="10"
                                                 IsVisible="{Binding History.HasSelectedHistory}">
-                                            <ScrollViewer MaxHeight="310"
-                                                          VerticalScrollBarVisibility="Auto">
+                                            <ScrollViewer VerticalScrollBarVisibility="Auto">
                                                 <StackPanel Spacing="4">
                                                     <TextBlock Text="Price History"
                                                                FontSize="16"
@@ -482,18 +546,19 @@
                                                     <TextBlock Text="{Binding History.SelectedHistory.Trend, StringFormat='Trend: {0}'}" />
                                                     <TextBlock Text="{Binding History.SelectedHistory.LatestProviderOfferId, StringFormat='Latest offer id: {0}'}"
                                                                TextWrapping="Wrap" />
-                                                    <TextBox Text="{Binding History.SelectedHistory.LatestSourceReference, Mode=OneWay}"
-                                                             IsReadOnly="True"
-                                                             TextWrapping="Wrap"
-                                                             IsVisible="{Binding History.SelectedHistory.HasLatestSourceReference}" />
+                                                    <TextBlock Text="{Binding History.SelectedHistory.LatestSourceReference}"
+                                                               Classes="secondary-text"
+                                                               TextWrapping="NoWrap"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               ToolTip.Tip="{Binding History.SelectedHistory.LatestSourceReference}"
+                                                               IsVisible="{Binding History.SelectedHistory.HasLatestSourceReference}" />
                                                 </StackPanel>
                                             </ScrollViewer>
                                         </Border>
                                     </Grid>
-                                </StackPanel>
+                                </Grid>
                             </Border>
-                        </StackPanel>
-                    </ScrollViewer>
+                    </Grid>
 
                     <GridSplitter Grid.Column="1"
                                   Width="10"
