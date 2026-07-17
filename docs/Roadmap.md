@@ -10,7 +10,7 @@ Phase 7 – Cruise Assistant
 
 Current Prompt
 --------------
-Prompt 037j – Cruise Discovery Workspace Refinements (next)
+Prompt 038 – Saved Cruises and Preferences (next)
 
 Prompt 037 – Cruise History and Price Tracking, including its 037h Multiple
 Cruise Deals extension, is complete. Kryten can explicitly capture currently
@@ -23,8 +23,11 @@ Discovery workspace with trusted paste-and-Go navigation, compact diagnostic
 history, bounded review panels, persistent local Cruise History and direct
 trusted links back to recorded TUI offers.
 
-Prompt 037j is the recommended next task. It refines visible Cruise Discovery
-identity, local History presentation and explicit mobile browser presentation.
+Prompt 037j is complete. Cruise Discovery now has a clear visible identity,
+compact active-browser History, local Cruise/Ship grouping and an explicit
+mobile-default browser presentation while preserving trusted navigation,
+capture and local History.
+
 Prompt 038 remains unstarted.
 
 Prompt 038 – Saved Cruises and Preferences remains unstarted.
@@ -413,9 +416,8 @@ Marella Cruises as operator separately from TUI as retail source. Trusted-host
 navigation, cancellation, stale-result rejection and controlled failure states
 are covered by deterministic offline tests.
 
-Prompt 037 – Cruise History and Price Tracking is complete. Prompt 037i –
-Cruise Discovery Workspace Layout is next; Prompt 038 – Saved Cruises and
-Preferences remains unstarted.
+Prompts 037, 037i and 037j are complete. Prompt 038 – Saved Cruises and
+Preferences is next and remains unstarted.
 
 Allow Robin to:
 
@@ -524,11 +526,34 @@ This is a presentation and workspace-navigation prompt. It must not alter the
 capture contract, TUI extraction script, persistence schema, recording rules,
 or introduce support for the separate `small-product-card` template.
 
-Robin manually verified the redesigned workspace on 17 July 2026. A later
-small refinement prompt may cover mobile browser presentation, Cruise/Ship
-grouping, moving the History open action beside its heading and hiding
-secondary History columns while the browser is open. These are deferred
-presentation improvements, not incomplete 037i work.
+Robin manually verified the redesigned workspace on 17 July 2026. Its planned
+presentation refinements were completed in Prompt 037j.
+
+Prompt 038 remains unstarted.
+
+---
+
+## Prompt 037j – Cruise Discovery Workspace Refinements
+
+Current status: Complete.
+
+Cruise Discovery now presents a clear user-facing identity without changing the
+underlying `cruise.of-the-week` skill identifier. Selected trusted History links
+sit beside Price History, browser-active History prioritises its essential
+columns, and browser-free History retains its wider context.
+
+Recorded Cruises can be shown flat or grouped locally by Cruise or Ship. The
+grouping is derived from loaded local History, preserves selection and never
+changes persisted observations or query behaviour.
+
+The embedded TUI browser now defaults to an explicit mobile presentation. It
+uses the supported native web-view user-agent capability and a compact
+right-hand panel so Cruise controls and local History have more working space.
+Switching presentation reloads only the current trusted address through the
+existing capture-clearing navigation lifecycle. The setting is not persisted.
+
+Robin manually verified the refinements on 17 July 2026. The verified baseline
+is 545 offline tests: 105 Core, 431 Avalonia and 9 API, with 0 failures.
 
 Prompt 038 remains unstarted.
 

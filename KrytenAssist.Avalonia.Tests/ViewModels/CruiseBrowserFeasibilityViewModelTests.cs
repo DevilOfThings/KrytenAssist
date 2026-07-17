@@ -1,4 +1,11 @@
+extern alias KrytenApplication;
+
+using KrytenAssist.Avalonia.Cruises.Discovery;
+using KrytenAssist.Avalonia.Tools;
 using KrytenAssist.Avalonia.ViewModels;
+using CaptureResult = KrytenApplication::KrytenAssist.Application.Cruises.CruiseCaptureResult;
+using CaptureService = KrytenApplication::KrytenAssist.Application.Cruises.ICruisePageCaptureService;
+using CaptureRequest = KrytenApplication::KrytenAssist.Application.Cruises.CruisePageCaptureRequest;
 
 namespace KrytenAssist.Avalonia.Tests.ViewModels;
 
@@ -20,6 +27,9 @@ public sealed class CruiseBrowserFeasibilityViewModelTests
         Assert.False(viewModel.HasCurrentAddress);
         Assert.False(viewModel.HasNavigationHistory);
         Assert.False(viewModel.HasPageTitle);
+        Assert.Equal(CruiseBrowserPresentation.Mobile, viewModel.BrowserPresentation);
+        Assert.True(viewModel.IsMobilePresentation);
+        Assert.False(viewModel.CanChangePresentation);
         Assert.Equal("Choose a trusted cruise source to begin.", viewModel.StatusMessage);
         Assert.True(viewModel.LoadCommand.CanExecute(null));
         Assert.False(viewModel.StopCommand.CanExecute(null));
@@ -580,11 +590,116 @@ public sealed class CruiseBrowserFeasibilityViewModelTests
         Assert.Null(viewModel.AddressDraft);
     }
 
+    [Fact]
+    public void DesktopPresentation_ReloadsTheSameTrustedAddressAfterBridgeRequest()
+    {
+        var viewModel = CreateReadyViewModel();
+        var events = new List<string>();
+        BrowserPresentationReloadRequestedEventArgs? presentationRequest = null;
+        Uri? loadRequest = null;
+        viewModel.BrowserPresentationReloadRequested += (_, args) =>
+        {
+            events.Add("presentation");
+            presentationRequest = args;
+        };
+        viewModel.LoadRequested += (_, args) =>
+        {
+            events.Add("load");
+            loadRequest = args.Address;
+        };
+
+        viewModel.SelectDesktopPresentationCommand.Execute(null);
+
+        Assert.Equal(["presentation", "load"], events);
+        Assert.NotNull(presentationRequest);
+        Assert.Equal(CruiseBrowserPresentation.Desktop, presentationRequest!.Presentation);
+        Assert.Equal(viewModel.CurrentAddress, presentationRequest.Address.AbsoluteUri);
+        Assert.Equal(presentationRequest.Address, loadRequest);
+        Assert.True(viewModel.IsDesktopPresentation);
+        Assert.True(viewModel.IsNavigating);
+        Assert.False(viewModel.IsPageReady);
+        Assert.Equal(520, viewModel.BrowserPanelMinWidth);
+        Assert.Equal(double.PositiveInfinity, viewModel.BrowserPanelMaxWidth);
+    }
+
+    [Fact]
+    public void SelectingCurrentPresentation_IsANoOp()
+    {
+        var viewModel = CreateReadyViewModel();
+        var presentationRequests = 0;
+        var loadRequests = 0;
+        viewModel.BrowserPresentationReloadRequested += (_, _) => presentationRequests++;
+        viewModel.LoadRequested += (_, _) => loadRequests++;
+
+        viewModel.SelectMobilePresentationCommand.Execute(null);
+
+        Assert.Equal(0, presentationRequests);
+        Assert.Equal(0, loadRequests);
+        Assert.True(viewModel.IsPageReady);
+        Assert.True(viewModel.IsMobilePresentation);
+    }
+
+    [Fact]
+    public void PresentationChange_IsUnavailableWhenThePageIsNotReadyOrTrusted()
+    {
+        var idle = new CruiseBrowserFeasibilityViewModel();
+        Assert.False(idle.CanChangePresentation);
+
+        var navigating = new CruiseBrowserFeasibilityViewModel();
+        navigating.LoadCommand.Execute(null);
+        Assert.False(navigating.CanChangePresentation);
+
+        var verifying = CreateReadyViewModel();
+        verifying.VerifyReadAccessCommand.Execute(null);
+        Assert.False(verifying.CanChangePresentation);
+
+        var untrusted = CreateReadyViewModel();
+        untrusted.ReportNavigationStarted(new Uri("https://www.tui.co.uk.evil.example/cruise"));
+        Assert.False(untrusted.CanChangePresentation);
+        Assert.False(untrusted.SelectMobilePresentationCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public async Task PresentationChange_ClearsExistingCaptureReviewThroughTheNavigationBoundary()
+    {
+        var viewModel = new CruiseBrowserFeasibilityViewModel(
+            new CruiseDiscoverySourceCatalog(),
+            new CruiseTrustedHostPolicy(),
+            new FixedCaptureService(CaptureResult.Incomplete("Missing ship.", ["shipName"])),
+            new FixedClock());
+        var address = viewModel.AvailableSources[0].StartingAddress;
+        viewModel.CapturePayloadRequested += (_, _) => { };
+        viewModel.LoadCommand.Execute(null);
+        viewModel.ReportNavigationCompleted(address);
+        viewModel.CaptureCommand.Execute(null);
+        await viewModel.ProcessCapturePayloadAsync("{\"version\":1,\"candidates\":[]}", address);
+
+        Assert.True(viewModel.HasCaptureMessage);
+
+        viewModel.SelectDesktopPresentationCommand.Execute(null);
+
+        Assert.False(viewModel.HasCaptureMessage);
+        Assert.Empty(viewModel.CaptureMissingFields);
+        Assert.True(viewModel.IsNavigating);
+    }
+
     private static CruiseBrowserFeasibilityViewModel CreateReadyViewModel()
     {
         var viewModel = new CruiseBrowserFeasibilityViewModel();
         viewModel.LoadCommand.Execute(null);
         viewModel.ReportNavigationCompleted(viewModel.AvailableSources[0].StartingAddress);
         return viewModel;
+    }
+
+    private sealed class FixedCaptureService(CaptureResult result) : CaptureService
+    {
+        public Task<CaptureResult> CaptureAsync(
+            CaptureRequest request,
+            CancellationToken cancellationToken = default) => Task.FromResult(result);
+    }
+
+    private sealed class FixedClock : IClock
+    {
+        public DateTimeOffset Now => new(2026, 7, 17, 12, 0, 0, TimeSpan.Zero);
     }
 }

@@ -97,7 +97,7 @@ When a trusted TUI browser session is active, provide an explicit mode choice:
 [ Desktop ] [ Mobile ]
 ```
 
-Desktop is the default. Mobile presentation must use the native web-view's
+Mobile is the default. Mobile presentation must use the native web-view's
 supported user-agent capability and a phone-oriented browser panel width; it
 must not merely shrink a desktop page.
 
@@ -215,7 +215,7 @@ Prompt 037j is complete only when:
 - browser-free History retains Trend and Status context
 - None/Cruise/Ship grouping is deterministic, local and does not alter History
   records or selected-detail behaviour
-- Desktop/Mobile is explicit, defaults to Desktop and uses the native user
+- Desktop/Mobile is explicit, defaults to Mobile and uses the native user
   agent rather than width alone
 - mode changes reload only a trusted current address through established
   lifecycle and capture-clearing behaviour
@@ -234,35 +234,75 @@ Prompt 037j is complete only when:
 
 ### Status
 
-Not started.
+Complete.
 
 ### Build
 
-Not run.
+Passed:
+
+```text
+dotnet build KrytenAssist.sln --no-restore
+```
+
+Result: 0 errors. Existing SQLite package advisory and unused command-event
+warnings remain.
 
 ### Tests
 
-Not run.
+Focused Cruise Discovery/Shell regression: 120 passed, 0 failed, 0 skipped.
+
+Complete offline regression passed using the stable single-worker runner:
+
+```text
+Core: 105 passed
+Avalonia: 431 passed
+API: 9 passed
+Total: 545 passed, 0 failed, 0 skipped
+```
+
+Tests use deterministic fixtures and fakes; they do not contact TUI, launch a
+native browser or use Robin's database.
 
 ### Manual Verification
 
-Not performed.
+Passed. Robin confirmed the visible Cruise Discovery identity, adaptive History
+columns and selected action, local grouping, mobile-default compact browser
+layout and the wider left-side workspace.
 
 ### Files Created
 
-To be completed.
+- `KrytenAssist.Avalonia/ViewModels/CruiseHistoryGrouping.cs`
+- `KrytenAssist.Avalonia/ViewModels/CruiseHistoryGroupViewModel.cs`
+- `KrytenAssist.Avalonia/ViewModels/CruiseBrowserPresentation.cs`
+- `docs/Codex Prompts/037j-a - Cruise Discovery Identity and History Actions.md`
+- `docs/Codex Prompts/037j-b - Grouped Recorded Cruises.md`
+- `docs/Codex Prompts/037j-c - Mobile Browser Presentation.md`
+- `docs/Codex Prompts/037j-d - Cruise Discovery Workspace Refinement Verification.md`
 
 ### Files Updated
 
-To be completed.
+- Shell, Cruise browser and Cruise History ViewModels, views and focused tests.
+- `docs/Roadmap.md`
+- this Playbook and 037j Codex prompt Results/Lessons.
 
 ### Production Corrections
 
-To be completed.
+Mobile is now the default browser presentation. The active workspace gives
+Cruise controls and local History three-fifths of the available width, reserving
+two-fifths for the compact mobile browser. The desktop option remains explicit
+for pages where it is more useful.
 
 ---
 
 ## Lessons Learned
 
-> Complete after implementation and verification. Do not begin Prompt 038
-> until this section and Results have been updated.
+- Presentation-only workspace changes can remain safe when they reuse the
+  established trusted-navigation and capture-clearing lifecycle.
+- Display grouping should stay derived from loaded local History state; it must
+  not change queries, records or selection identity.
+- Native browser user-agent behaviour belongs in the narrow Avalonia bridge,
+  while the ViewModel owns the deliberate presentation choice and command
+  availability.
+- TUI decides its rendered layout. Mobile user-agent and panel dimensions
+  request a useful presentation but do not imply a new supported capture
+  template.

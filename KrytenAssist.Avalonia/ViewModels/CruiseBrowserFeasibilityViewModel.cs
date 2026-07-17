@@ -44,6 +44,8 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     private readonly DelegateCommand _recordSelectedCommand;
     private readonly DelegateCommand _recordAllObservationsCommand;
     private readonly DelegateCommand _cancelBatchRecordingCommand;
+    private readonly DelegateCommand _selectDesktopPresentationCommand;
+    private readonly DelegateCommand _selectMobilePresentationCommand;
     private readonly ICruisePageCaptureService? _captureService;
     private readonly ICruisePageBatchCaptureService? _batchCaptureService;
     private readonly IClock? _clock;
@@ -82,6 +84,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     private string? _batchRecordingSummary;
     private CancellationTokenSource? _batchRecordingCancellation;
     private int _batchRecordingGeneration;
+    private CruiseBrowserPresentation _browserPresentation = CruiseBrowserPresentation.Mobile;
 
     public CruiseBrowserFeasibilityViewModel()
         : this(new CruiseDiscoverySourceCatalog(), new CruiseTrustedHostPolicy())
@@ -151,6 +154,12 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         _cancelBatchRecordingCommand = new DelegateCommand(
             CancelBatchRecording,
             () => IsBatchRecording);
+        _selectDesktopPresentationCommand = new DelegateCommand(
+            () => RequestPresentationChange(CruiseBrowserPresentation.Desktop),
+            () => CanChangePresentation);
+        _selectMobilePresentationCommand = new DelegateCommand(
+            () => RequestPresentationChange(CruiseBrowserPresentation.Mobile),
+            () => CanChangePresentation);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -172,6 +181,8 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     public event EventHandler? UntrustedAddressObserved;
 
     public event EventHandler? CapturePayloadRequested;
+
+    public event EventHandler<BrowserPresentationReloadRequestedEventArgs>? BrowserPresentationReloadRequested;
 
     public event EventHandler<BrowserNavigationRequestedEventArgs>? ExternalOpenRequested;
 
@@ -234,6 +245,46 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     public ICommand RecordAllObservationsCommand => _recordAllObservationsCommand;
 
     public ICommand CancelBatchRecordingCommand => _cancelBatchRecordingCommand;
+
+    public ICommand SelectDesktopPresentationCommand => _selectDesktopPresentationCommand;
+
+    public ICommand SelectMobilePresentationCommand => _selectMobilePresentationCommand;
+
+    public CruiseBrowserPresentation BrowserPresentation
+    {
+        get => _browserPresentation;
+        private set
+        {
+            if (!SetField(ref _browserPresentation, value))
+            {
+                return;
+            }
+
+            OnPropertyChanged(nameof(IsDesktopPresentation));
+            OnPropertyChanged(nameof(IsMobilePresentation));
+            OnPropertyChanged(nameof(BrowserPanelMinWidth));
+            OnPropertyChanged(nameof(BrowserPanelMaxWidth));
+        }
+    }
+
+    public bool IsDesktopPresentation => BrowserPresentation == CruiseBrowserPresentation.Desktop;
+
+    public bool IsMobilePresentation => BrowserPresentation == CruiseBrowserPresentation.Mobile;
+
+    public double BrowserPanelMinWidth => IsMobilePresentation ? 360 : 520;
+
+    public double BrowserPanelMaxWidth => IsMobilePresentation ? 430 : double.PositiveInfinity;
+
+    public bool CanChangePresentation =>
+        HasStarted &&
+        IsPageReady &&
+        SelectedSource is not null &&
+        !HasUnsupportedHost &&
+        !IsNavigating &&
+        !IsVerifying &&
+        !IsCapturing &&
+        !IsBatchRecording &&
+        TryGetCurrentTrustedAddress(out _);
 
     public bool IsCapturing
     {
@@ -789,6 +840,32 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         ErrorMessage = null;
         StatusMessage = "Refreshing the embedded page...";
         RefreshRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void RequestPresentationChange(CruiseBrowserPresentation presentation)
+    {
+        if (presentation == BrowserPresentation || !CanChangePresentation ||
+            !TryGetCurrentTrustedAddress(out var address))
+        {
+            return;
+        }
+
+        BrowserPresentation = presentation;
+        ClearCaptureState(cancelActive: true);
+        _wasNavigationStopped = false;
+        IsPageReady = false;
+        IsNavigating = true;
+        HasUnsupportedHost = false;
+        ErrorMessage = null;
+        PageTitle = null;
+        HasVisibleTextSample = false;
+        OnPropertyChanged(nameof(VisibleTextSampleStatus));
+        StatusMessage = $"Loading the selected cruise source in {presentation.ToString().ToLowerInvariant()} presentation...";
+
+        BrowserPresentationReloadRequested?.Invoke(
+            this,
+            new BrowserPresentationReloadRequestedEventArgs(address, presentation));
+        LoadRequested?.Invoke(this, new BrowserNavigationRequestedEventArgs(address));
     }
 
     private void RequestGo()
@@ -1353,6 +1430,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(CanCapture));
         OnPropertyChanged(nameof(CanOpenExternal));
         OnPropertyChanged(nameof(CanOpenSelectedHistoryAtTui));
+        OnPropertyChanged(nameof(CanChangePresentation));
         OnPropertyChanged(nameof(CaptureButtonText));
         _loadCommand.RaiseCanExecuteChanged();
         _goCommand.RaiseCanExecuteChanged();
@@ -1371,6 +1449,8 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         _recordSelectedCommand.RaiseCanExecuteChanged();
         _recordAllObservationsCommand.RaiseCanExecuteChanged();
         _cancelBatchRecordingCommand.RaiseCanExecuteChanged();
+        _selectDesktopPresentationCommand.RaiseCanExecuteChanged();
+        _selectMobilePresentationCommand.RaiseCanExecuteChanged();
     }
 
     private void OnHistoryPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -1390,6 +1470,20 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         if (!Uri.TryCreate(sourceReference, UriKind.Absolute, out var parsedAddress) ||
             AvailableSources.Count == 0 ||
             _trustedHostPolicy.Classify(parsedAddress, AvailableSources[0]) != CruiseAddressTrust.Trusted)
+        {
+            return false;
+        }
+
+        address = parsedAddress;
+        return true;
+    }
+
+    private bool TryGetCurrentTrustedAddress(out Uri address)
+    {
+        address = null!;
+        if (SelectedSource is null ||
+            !Uri.TryCreate(CurrentAddress, UriKind.Absolute, out var parsedAddress) ||
+            _trustedHostPolicy.Classify(parsedAddress, SelectedSource) != CruiseAddressTrust.Trusted)
         {
             return false;
         }
@@ -1581,4 +1675,13 @@ public sealed class CruiseDiscoverySourceOptionViewModel
 public sealed class BrowserNavigationRequestedEventArgs(Uri address) : EventArgs
 {
     public Uri Address { get; } = address ?? throw new ArgumentNullException(nameof(address));
+}
+
+public sealed class BrowserPresentationReloadRequestedEventArgs(
+    Uri address,
+    CruiseBrowserPresentation presentation) : EventArgs
+{
+    public Uri Address { get; } = address ?? throw new ArgumentNullException(nameof(address));
+
+    public CruiseBrowserPresentation Presentation { get; } = presentation;
 }

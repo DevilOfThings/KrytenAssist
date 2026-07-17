@@ -14,6 +14,11 @@ namespace KrytenAssist.Avalonia.Views;
 
 public partial class CruiseBrowserFeasibilityView : UserControl
 {
+    // Applied only for an explicit Mobile request. Desktop restores the native
+    // platform default user agent rather than imitating a particular browser.
+    private const string MobileUserAgent =
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 " +
+        "(KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1";
     private const string ReadAccessScript =
         "JSON.stringify({" +
         "title: document.title || ''," +
@@ -84,6 +89,7 @@ public partial class CruiseBrowserFeasibilityView : UserControl
         _viewModel.ReadAccessVerificationRequested += OnReadAccessVerificationRequested;
         _viewModel.UntrustedAddressObserved += OnUntrustedAddressObserved;
         _viewModel.CapturePayloadRequested += OnCapturePayloadRequested;
+        _viewModel.BrowserPresentationReloadRequested += OnBrowserPresentationReloadRequested;
         _viewModel.ExternalOpenRequested += OnExternalOpenRequested;
     }
 
@@ -118,6 +124,22 @@ public partial class CruiseBrowserFeasibilityView : UserControl
         try
         {
             EmbeddedBrowser.Navigate(e.Address);
+        }
+        catch (Exception)
+        {
+            _viewModel?.ReportBrowserOperationFailed();
+        }
+    }
+
+    private void OnBrowserPresentationReloadRequested(
+        object? sender,
+        BrowserPresentationReloadRequestedEventArgs e)
+    {
+        try
+        {
+            EmbeddedBrowser.UserAgent = e.Presentation == CruiseBrowserPresentation.Mobile
+                ? MobileUserAgent
+                : null;
         }
         catch (Exception)
         {
@@ -295,6 +317,7 @@ public partial class CruiseBrowserFeasibilityView : UserControl
         _viewModel.ReadAccessVerificationRequested -= OnReadAccessVerificationRequested;
         _viewModel.UntrustedAddressObserved -= OnUntrustedAddressObserved;
         _viewModel.CapturePayloadRequested -= OnCapturePayloadRequested;
+        _viewModel.BrowserPresentationReloadRequested -= OnBrowserPresentationReloadRequested;
         _viewModel.ExternalOpenRequested -= OnExternalOpenRequested;
         _viewModel = null;
     }

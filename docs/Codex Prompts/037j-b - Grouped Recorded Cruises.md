@@ -23,8 +23,7 @@ this prompt’s Results and Lessons Learned after Robin’s manual verification.
 
 ### Status
 
-Implementation and automated verification complete. Awaiting Robin's final
-manual verification.
+Complete.
 
 ### Grouping
 
@@ -59,9 +58,8 @@ Focused Cruise History/browser regression: 52 passed, 0 failed, 0 skipped.
 
 ### Manual Verification
 
-Pending Robin's confirmation that all three radio choices group correctly,
-Recorded Cruises scroll independently, and selecting a sailing updates Price
-History.
+Passed. Robin confirmed the None, Cruise and Ship radio choices, independently
+scrolling Recorded Cruises and Price History selection behaviour.
 
 ## Lessons Learned
 

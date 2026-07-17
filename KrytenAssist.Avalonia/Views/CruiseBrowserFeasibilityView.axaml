@@ -49,11 +49,11 @@
 
                 <Grid IsVisible="{Binding HasStarted}">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="2*"
-                                          MinWidth="420" />
-                        <ColumnDefinition Width="10" />
                         <ColumnDefinition Width="3*"
-                                          MinWidth="520" />
+                                          MinWidth="560" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="2*"
+                                          MinWidth="430" />
                     </Grid.ColumnDefinitions>
 
                     <Grid Grid.Column="0"
@@ -97,6 +97,21 @@
                                 <Button Content="Open at TUI"
                                         Classes="secondary"
                                         Command="{Binding OpenExternalCommand}" />
+                                <StackPanel Orientation="Horizontal"
+                                            Spacing="5"
+                                            VerticalAlignment="Center"
+                                            IsEnabled="{Binding CanChangePresentation}">
+                                    <TextBlock Text="View:"
+                                               VerticalAlignment="Center" />
+                                    <RadioButton Content="Desktop"
+                                                 GroupName="BrowserPresentation"
+                                                 IsChecked="{Binding IsDesktopPresentation, Mode=OneWay}"
+                                                 Command="{Binding SelectDesktopPresentationCommand}" />
+                                    <RadioButton Content="Mobile"
+                                                 GroupName="BrowserPresentation"
+                                                 IsChecked="{Binding IsMobilePresentation, Mode=OneWay}"
+                                                 Command="{Binding SelectMobilePresentationCommand}" />
+                                </StackPanel>
                             </WrapPanel>
 
                             <Grid ColumnDefinitions="Auto,*"
@@ -599,11 +614,13 @@
                     <Border Grid.Column="2"
                             Classes="workspace-surface"
                             Padding="4"
-                            MinWidth="520"
+                            MinWidth="{Binding BrowserPanelMinWidth}"
+                            MaxWidth="{Binding BrowserPanelMaxWidth}"
                             MinHeight="560"
                             IsVisible="{Binding IsBrowserVisible}">
                         <NativeWebView x:Name="EmbeddedBrowser"
-                                       MinWidth="512"
+                                       MinWidth="{Binding BrowserPanelMinWidth}"
+                                       MaxWidth="{Binding BrowserPanelMaxWidth}"
                                        MinHeight="552"
                                        HorizontalAlignment="Stretch"
                                        VerticalAlignment="Stretch"
