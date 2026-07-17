@@ -28,6 +28,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
 
     private readonly CruiseTrustedHostPolicy _trustedHostPolicy;
     private readonly DelegateCommand _loadCommand;
+    private readonly DelegateCommand _goCommand;
     private readonly DelegateCommand _backCommand;
     private readonly DelegateCommand _forwardCommand;
     private readonly DelegateCommand _stopCommand;
@@ -53,6 +54,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     private string _statusMessage = "Choose a trusted cruise source to begin.";
     private string? _errorMessage;
     private string? _currentAddress;
+    private string? _addressDraft;
     private string? _pageTitle;
     private bool _hasVisibleTextSample;
     private readonly List<string> _navigationHistory = [];
@@ -113,6 +115,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         _loadCommand = new DelegateCommand(
             () => OpenSource(AvailableSources[0]),
             () => CanLoad);
+        _goCommand = new DelegateCommand(RequestGo, () => CanGo);
         _backCommand = new DelegateCommand(RequestBack, () => CanGoBack);
         _forwardCommand = new DelegateCommand(RequestForward, () => CanGoForward);
         _stopCommand = new DelegateCommand(RequestStop, () => IsNavigating);
@@ -190,6 +193,8 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     public string? TrustedHost => SelectedSource?.TrustedHost;
 
     public ICommand LoadCommand => _loadCommand;
+
+    public ICommand GoCommand => _goCommand;
 
     public ICommand BackCommand => _backCommand;
 
@@ -386,6 +391,14 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
 
     public bool CanGoForward => HasStarted && _canGoForward && !IsVerifying;
 
+    public bool CanGo => HasStarted &&
+                         HasSelectedSource &&
+                         !string.IsNullOrWhiteSpace(AddressDraft) &&
+                         !IsNavigating &&
+                         !IsVerifying &&
+                         !IsCapturing &&
+                         !IsBatchRecording;
+
     public string? CurrentHost => Uri.TryCreate(CurrentAddress, UriKind.Absolute, out var address) &&
                                   address.Scheme == Uri.UriSchemeHttps
         ? address.Host
@@ -482,6 +495,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         {
             if (SetField(ref _currentAddress, value))
             {
+                AddressDraft = value;
                 OnPropertyChanged(nameof(HasCurrentAddress));
                 OnPropertyChanged(nameof(CurrentHost));
                 OnPropertyChanged(nameof(HasCurrentHost));
@@ -491,6 +505,18 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     }
 
     public bool HasCurrentAddress => !string.IsNullOrWhiteSpace(CurrentAddress);
+
+    public string? AddressDraft
+    {
+        get => _addressDraft;
+        set
+        {
+            if (SetField(ref _addressDraft, value))
+            {
+                OnCommandStateChanged();
+            }
+        }
+    }
 
     public string NavigationHistory => string.Join(Environment.NewLine, _navigationHistory);
 
@@ -745,6 +771,48 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         ErrorMessage = null;
         StatusMessage = "Refreshing the embedded page...";
         RefreshRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void RequestGo()
+    {
+        if (SelectedSource is null)
+        {
+            return;
+        }
+
+        var draft = AddressDraft?.Trim();
+        if (string.IsNullOrWhiteSpace(draft) ||
+            !Uri.TryCreate(draft, UriKind.Absolute, out var address))
+        {
+            RejectAddressDraft("Enter a valid HTTPS address for the trusted cruise source.");
+            return;
+        }
+
+        if (_trustedHostPolicy.Classify(address, SelectedSource) != CruiseAddressTrust.Trusted)
+        {
+            RejectAddressDraft($"Kryten only allows browsing on {SelectedSource.TrustedHost}.");
+            return;
+        }
+
+        ClearCaptureState(cancelActive: true);
+        _wasNavigationStopped = false;
+        IsVerifying = false;
+        IsPageReady = false;
+        IsNavigating = true;
+        HasUnsupportedHost = false;
+        ErrorMessage = null;
+        PageTitle = null;
+        HasVisibleTextSample = false;
+        OnPropertyChanged(nameof(VisibleTextSampleStatus));
+        AddressDraft = address.AbsoluteUri;
+        StatusMessage = "Opening the trusted cruise page...";
+        LoadRequested?.Invoke(this, new BrowserNavigationRequestedEventArgs(address));
+    }
+
+    private void RejectAddressDraft(string message)
+    {
+        ErrorMessage = message;
+        StatusMessage = "The address was not opened.";
     }
 
     private void RequestClose()
@@ -1102,6 +1170,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
 
     private void OnBatchRecordingCommandStateChanged()
     {
+        OnPropertyChanged(nameof(CanGo));
         OnPropertyChanged(nameof(CanRecordSelected));
         OnPropertyChanged(nameof(CanRecordAllObservations));
         OnPropertyChanged(nameof(CanCapture));
@@ -1113,6 +1182,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         _captureCommand.RaiseCanExecuteChanged();
         _selectAllReadyCommand.RaiseCanExecuteChanged();
         _clearSelectionCommand.RaiseCanExecuteChanged();
+        _goCommand.RaiseCanExecuteChanged();
     }
 
     private void ClearCaptureState(bool cancelActive)
@@ -1253,10 +1323,12 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(CanVerifyReadAccess));
         OnPropertyChanged(nameof(CanGoBack));
         OnPropertyChanged(nameof(CanGoForward));
+        OnPropertyChanged(nameof(CanGo));
         OnPropertyChanged(nameof(CanCapture));
         OnPropertyChanged(nameof(CanOpenExternal));
         OnPropertyChanged(nameof(CaptureButtonText));
         _loadCommand.RaiseCanExecuteChanged();
+        _goCommand.RaiseCanExecuteChanged();
         _backCommand.RaiseCanExecuteChanged();
         _forwardCommand.RaiseCanExecuteChanged();
         _stopCommand.RaiseCanExecuteChanged();

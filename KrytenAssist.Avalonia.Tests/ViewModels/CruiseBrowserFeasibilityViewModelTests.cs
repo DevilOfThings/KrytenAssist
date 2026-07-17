@@ -458,6 +458,107 @@ public sealed class CruiseBrowserFeasibilityViewModelTests
         Assert.All(retained, link => Assert.StartsWith("https://www.tui.co.uk/", link));
     }
 
+    [Fact]
+    public void EditingAddressDraft_DoesNotRequestNavigationOrMutateObservedState()
+    {
+        var viewModel = CreateReadyViewModel();
+        var currentAddress = viewModel.CurrentAddress;
+        var navigationHistory = viewModel.NavigationHistory;
+        var requests = 0;
+        viewModel.LoadRequested += (_, _) => requests++;
+
+        viewModel.AddressDraft = "https://www.tui.co.uk/cruise/deals/voyager-cruises";
+
+        Assert.Equal(0, requests);
+        Assert.Equal(currentAddress, viewModel.CurrentAddress);
+        Assert.Equal(navigationHistory, viewModel.NavigationHistory);
+        Assert.True(viewModel.CanGo);
+    }
+
+    [Fact]
+    public void GoCommand_RequestsTrimmedTrustedAddressAndWaitsForBrowserObservation()
+    {
+        var viewModel = CreateReadyViewModel();
+        var observedAddress = viewModel.CurrentAddress;
+        var target = new Uri("https://www.tui.co.uk/cruise/deals/voyager-cruises");
+        Uri? requestedAddress = null;
+        viewModel.LoadRequested += (_, args) => requestedAddress = args.Address;
+        viewModel.AddressDraft = $"  {target.AbsoluteUri}  ";
+
+        viewModel.GoCommand.Execute(null);
+
+        Assert.Equal(target, requestedAddress);
+        Assert.True(viewModel.IsNavigating);
+        Assert.False(viewModel.IsPageReady);
+        Assert.Equal(observedAddress, viewModel.CurrentAddress);
+        Assert.Equal(target.AbsoluteUri, viewModel.AddressDraft);
+        Assert.Equal("Opening the trusted cruise page...", viewModel.StatusMessage);
+
+        viewModel.ReportNavigationCompleted(target);
+
+        Assert.Equal(target.AbsoluteUri, viewModel.CurrentAddress);
+        Assert.Equal(target.AbsoluteUri, viewModel.AddressDraft);
+    }
+
+    [Theory]
+    [InlineData("not a url")]
+    [InlineData("http://www.tui.co.uk/cruise/deals/voyager-cruises")]
+    [InlineData("about:blank")]
+    [InlineData("https://www.tui.co.uk.evil.example/cruise/deals")]
+    [InlineData("https://example.com/cruises")]
+    public void GoCommand_RejectsUnsafeAddressWithoutChangingObservedPage(string addressDraft)
+    {
+        var viewModel = CreateReadyViewModel();
+        var currentAddress = viewModel.CurrentAddress;
+        var requests = 0;
+        viewModel.LoadRequested += (_, _) => requests++;
+        viewModel.AddressDraft = addressDraft;
+
+        viewModel.GoCommand.Execute(null);
+
+        Assert.Equal(0, requests);
+        Assert.Equal(currentAddress, viewModel.CurrentAddress);
+        Assert.False(viewModel.IsNavigating);
+        Assert.True(viewModel.HasError);
+        Assert.DoesNotContain(addressDraft, viewModel.ErrorMessage, StringComparison.Ordinal);
+        Assert.DoesNotContain(addressDraft, viewModel.StatusMessage, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void GoCommand_IsUnavailableBeforeActivationAndDuringNavigationOrVerification()
+    {
+        var viewModel = new CruiseBrowserFeasibilityViewModel
+        {
+            AddressDraft = "https://www.tui.co.uk/cruise/deals/voyager-cruises"
+        };
+
+        Assert.False(viewModel.CanGo);
+        Assert.False(viewModel.GoCommand.CanExecute(null));
+
+        viewModel.LoadCommand.Execute(null);
+
+        Assert.False(viewModel.CanGo);
+
+        viewModel.ReportNavigationCompleted(viewModel.AvailableSources[0].StartingAddress);
+        Assert.True(viewModel.CanGo);
+
+        viewModel.VerifyReadAccessCommand.Execute(null);
+
+        Assert.False(viewModel.CanGo);
+    }
+
+    [Fact]
+    public void BrowserClose_ClearsAddressDraft()
+    {
+        var viewModel = CreateReadyViewModel();
+
+        Assert.False(string.IsNullOrWhiteSpace(viewModel.AddressDraft));
+
+        viewModel.ReportBrowserClosed();
+
+        Assert.Null(viewModel.AddressDraft);
+    }
+
     private static CruiseBrowserFeasibilityViewModel CreateReadyViewModel()
     {
         var viewModel = new CruiseBrowserFeasibilityViewModel();

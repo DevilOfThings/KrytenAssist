@@ -51,6 +51,18 @@ public sealed class CruiseCaptureLifecycleViewModelTests
     }
 
     [Fact]
+    public void Go_IsUnavailableWhileCaptureIsActive()
+    {
+        var viewModel = CreateReadyViewModel(new PendingCaptureService());
+        viewModel.CapturePayloadRequested += (_, _) => { };
+        viewModel.CaptureCommand.Execute(null);
+        viewModel.AddressDraft = "https://www.tui.co.uk/cruise/deals/voyager-cruises";
+
+        Assert.False(viewModel.CanGo);
+        Assert.False(viewModel.GoCommand.CanExecute(null));
+    }
+
+    [Fact]
     public async Task Capture_PassesExactTrustedRequestAndFixedClockValue()
     {
         var service = new RecordingCaptureService(CaptureResult.Failed("Controlled failure."));
@@ -103,6 +115,27 @@ public sealed class CruiseCaptureLifecycleViewModelTests
         Assert.True(viewModel.HasCapturedItinerary);
         Assert.True(viewModel.HasCapturedPrices);
         Assert.True(viewModel.HasCapturedPromotion);
+    }
+
+    [Fact]
+    public async Task Go_ClearsCompletedCaptureReviewBeforeRequestingTrustedNavigation()
+    {
+        var viewModel = CreateReadyViewModel(
+            new RecordingCaptureService(CaptureResult.Succeeded(CompleteObservation())));
+        viewModel.CapturePayloadRequested += (_, _) => { };
+        viewModel.CaptureCommand.Execute(null);
+        await viewModel.ProcessCapturePayloadAsync(Payload, CurrentAddress(viewModel));
+        Uri? requestedAddress = null;
+        viewModel.LoadRequested += (_, args) => requestedAddress = args.Address;
+        viewModel.AddressDraft = "https://www.tui.co.uk/cruise/deals/voyager-cruises";
+
+        viewModel.GoCommand.Execute(null);
+
+        Assert.Equal("https://www.tui.co.uk/cruise/deals/voyager-cruises",
+            requestedAddress?.AbsoluteUri);
+        Assert.False(viewModel.HasCapturedObservation);
+        Assert.Null(viewModel.CaptureStatus);
+        Assert.False(viewModel.HasCaptureMessage);
     }
 
     [Fact]

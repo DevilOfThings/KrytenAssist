@@ -120,15 +120,25 @@
 
                                 <TextBlock Grid.Row="3"
                                            Text="Address"
-                                           FontWeight="SemiBold"
-                                           IsVisible="{Binding HasCurrentAddress}" />
-                                <TextBox Grid.Row="3"
-                                         Grid.Column="1"
-                                         Text="{Binding CurrentAddress, Mode=OneWay}"
-                                         IsReadOnly="True"
-                                         TextWrapping="Wrap"
-                                         PlaceholderText="The current page address will appear here."
-                                         IsVisible="{Binding HasCurrentAddress}" />
+                                           FontWeight="SemiBold" />
+                                <Grid Grid.Row="3"
+                                      Grid.Column="1"
+                                      ColumnDefinitions="*,Auto"
+                                      ColumnSpacing="8">
+                                    <TextBox Text="{Binding AddressDraft, Mode=TwoWay}"
+                                             TextWrapping="Wrap"
+                                             PlaceholderText="Paste a trusted TUI address."
+                                             IsEnabled="{Binding HasSelectedSource}">
+                                        <TextBox.KeyBindings>
+                                            <KeyBinding Gesture="Enter"
+                                                        Command="{Binding GoCommand}" />
+                                        </TextBox.KeyBindings>
+                                    </TextBox>
+                                    <Button Grid.Column="1"
+                                            Content="Go"
+                                            Classes="primary"
+                                            Command="{Binding GoCommand}" />
+                                </Grid>
 
                                 <TextBlock Grid.Row="4"
                                            Text="Page title"
