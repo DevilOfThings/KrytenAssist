@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:viewModels="clr-namespace:KrytenAssist.Avalonia.ViewModels"
+             xmlns:views="clr-namespace:KrytenAssist.Avalonia.Views"
              x:Class="KrytenAssist.Avalonia.Views.CruiseHistoryPanelView"
              x:DataType="viewModels:CruiseBrowserFeasibilityViewModel">
     <Border Classes="workspace-surface"
@@ -149,7 +150,7 @@
                         IsVisible="{Binding History.HasSelectedHistory}">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Spacing="4">
-                            <Grid ColumnDefinitions="*,Auto"
+                            <Grid ColumnDefinitions="*,Auto,Auto"
                                   ColumnSpacing="8">
                                 <TextBlock Text="Price History"
                                            FontSize="16"
@@ -159,6 +160,9 @@
                                         Classes="secondary"
                                         Command="{Binding OpenSelectedHistoryAtTuiCommand}"
                                         IsVisible="{Binding CanOpenSelectedHistoryAtTui}" />
+                                <Button Grid.Column="2" Content="{Binding SelectedHistorySaveButtonText}"
+                                        Classes="secondary" Command="{Binding SaveSelectedHistoryCommand}"
+                                        IsVisible="{Binding CanSaveSelectedHistory}" />
                             </Grid>
                             <TextBlock Text="{Binding History.SelectedHistory.Title}"
                                        FontSize="17"
@@ -185,6 +189,7 @@
                                        TextTrimming="CharacterEllipsis"
                                        ToolTip.Tip="{Binding History.SelectedHistory.LatestSourceReference}"
                                        IsVisible="{Binding History.SelectedHistory.HasLatestSourceReference}" />
+                            <views:CruiseEvaluationEditorView DataContext="{Binding Evaluation}" />
                         </StackPanel>
                     </ScrollViewer>
                 </Border>

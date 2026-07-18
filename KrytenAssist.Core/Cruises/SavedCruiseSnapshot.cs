@@ -7,6 +7,8 @@ public sealed record SavedCruiseSnapshot
     public const int MaximumDeparturePortLength = 500;
     public const int MaximumItineraryLength = 4000;
     public const int MaximumSourceReferenceLength = 4000;
+    public const int MaximumRetailSourceIdLength = 200;
+    public const int MaximumRetailSourceNameLength = 500;
 
     public SavedCruiseSnapshot(
         CruiseSailingKey sailingKey,
@@ -27,6 +29,11 @@ public sealed record SavedCruiseSnapshot
         DeparturePort = Optional(departurePort, MaximumDeparturePortLength, nameof(departurePort));
         ItinerarySummary = Optional(itinerarySummary, MaximumItineraryLength, nameof(itinerarySummary));
         SourceReference = Optional(sourceReference, MaximumSourceReferenceLength, nameof(sourceReference));
+        if (retailSource is not null)
+        {
+            Limit(retailSource.Id, MaximumRetailSourceIdLength, nameof(retailSource));
+            Limit(retailSource.Name, MaximumRetailSourceNameLength, nameof(retailSource));
+        }
         DisplayedPrice = displayedPrice;
         SavedAt = savedAt;
         RetailSource = retailSource;

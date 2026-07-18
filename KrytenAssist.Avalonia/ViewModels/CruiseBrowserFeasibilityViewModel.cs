@@ -39,6 +39,8 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     private readonly DelegateCommand _cancelCaptureCommand;
     private readonly DelegateCommand _openExternalCommand;
     private readonly DelegateCommand _openSelectedHistoryAtTuiCommand;
+    private readonly DelegateCommand _saveCapturedCruiseCommand;
+    private readonly DelegateCommand _saveSelectedHistoryCommand;
     private readonly DelegateCommand _selectAllReadyCommand;
     private readonly DelegateCommand _clearSelectionCommand;
     private readonly DelegateCommand _recordSelectedCommand;
@@ -98,7 +100,8 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         IClock? clock = null,
         CruiseHistoryViewModel? history = null,
         ICruisePageBatchCaptureService? batchCaptureService = null,
-        RecordObservation? recordObservation = null)
+        RecordObservation? recordObservation = null,
+        CruiseSaveAndEvaluationViewModel? evaluation = null)
     {
         ArgumentNullException.ThrowIfNull(sourceCatalog);
         ArgumentNullException.ThrowIfNull(trustedHostPolicy);
@@ -108,6 +111,8 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         _batchCaptureService = batchCaptureService;
         _clock = clock;
         _recordObservation = recordObservation;
+        Evaluation = evaluation;
+        if (Evaluation is not null) Evaluation.PropertyChanged += OnEvaluationPropertyChanged;
         History = history;
         if (History is not null)
         {
@@ -139,6 +144,8 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         _openSelectedHistoryAtTuiCommand = new DelegateCommand(
             RequestOpenSelectedHistoryAtTui,
             () => CanOpenSelectedHistoryAtTui);
+        _saveCapturedCruiseCommand = new DelegateCommand(() => _ = SaveCapturedCruiseAsync(), () => CanSaveCapturedCruise);
+        _saveSelectedHistoryCommand = new DelegateCommand(() => _ = SaveOrEditSelectedHistoryAsync(), () => CanSaveSelectedHistory);
         _selectAllReadyCommand = new DelegateCommand(
             SelectAllReady,
             () => CanSelectAllReady);
@@ -189,6 +196,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     public IReadOnlyList<CruiseDiscoverySource> AvailableSources { get; }
 
     public CruiseHistoryViewModel? History { get; }
+    public CruiseSaveAndEvaluationViewModel? Evaluation { get; }
 
     public IReadOnlyList<CruiseDiscoverySourceOptionViewModel> SourceOptions { get; }
 
@@ -235,6 +243,8 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     public ICommand OpenExternalCommand => _openExternalCommand;
 
     public ICommand OpenSelectedHistoryAtTuiCommand => _openSelectedHistoryAtTuiCommand;
+    public ICommand SaveCapturedCruiseCommand => _saveCapturedCruiseCommand;
+    public ICommand SaveSelectedHistoryCommand => _saveSelectedHistoryCommand;
 
     public ICommand SelectAllReadyCommand => _selectAllReadyCommand;
 
@@ -420,6 +430,9 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     public CruiseObservation? CapturedObservation => _capturedObservation;
 
     public bool HasCapturedObservation => CapturedObservation is not null;
+    public bool CanSaveCapturedCruise => CapturedObservation is not null && Evaluation is not null && !Evaluation.IsBusy;
+    public bool CanSaveSelectedHistory => History?.SelectedHistory is not null && Evaluation is not null && !Evaluation.IsBusy;
+    public string SelectedHistorySaveButtonText => Evaluation?.IsSaved == true ? "Edit Evaluation" : "Save Cruise";
 
     public string? CapturedTitle => CapturedObservation?.Snapshot.Offer.Title;
     public string? CapturedOperator => CapturedObservation?.Snapshot.Offer.Provider.Name;
@@ -1066,6 +1079,29 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         }
     }
 
+    private async Task SaveCapturedCruiseAsync()
+    {
+        if (CapturedObservation is not null && Evaluation is not null)
+            await Evaluation.SaveAndEditAsync(CapturedObservation);
+        NotifySaveCommands();
+    }
+
+    private async Task SaveOrEditSelectedHistoryAsync()
+    {
+        var observation = History?.SelectedHistory?.Details.History.Observations[^1];
+        if (observation is null || Evaluation is null) return;
+        if (Evaluation.IsSaved) Evaluation.OpenEditor();
+        else await Evaluation.SaveAndEditAsync(observation);
+        NotifySaveCommands();
+    }
+
+    private void NotifySaveCommands()
+    {
+        OnPropertyChanged(nameof(CanSaveCapturedCruise)); OnPropertyChanged(nameof(CanSaveSelectedHistory));
+        OnPropertyChanged(nameof(SelectedHistorySaveButtonText));
+        _saveCapturedCruiseCommand.RaiseCanExecuteChanged(); _saveSelectedHistoryCommand.RaiseCanExecuteChanged();
+    }
+
     private void SelectAllReady()
     {
         foreach (var candidate in CapturedCandidates)
@@ -1309,6 +1345,11 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         IReadOnlyList<string> missingFields,
         CruiseObservation? observation = null)
     {
+        if (!ReferenceEquals(_capturedObservation, observation))
+        {
+            Evaluation?.ClearTarget();
+        }
+
         ClearBatchReviewState();
         _captureStatus = status;
         _captureMessage = message;
@@ -1323,6 +1364,8 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(HasCaptureMissingFields));
         OnPropertyChanged(nameof(CapturedObservation));
         OnPropertyChanged(nameof(HasCapturedObservation));
+        OnPropertyChanged(nameof(CanSaveCapturedCruise));
+        _saveCapturedCruiseCommand.RaiseCanExecuteChanged();
         OnPropertyChanged(nameof(CapturedTitle));
         OnPropertyChanged(nameof(CapturedOperator));
         OnPropertyChanged(nameof(CapturedSource));
@@ -1368,7 +1411,8 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
                     candidate,
                     CanOpenCandidateAtTui(candidate.SourceReference),
                     RequestCandidateExternalOpen,
-                    OnCandidateSelectionChanged))
+                    OnCandidateSelectionChanged,
+                    Evaluation is null ? null : Evaluation.SaveAndEditAsync))
                 .ToList()
                 .AsReadOnly();
         }
@@ -1444,6 +1488,8 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         _cancelCaptureCommand.RaiseCanExecuteChanged();
         _openExternalCommand.RaiseCanExecuteChanged();
         _openSelectedHistoryAtTuiCommand.RaiseCanExecuteChanged();
+        _saveCapturedCruiseCommand.RaiseCanExecuteChanged();
+        _saveSelectedHistoryCommand.RaiseCanExecuteChanged();
         _selectAllReadyCommand.RaiseCanExecuteChanged();
         _clearSelectionCommand.RaiseCanExecuteChanged();
         _recordSelectedCommand.RaiseCanExecuteChanged();
@@ -1460,7 +1506,17 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         {
             OnPropertyChanged(nameof(CanOpenSelectedHistoryAtTui));
             _openSelectedHistoryAtTuiCommand.RaiseCanExecuteChanged();
+            var observation = History?.SelectedHistory?.Details.History.Observations[^1];
+            if (observation is null) Evaluation?.ClearTarget();
+            else if (Evaluation is not null) _ = Evaluation.InspectAsync(observation);
+            NotifySaveCommands();
         }
+    }
+
+    private void OnEvaluationPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(CruiseSaveAndEvaluationViewModel.IsSaved) or nameof(CruiseSaveAndEvaluationViewModel.IsBusy))
+            NotifySaveCommands();
     }
 
     private bool TryGetSelectedHistoryAddress(out Uri address)

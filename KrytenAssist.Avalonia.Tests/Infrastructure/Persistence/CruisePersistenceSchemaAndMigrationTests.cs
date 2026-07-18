@@ -27,6 +27,11 @@ public sealed class CruisePersistenceSchemaAndMigrationTests
         Assert.Contains("CruiseHistories", schema.Keys);
         Assert.Contains("CruiseObservations", schema.Keys);
         Assert.Contains("CruiseObservationPrices", schema.Keys);
+        Assert.Contains("SavedCruises", schema.Keys);
+        Assert.Contains("FavouriteCruiseShips", schema.Keys);
+        Assert.Contains("CruisePreferenceProfiles", schema.Keys);
+        Assert.Contains("CruisePreferenceMonths", schema.Keys);
+        Assert.Contains("CruisePreferenceCabins", schema.Keys);
         Assert.Contains("CK_CruiseHistories_DurationNights", schema["CruiseHistories"]);
         Assert.Contains("CK_CruiseObservations_Fingerprint_Length", schema["CruiseObservations"]);
         Assert.Contains("CK_CruiseObservationPrices_Amount", schema["CruiseObservationPrices"]);
@@ -35,6 +40,10 @@ public sealed class CruisePersistenceSchemaAndMigrationTests
         Assert.Contains("UX_CruiseObservations_History_Sequence", indexes.Keys);
         Assert.DoesNotContain("UX_CruiseObservations_History_Fingerprint", indexes.Keys);
         Assert.Contains("UX_CruiseObservationPrices_Observation_Order", indexes.Keys);
+        Assert.Contains("UX_SavedCruises_Sailing", indexes.Keys);
+        Assert.Contains("UX_FavouriteCruiseShips_Operator_Ship", indexes.Keys);
+        Assert.Contains("UX_CruisePreferenceMonths_Profile_Month", indexes.Keys);
+        Assert.Contains("UX_CruisePreferenceCabins_Profile_Cabin", indexes.Keys);
     }
 
     [Fact]
@@ -80,10 +89,11 @@ public sealed class CruisePersistenceSchemaAndMigrationTests
         await context.Database.MigrateAsync();
         var applied = await context.Database.GetAppliedMigrationsAsync();
 
-        Assert.Equal(3, applied.Count());
+        Assert.Equal(4, applied.Count());
         Assert.Contains(InitialMigration, applied);
         Assert.Contains(applied, migration => migration.EndsWith("_AddCruiseHistoryPersistence", StringComparison.Ordinal));
         Assert.Contains(applied, migration => migration.EndsWith("_HardenCruiseHistoryRecording", StringComparison.Ordinal));
+        Assert.Contains(applied, migration => migration.EndsWith("_AddPersonalCruiseState", StringComparison.Ordinal));
     }
 
     [Fact]

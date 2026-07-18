@@ -8,6 +8,9 @@ using Microsoft.Extensions.DependencyInjection;
 using GetHistory = KrytenApplication::KrytenAssist.Application.Cruises.GetCruiseHistory;
 using ListHistories = KrytenApplication::KrytenAssist.Application.Cruises.ListCruiseHistories;
 using RecordObservation = KrytenApplication::KrytenAssist.Application.Cruises.RecordCruiseObservation;
+using SaveCruise = KrytenApplication::KrytenAssist.Application.Cruises.SaveCruise;
+using SavePreferences = KrytenApplication::KrytenAssist.Application.Cruises.SaveCruisePreferences;
+using ListSaved = KrytenApplication::KrytenAssist.Application.Cruises.ListSavedCruises;
 
 namespace KrytenAssist.Avalonia.Tests.DependencyInjection;
 
@@ -32,6 +35,9 @@ public sealed class CruiseHistoryDesktopCompositionTests
             Assert.NotNull(scope.ServiceProvider.GetRequiredService<GetHistory>());
             Assert.NotNull(scope.ServiceProvider.GetRequiredService<ListHistories>());
             Assert.NotNull(scope.ServiceProvider.GetRequiredService<CruiseHistoryViewModel>());
+            Assert.NotNull(scope.ServiceProvider.GetRequiredService<SaveCruise>());
+            Assert.NotNull(scope.ServiceProvider.GetRequiredService<ListSaved>());
+            Assert.NotNull(scope.ServiceProvider.GetRequiredService<SavePreferences>());
             Assert.True(File.Exists(databasePath));
         }
         finally

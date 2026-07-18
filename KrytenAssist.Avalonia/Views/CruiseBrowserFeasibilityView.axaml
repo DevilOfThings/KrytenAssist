@@ -293,6 +293,9 @@
                                                     Classes="primary"
                                                     Command="{Binding History.RecordObservationCommand}"
                                                     IsVisible="{Binding History.CanRecord}" />
+                                            <Button Content="Save Cruise" Classes="secondary"
+                                                    Command="{Binding SaveCapturedCruiseCommand}"
+                                                    IsVisible="{Binding CanSaveCapturedCruise}" />
                                             <Button Content="Cancel Recording"
                                                     Classes="secondary"
                                                     Command="{Binding History.CancelRecordingCommand}"
@@ -413,6 +416,10 @@
                                                                         HorizontalAlignment="Left"
                                                                         Command="{Binding OpenAtTuiCommand}"
                                                                         IsVisible="{Binding CanOpenAtTui}" />
+                                                                <Button Content="Save Cruise" Classes="secondary" HorizontalAlignment="Left"
+                                                                        Command="{Binding SaveCruiseCommand}" IsVisible="{Binding IsReady}" />
+                                                                <TextBlock Text="{Binding SaveMessage}" Classes="secondary-text"
+                                                                           TextWrapping="Wrap" IsVisible="{Binding HasSaveMessage}" />
                                                             </StackPanel>
                                                         </Grid>
                                                     </Border>
@@ -422,6 +429,8 @@
                                     </ScrollViewer>
                                 </StackPanel>
                             </Border>
+
+                            <views:CruiseEvaluationEditorView DataContext="{Binding Evaluation}" />
 
                             </StackPanel>
                         </ScrollViewer>
@@ -559,7 +568,7 @@
                                                 IsVisible="{Binding History.HasSelectedHistory}">
                                             <ScrollViewer VerticalScrollBarVisibility="Auto">
                                                 <StackPanel Spacing="4">
-                                                    <Grid ColumnDefinitions="*,Auto"
+                                                    <Grid ColumnDefinitions="*,Auto,Auto"
                                                           ColumnSpacing="8">
                                                         <TextBlock Text="Price History"
                                                                    FontSize="16"
@@ -569,6 +578,9 @@
                                                                 Classes="secondary"
                                                                 Command="{Binding OpenSelectedHistoryAtTuiCommand}"
                                                                 IsVisible="{Binding CanOpenSelectedHistoryAtTui}" />
+                                                        <Button Grid.Column="2" Content="{Binding SelectedHistorySaveButtonText}"
+                                                                Classes="secondary" Command="{Binding SaveSelectedHistoryCommand}"
+                                                                IsVisible="{Binding CanSaveSelectedHistory}" />
                                                     </Grid>
                                                     <TextBlock Text="{Binding History.SelectedHistory.Title}"
                                                                FontSize="17"

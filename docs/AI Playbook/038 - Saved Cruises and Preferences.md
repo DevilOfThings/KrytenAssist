@@ -257,6 +257,13 @@ the complete implementation contract.
 - verify migrations from the current Prompt 037j database and restart
   persistence using isolated test databases
 
+The agreed analysis uses five independent tables: saved sailings, favourite
+ships, a singleton preference profile, preferred months and preferred cabins.
+There is deliberately no database foreign key between personal state and
+Cruise History; their normalized sailing values are associated only through
+Application identity. See the 038c Codex prompt for the complete schema,
+transaction, concurrency, migration and composition contract.
+
 ### Step 4 – 038d: Save Actions and Evaluation Editing
 
 - add explicit Save Cruise actions to capture review and Recorded History
@@ -265,6 +272,13 @@ the complete implementation contract.
 - provide honest save/update/cancel/failure feedback
 - prevent stale capture or selection changes from updating the wrong sailing
 - add focused ViewModel and command-lifecycle tests
+
+The agreed analysis uses one shared workspace child ViewModel for explicit
+single-capture, per-candidate and selected-History targets. It maps observations
+through a provider-independent Application factory, keeps save and recording
+independent, provides separate evaluation/sailing-favourite/ship-favourite
+operations and rejects stale asynchronous results by target generation. See the
+038d Codex prompt for the complete interaction and test contract.
 
 ### Step 5 – 038e: Saved Cruises Organisation
 
@@ -325,9 +339,9 @@ Prompt 038 is complete only when:
 
 ### Status
 
-In progress. Steps 038a and 038b are complete. The accepted provider-independent
-saved-cruise domain and Application contracts now separate lifecycle, optional
-evaluation, sailing favourites, operator/ship favourites and general cruise
-preferences from factual History. The premature persistence prototype was
-removed and the Prompt 037j database baseline restored. Prompt 038c – SQLite
-Personal-State Persistence is next.
+In progress. Steps 038a–038d are complete. Robin can deliberately save a single
+capture, an individual Ready batch candidate or a selected recorded History
+sailing without recording another observation. One shared workspace editor now
+supports optional personal evaluation plus independent sailing and ship
+favourites, with controlled outcomes and stale-result protection. Prompt 038e
+– Saved Cruises Organisation is next.

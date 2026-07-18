@@ -20,6 +20,7 @@ public sealed class SavedCruiseTests
         var value = Snapshot(title: "  Mediterranean Escape  ");
         value.Title.Should().Be("Mediterranean Escape");
         FluentActions.Invoking(() => Snapshot(title: new string('x', 1001))).Should().Throw<ArgumentException>();
+        FluentActions.Invoking(() => Snapshot(source: new CruiseSource(new string('x', 201), "TUI"))).Should().Throw<ArgumentException>();
     }
 
     [Fact]

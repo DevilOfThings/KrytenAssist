@@ -6,6 +6,12 @@ using Microsoft.Extensions.DependencyInjection;
 using RepositoryContract = KrytenApplication::KrytenAssist.Application.Abstractions.Persistence.ICruiseObservationRepository;
 using InfrastructureRegistration = KrytenInfrastructure::KrytenAssist.Infrastructure.DependencyInjection;
 using Repository = KrytenInfrastructure::KrytenAssist.Infrastructure.Persistence.SqliteCruiseObservationRepository;
+using SavedContract = KrytenApplication::KrytenAssist.Application.Abstractions.Persistence.ISavedCruiseRepository;
+using FavouriteContract = KrytenApplication::KrytenAssist.Application.Abstractions.Persistence.IFavouriteCruiseShipRepository;
+using PreferencesContract = KrytenApplication::KrytenAssist.Application.Abstractions.Persistence.ICruisePreferencesRepository;
+using SavedRepository = KrytenInfrastructure::KrytenAssist.Infrastructure.Persistence.SqliteSavedCruiseRepository;
+using FavouriteRepository = KrytenInfrastructure::KrytenAssist.Infrastructure.Persistence.SqliteFavouriteCruiseShipRepository;
+using PreferencesRepository = KrytenInfrastructure::KrytenAssist.Infrastructure.Persistence.SqliteCruisePreferencesRepository;
 
 namespace KrytenAssist.Avalonia.Tests.Infrastructure.Persistence;
 
@@ -31,6 +37,9 @@ public sealed class CruisePersistenceDependencyInjectionTests
             var repository = scope.ServiceProvider.GetRequiredService<RepositoryContract>();
 
             Assert.IsType<Repository>(repository);
+            Assert.IsType<SavedRepository>(scope.ServiceProvider.GetRequiredService<SavedContract>());
+            Assert.IsType<FavouriteRepository>(scope.ServiceProvider.GetRequiredService<FavouriteContract>());
+            Assert.IsType<PreferencesRepository>(scope.ServiceProvider.GetRequiredService<PreferencesContract>());
             Assert.True(File.Exists(databasePath));
         }
         finally

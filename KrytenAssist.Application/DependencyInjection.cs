@@ -16,6 +16,19 @@ public static class DependencyInjection
         services.AddScoped<RecordCruiseObservation>();
         services.AddScoped<GetCruiseHistory>();
         services.AddScoped<ListCruiseHistories>();
+        services.AddScoped<SaveCruise>();
+        services.AddScoped<UpdateCruiseEvaluation>();
+        services.AddScoped<DismissCruise>();
+        services.AddScoped<RestoreCruise>();
+        services.AddScoped<RemoveSavedCruise>();
+        services.AddScoped<SetSavedCruiseFavourite>();
+        services.AddScoped<GetSavedCruise>();
+        services.AddScoped<ListSavedCruises>();
+        services.AddScoped<SetFavouriteCruiseShip>();
+        services.AddScoped<ListFavouriteCruiseShips>();
+        services.AddScoped<GetCruisePreferences>();
+        services.AddScoped<SaveCruisePreferences>();
+        services.AddSingleton<SavedCruiseSnapshotFactory>();
 
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
 

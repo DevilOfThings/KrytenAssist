@@ -43,7 +43,8 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
         ICruisePageCaptureService? captureService = null,
         CruiseHistoryViewModel? history = null,
         ICruisePageBatchCaptureService? batchCaptureService = null,
-        RecordObservation? recordObservation = null)
+        RecordObservation? recordObservation = null,
+        CruiseSaveAndEvaluationViewModel? evaluation = null)
     {
         ArgumentNullException.ThrowIfNull(skillRegistry);
         ArgumentNullException.ThrowIfNull(clock);
@@ -57,7 +58,8 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
             clock,
             history,
             batchCaptureService,
-            recordObservation);
+            recordObservation,
+            evaluation);
         _retrieveCommand = new AsyncCommand(RetrieveAsync, () => CanRetrieve);
         _cancelCommand = new DelegateCommand(Cancel, () => IsBusy);
     }
@@ -74,7 +76,7 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
 
     public void Activate() => History?.Activate();
 
-    public void Deactivate() => History?.Deactivate();
+    public void Deactivate() { History?.Deactivate(); BrowserFeasibility.Evaluation?.Deactivate(); }
 
     public CruiseObservation? Observation
     {

@@ -1,0 +1,34 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="clr-namespace:KrytenAssist.Avalonia.ViewModels"
+             x:Class="KrytenAssist.Avalonia.Views.CruiseEvaluationEditorView"
+             x:DataType="viewModels:CruiseSaveAndEvaluationViewModel">
+    <Border Classes="status-surface" Padding="10" IsVisible="{Binding IsEditorOpen}">
+        <StackPanel Spacing="7">
+            <TextBlock Text="Personal Evaluation" FontSize="16" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding TargetTitle}" FontWeight="SemiBold" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding TargetIdentity}" Classes="secondary-text" />
+            <Grid ColumnDefinitions="Auto,*,Auto,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="8" RowSpacing="6">
+                <TextBlock Text="Interest" VerticalAlignment="Center" />
+                <ComboBox Grid.Column="1" ItemsSource="{Binding InterestOptions}" SelectedItem="{Binding Interest, Mode=TwoWay}" />
+                <TextBlock Grid.Column="2" Text="Overall" VerticalAlignment="Center" />
+                <ComboBox Grid.Column="3" ItemsSource="{Binding RatingOptions}" SelectedItem="{Binding OverallRating, Mode=TwoWay}" />
+                <TextBlock Grid.Row="1" Text="Itinerary" VerticalAlignment="Center" />
+                <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding RatingOptions}" SelectedItem="{Binding ItineraryRating, Mode=TwoWay}" />
+                <TextBlock Grid.Row="1" Grid.Column="2" Text="Ship" VerticalAlignment="Center" />
+                <ComboBox Grid.Row="1" Grid.Column="3" ItemsSource="{Binding RatingOptions}" SelectedItem="{Binding ShipRating, Mode=TwoWay}" />
+                <TextBlock Grid.Row="2" Text="Value" VerticalAlignment="Center" />
+                <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding RatingOptions}" SelectedItem="{Binding ValueRating, Mode=TwoWay}" />
+            </Grid>
+            <TextBox Text="{Binding Notes, Mode=TwoWay}" AcceptsReturn="True" MinHeight="65" MaxLength="4000" PlaceholderText="Personal notes" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding NotesCountText}" Classes="secondary-text" HorizontalAlignment="Right" />
+            <WrapPanel ItemSpacing="8" LineSpacing="8">
+                <Button Content="Save Evaluation" Classes="primary" Command="{Binding SaveEvaluationCommand}" />
+                <Button Content="Cancel Changes" Classes="secondary" Command="{Binding CancelChangesCommand}" />
+                <Button Content="{Binding FavouriteButtonText}" Classes="secondary" Command="{Binding ToggleFavouriteCommand}" />
+                <Button Content="{Binding ShipFavouriteButtonText}" Classes="secondary" Command="{Binding ToggleShipFavouriteCommand}" />
+            </WrapPanel>
+            <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
+        </StackPanel>
+    </Border>
+</UserControl>

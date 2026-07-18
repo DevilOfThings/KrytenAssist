@@ -19,6 +19,9 @@ public static class DependencyInjection
 
         services.AddScoped<IPromptCardRepository, SqlitePromptCardRepository>();
         services.AddScoped<ICruiseObservationRepository, SqliteCruiseObservationRepository>();
+        services.AddScoped<ISavedCruiseRepository, SqliteSavedCruiseRepository>();
+        services.AddScoped<IFavouriteCruiseShipRepository, SqliteFavouriteCruiseShipRepository>();
+        services.AddScoped<ICruisePreferencesRepository, SqliteCruisePreferencesRepository>();
         return services;
     }
 }

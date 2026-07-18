@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using KrytenAssist.Core.Cruises;
 using CruiseCaptureCandidateResult =
@@ -25,12 +26,16 @@ public sealed class CruiseCaptureCandidateReviewItemViewModel : INotifyPropertyC
     private bool _isSelectionLocked;
     private CruiseBatchRecordingStatus _recordingStatus;
     private string? _recordingMessage;
+    private readonly Func<CruiseObservation, Task<string>>? _saveCruise;
+    private bool _isSaving;
+    private string? _saveMessage;
 
     public CruiseCaptureCandidateReviewItemViewModel(
         CruiseCaptureCandidateResult candidate,
         bool canOpenAtTui,
         Action<Uri> openAtTui,
-        Action<CruiseCaptureCandidateReviewItemViewModel> selectionChanged)
+        Action<CruiseCaptureCandidateReviewItemViewModel> selectionChanged,
+        Func<CruiseObservation, Task<string>>? saveCruise = null)
     {
         ArgumentNullException.ThrowIfNull(candidate);
         ArgumentNullException.ThrowIfNull(openAtTui);
@@ -38,6 +43,7 @@ public sealed class CruiseCaptureCandidateReviewItemViewModel : INotifyPropertyC
 
         Candidate = candidate;
         _selectionChanged = selectionChanged;
+        _saveCruise = saveCruise;
         CanOpenAtTui = canOpenAtTui &&
                        Uri.TryCreate(candidate.SourceReference, UriKind.Absolute, out _);
         OpenAtTuiCommand = new DelegateCommand(
@@ -49,6 +55,7 @@ public sealed class CruiseCaptureCandidateReviewItemViewModel : INotifyPropertyC
                 }
             },
             () => CanOpenAtTui);
+        SaveCruiseCommand = new DelegateCommand(StartSaveCruise, () => CanSaveCruise);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -140,6 +147,11 @@ public sealed class CruiseCaptureCandidateReviewItemViewModel : INotifyPropertyC
     public bool CanOpenAtTui { get; }
 
     public ICommand OpenAtTuiCommand { get; }
+    public ICommand SaveCruiseCommand { get; }
+    public bool IsSaving => _isSaving;
+    public bool CanSaveCruise => IsReady && Observation is not null && _saveCruise is not null && !IsSaving;
+    public string? SaveMessage => _saveMessage;
+    public bool HasSaveMessage => !string.IsNullOrWhiteSpace(SaveMessage);
 
     public CruiseBatchRecordingStatus RecordingStatus => _recordingStatus;
 
@@ -182,6 +194,21 @@ public sealed class CruiseCaptureCandidateReviewItemViewModel : INotifyPropertyC
 
         _isSelectionLocked = isLocked;
         OnPropertyChanged(nameof(CanSelect));
+    }
+
+    private async void StartSaveCruise()
+    {
+        if (!CanSaveCruise || Observation is null) return;
+        _isSaving = true; _saveMessage = "Saving cruise…"; NotifySaveState();
+        try { _saveMessage = await _saveCruise!(Observation); }
+        catch { _saveMessage = "This cruise could not be saved locally. Please try again."; }
+        finally { _isSaving = false; NotifySaveState(); }
+    }
+
+    private void NotifySaveState()
+    {
+        OnPropertyChanged(nameof(IsSaving)); OnPropertyChanged(nameof(CanSaveCruise));
+        OnPropertyChanged(nameof(SaveMessage)); OnPropertyChanged(nameof(HasSaveMessage));
     }
 
     public void MarkRecording()
