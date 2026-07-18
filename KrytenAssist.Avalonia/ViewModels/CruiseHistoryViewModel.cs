@@ -27,6 +27,7 @@ public sealed class CruiseHistoryViewModel : INotifyPropertyChanged
     private readonly GetHistory _getHistory;
     private readonly ListHistories _listHistories;
     private readonly IClock _clock;
+    private readonly CruiseAlertCoordinator? _alertCoordinator;
     private readonly AsyncCommand _recordCommand;
     private readonly DelegateCommand _cancelRecordingCommand;
     private readonly AsyncCommand _refreshHistoryCommand;
@@ -52,7 +53,8 @@ public sealed class CruiseHistoryViewModel : INotifyPropertyChanged
         RecordObservation recordObservation,
         GetHistory getHistory,
         ListHistories listHistories,
-        IClock clock)
+        IClock clock,
+        CruiseAlertCoordinator? alertCoordinator = null)
     {
         ArgumentNullException.ThrowIfNull(recordObservation);
         ArgumentNullException.ThrowIfNull(getHistory);
@@ -62,6 +64,7 @@ public sealed class CruiseHistoryViewModel : INotifyPropertyChanged
         _getHistory = getHistory;
         _listHistories = listHistories;
         _clock = clock;
+        _alertCoordinator = alertCoordinator;
         _recordCommand = new AsyncCommand(RecordAsync, () => CanRecord);
         _cancelRecordingCommand = new DelegateCommand(CancelRecording, () => IsRecording);
         _refreshHistoryCommand = new AsyncCommand(RefreshHistoryAsync, () => !IsLoadingHistory);
@@ -284,6 +287,8 @@ public sealed class CruiseHistoryViewModel : INotifyPropertyChanged
             }
 
             RecordMessage = CreateRecordMessage(result, observation.Source);
+            if (result.RecordingSucceeded && result.CreatedAlertCount > 0 && _alertCoordinator is not null)
+                await _alertCoordinator.NotifyAlertsCreatedAsync(result.CreatedAlertCount);
             if (result.Recording.Status is RecordStatus.FirstObservationRecorded
                 or RecordStatus.ChangedObservationRecorded
                 or RecordStatus.AlreadyCurrent)

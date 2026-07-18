@@ -88,6 +88,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     private CancellationTokenSource? _batchRecordingCancellation;
     private int _batchRecordingGeneration;
     private CruiseBrowserPresentation _browserPresentation = CruiseBrowserPresentation.Mobile;
+    private readonly CruiseAlertCoordinator? _alertCoordinator;
 
     public CruiseBrowserFeasibilityViewModel()
         : this(new CruiseDiscoverySourceCatalog(), new CruiseTrustedHostPolicy())
@@ -102,7 +103,8 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         CruiseHistoryViewModel? history = null,
         ICruisePageBatchCaptureService? batchCaptureService = null,
         RecordObservation? recordObservation = null,
-        CruiseSaveAndEvaluationViewModel? evaluation = null)
+        CruiseSaveAndEvaluationViewModel? evaluation = null,
+        CruiseAlertCoordinator? alertCoordinator = null)
     {
         ArgumentNullException.ThrowIfNull(sourceCatalog);
         ArgumentNullException.ThrowIfNull(trustedHostPolicy);
@@ -113,6 +115,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         _clock = clock;
         _recordObservation = recordObservation;
         Evaluation = evaluation;
+        _alertCoordinator = alertCoordinator;
         if (Evaluation is not null) Evaluation.PropertyChanged += OnEvaluationPropertyChanged;
         History = history;
         if (History is not null)
@@ -1228,6 +1231,9 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
             {
                 await History.RefreshAfterBatchRecordingAsync(preferredObservation);
             }
+            var createdAlerts = items.Sum(item => item.CreatedAlertCount);
+            if (generation == _batchRecordingGeneration && createdAlerts > 0 && _alertCoordinator is not null)
+                await _alertCoordinator.NotifyAlertsCreatedAsync(createdAlerts);
         }
         catch (Exception)
         {

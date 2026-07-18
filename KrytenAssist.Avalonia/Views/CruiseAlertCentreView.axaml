@@ -1,0 +1,114 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="clr-namespace:KrytenAssist.Avalonia.ViewModels"
+             x:Class="KrytenAssist.Avalonia.Views.CruiseAlertCentreView"
+             x:DataType="viewModels:CruiseAlertCentreViewModel">
+  <Grid RowDefinitions="Auto,*" Margin="20,8,20,20">
+    <StackPanel Grid.Row="0" Spacing="10">
+      <StackPanel Orientation="Horizontal" Spacing="12">
+        <TextBlock Text="Alert Centre" Classes="section-heading" VerticalAlignment="Center" />
+        <RadioButton Content="Inbox" GroupName="AlertCentreMode" IsChecked="{Binding IsInboxMode}" />
+        <RadioButton Content="Settings" GroupName="AlertCentreMode" IsChecked="{Binding IsSettingsMode}" />
+      </StackPanel>
+      <TextBlock Text="Alerts are created only from Cruise evidence you explicitly record or save. Kryten is not monitoring retailer sites in the background."
+                 Classes="secondary-text" TextWrapping="Wrap" />
+    </StackPanel>
+
+    <Grid Grid.Row="1" RowDefinitions="Auto,*" IsVisible="{Binding IsInboxMode}" Margin="0,12,0,0">
+      <StackPanel Grid.Row="0" Spacing="8">
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <Button Content="Refresh" Classes="secondary" Command="{Binding RefreshCommand}" />
+          <Button Content="Cancel Loading" Classes="secondary" Command="{Binding CancelLoadingCommand}" IsVisible="{Binding IsLoading}" />
+          <TextBlock Text="Loading alerts…" Classes="busy-text" VerticalAlignment="Center" IsVisible="{Binding IsLoading}" />
+          <TextBlock Text="{Binding Message}" Classes="secondary-text" VerticalAlignment="Center" />
+        </StackPanel>
+        <TextBlock Text="{Binding ErrorMessage}" Classes="error-text" IsVisible="{Binding HasError}" />
+        <StackPanel Orientation="Horizontal" Spacing="14">
+          <TextBlock Text="Type" FontWeight="SemiBold" VerticalAlignment="Center" />
+          <RadioButton Content="All" GroupName="AlertType" IsChecked="{Binding IsAllTypes}" />
+          <RadioButton Content="Price drops" GroupName="AlertType" IsChecked="{Binding IsPriceDrops}" />
+          <RadioButton Content="Promotions" GroupName="AlertType" IsChecked="{Binding IsPromotions}" />
+          <RadioButton Content="Saved criteria" GroupName="AlertType" IsChecked="{Binding IsSavedCriteria}" />
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Spacing="14">
+          <TextBlock Text="Status" FontWeight="SemiBold" VerticalAlignment="Center" />
+          <RadioButton Content="Active" GroupName="AlertLifecycle" IsChecked="{Binding IsActiveLifecycle}" />
+          <RadioButton Content="Unread" GroupName="AlertLifecycle" IsChecked="{Binding IsUnreadLifecycle}" />
+          <RadioButton Content="Read" GroupName="AlertLifecycle" IsChecked="{Binding IsReadLifecycle}" />
+          <RadioButton Content="Dismissed" GroupName="AlertLifecycle" IsChecked="{Binding IsDismissedLifecycle}" />
+        </StackPanel>
+      </StackPanel>
+
+      <Grid Grid.Row="1" ColumnDefinitions="2*,3*" ColumnSpacing="12" Margin="0,10,0,0">
+        <Border Grid.Column="0" Classes="workspace-surface" Padding="8">
+          <Grid>
+            <ListBox ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem, Mode=TwoWay}" IsVisible="{Binding HasItems}">
+              <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="viewModels:CruiseAlertItemViewModel">
+                  <StackPanel Margin="4,7" Spacing="3">
+                    <StackPanel Orientation="Horizontal" Spacing="7">
+                      <TextBlock Text="{Binding TypeLabel}" FontWeight="SemiBold" />
+                      <TextBlock Text="{Binding StatusLabel}" Classes="secondary-text" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding SailingText}" />
+                    <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" MaxLines="3" />
+                    <TextBlock Text="{Binding EventTimeText}" Classes="secondary-text" />
+                  </StackPanel>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+            <TextBlock Text="{Binding EmptyMessage}" TextWrapping="Wrap" Classes="secondary-text" Margin="12" IsVisible="{Binding !HasItems}" />
+          </Grid>
+        </Border>
+        <Border Grid.Column="1" Classes="workspace-surface" Padding="14">
+          <Grid>
+            <Grid RowDefinitions="*,Auto" IsVisible="{Binding HasSelection}">
+              <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="9">
+                  <TextBlock Text="{Binding SelectedItem.TypeLabel}" FontSize="18" FontWeight="SemiBold" />
+                  <TextBlock Text="{Binding SelectedItem.SailingText}" />
+                  <TextBlock Text="{Binding SelectedItem.Summary}" TextWrapping="Wrap" />
+                  <TextBlock Text="{Binding SelectedItem.DetailText}" TextWrapping="Wrap" />
+                </StackPanel>
+              </ScrollViewer>
+              <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" Margin="0,12,0,0">
+                <Button Content="Mark read" Classes="primary" Command="{Binding MarkReadCommand}" IsVisible="{Binding SelectedItem.IsUnread}" />
+                <Button Content="Mark unread" Classes="secondary" Command="{Binding MarkUnreadCommand}" IsVisible="{Binding SelectedItem.IsRead}" />
+                <Button Content="Dismiss" Classes="secondary" Command="{Binding DismissCommand}" IsVisible="{Binding !SelectedItem.IsDismissed}" />
+                <Button Content="Restore as unread" Classes="primary" Command="{Binding RestoreCommand}" IsVisible="{Binding SelectedItem.IsDismissed}" />
+              </StackPanel>
+            </Grid>
+            <TextBlock Text="Select an alert to review its evidence." Classes="secondary-text" IsVisible="{Binding !HasSelection}" />
+          </Grid>
+        </Border>
+      </Grid>
+    </Grid>
+
+    <ScrollViewer Grid.Row="1" IsVisible="{Binding IsSettingsMode}" VerticalScrollBarVisibility="Auto" Margin="0,12,0,0">
+      <Border Classes="workspace-surface" Padding="18" MaxWidth="720" HorizontalAlignment="Left">
+        <StackPanel Spacing="12" DataContext="{Binding Settings}">
+          <TextBlock Text="Alert Settings" Classes="section-heading" />
+          <CheckBox Content="Price Drop alerts" IsChecked="{Binding PriceDropEnabled}" IsEnabled="{Binding !IsBusy}" />
+          <CheckBox Content="Promotion alerts" IsChecked="{Binding PromotionEnabled}" IsEnabled="{Binding !IsBusy}" />
+          <CheckBox Content="Saved Criteria alerts" IsChecked="{Binding SavedCriteriaEnabled}" IsEnabled="{Binding !IsBusy}" />
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Text="Minimum Price Drop" VerticalAlignment="Center" />
+            <TextBox Text="{Binding MinimumPriceDropPercentage}" Width="120" IsEnabled="{Binding !IsBusy}" />
+            <TextBlock Text="%" VerticalAlignment="Center" />
+          </StackPanel>
+          <TextBlock Text="{Binding ValidationError}" Classes="error-text" IsVisible="{Binding HasValidationError}" />
+          <TextBlock Text="{Binding ErrorMessage}" Classes="error-text" IsVisible="{Binding HasError}" />
+          <TextBlock Text="{Binding Message}" Classes="secondary-text" />
+          <TextBlock Text="{Binding UnsavedChangesText}" Classes="secondary-text" />
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Content="Save Settings" Classes="primary" Command="{Binding SaveCommand}" />
+            <Button Content="Cancel Changes" Classes="secondary" Command="{Binding CancelChangesCommand}" />
+            <Button Content="Cancel Loading" Classes="secondary" Command="{Binding CancelOperationCommand}" IsVisible="{Binding IsBusy}" />
+          </StackPanel>
+          <TextBlock Text="Saving settings affects future explicit evaluations only. Existing alerts are not recalculated or removed."
+                     Classes="secondary-text" TextWrapping="Wrap" />
+        </StackPanel>
+      </Border>
+    </ScrollViewer>
+  </Grid>
+</UserControl>

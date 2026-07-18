@@ -21,6 +21,9 @@
                 <RadioButton Content="Saved Cruises"
                              GroupName="CruiseWorkspaceMode"
                              IsChecked="{Binding IsSavedCruisesMode}" />
+                <RadioButton Content="{Binding AlertsModeText}"
+                             GroupName="CruiseWorkspaceMode"
+                             IsChecked="{Binding IsAlertsMode}" />
             </StackPanel>
         </Border>
         <ScrollViewer Grid.Row="0"
@@ -190,6 +193,12 @@
             <views:SavedCruisesView VerticalAlignment="Stretch"
                                     HorizontalAlignment="Stretch"
                                     DataContext="{Binding SavedCruises}" />
+        </Grid>
+        <Grid Grid.Row="1"
+              IsVisible="{Binding IsAlertsMode}">
+            <views:CruiseAlertCentreView VerticalAlignment="Stretch"
+                                         HorizontalAlignment="Stretch"
+                                         DataContext="{Binding AlertCentre}" />
         </Grid>
     </Grid>
 </UserControl>

@@ -34,7 +34,7 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
     private CruiseObservation? _observation;
     private bool _isBusy;
     private string? _errorMessage;
-    private bool _isSavedCruisesMode;
+    private CruiseWorkspaceMode _workspaceMode;
 
     public CruiseOfTheWeekViewModel(
         ISkillRegistry skillRegistry,
@@ -46,7 +46,9 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
         ICruisePageBatchCaptureService? batchCaptureService = null,
         RecordObservation? recordObservation = null,
         CruiseSaveAndEvaluationViewModel? evaluation = null,
-        SavedCruisesViewModel? savedCruises = null)
+        SavedCruisesViewModel? savedCruises = null,
+        CruiseAlertCentreViewModel? alertCentre = null,
+        CruiseAlertCoordinator? alertCoordinator = null)
     {
         ArgumentNullException.ThrowIfNull(skillRegistry);
         ArgumentNullException.ThrowIfNull(clock);
@@ -62,10 +64,21 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
             history,
             batchCaptureService,
             recordObservation,
-            sharedEvaluation);
+            sharedEvaluation,
+            alertCoordinator);
         SavedCruises = savedCruises;
+        AlertCentre = alertCentre;
+        AlertCoordinator = alertCoordinator;
         _retrieveCommand = new AsyncCommand(RetrieveAsync, () => CanRetrieve);
         _cancelCommand = new DelegateCommand(Cancel, () => IsBusy);
+        if (AlertCoordinator is not null)
+        {
+            AlertCoordinator.PropertyChanged += (_, args) =>
+            {
+                if (args.PropertyName == nameof(CruiseAlertCoordinator.BadgeText))
+                    OnPropertyChanged(nameof(AlertsModeText));
+            };
+        }
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -79,50 +92,68 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
     public CruiseHistoryViewModel? History => BrowserFeasibility.History;
 
     public SavedCruisesViewModel? SavedCruises { get; }
+    public CruiseAlertCentreViewModel? AlertCentre { get; }
+    public CruiseAlertCoordinator? AlertCoordinator { get; }
+    public string AlertsModeText => AlertCoordinator?.BadgeText ?? "Alerts";
+
+    public CruiseWorkspaceMode WorkspaceMode
+    {
+        get => _workspaceMode;
+        private set
+        {
+            if (_workspaceMode == value) return;
+            _workspaceMode = value;
+            BrowserFeasibility.Evaluation?.ClearTarget();
+            SavedCruises?.Deactivate();
+            AlertCentre?.Deactivate();
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsDiscoveryMode));
+            OnPropertyChanged(nameof(IsSavedCruisesMode));
+            OnPropertyChanged(nameof(IsAlertsMode));
+            if (value == CruiseWorkspaceMode.Discovery) History?.Activate();
+            else History?.Deactivate();
+            if (value == CruiseWorkspaceMode.SavedCruises) _ = ActivateSavedCruisesAsync();
+            if (value == CruiseWorkspaceMode.Alerts) _ = ActivateAlertsAsync();
+        }
+    }
 
     public bool IsDiscoveryMode
     {
-        get => !IsSavedCruisesMode;
+        get => WorkspaceMode == CruiseWorkspaceMode.Discovery;
         set
         {
             if (value)
             {
-                IsSavedCruisesMode = false;
+                WorkspaceMode = CruiseWorkspaceMode.Discovery;
             }
         }
     }
 
     public bool IsSavedCruisesMode
     {
-        get => _isSavedCruisesMode;
+        get => WorkspaceMode == CruiseWorkspaceMode.SavedCruises;
         set
         {
-            if (_isSavedCruisesMode == value || (value && SavedCruises is null))
-            {
-                return;
-            }
-
-            _isSavedCruisesMode = value;
-            BrowserFeasibility.Evaluation?.ClearTarget();
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(IsDiscoveryMode));
-            if (value)
-            {
-                _ = ActivateSavedCruisesAsync();
-            }
-            else
-            {
-                SavedCruises?.Deactivate();
-                History?.Activate();
-            }
+            if (value && SavedCruises is not null) WorkspaceMode = CruiseWorkspaceMode.SavedCruises;
         }
+    }
+
+    public bool IsAlertsMode
+    {
+        get => WorkspaceMode == CruiseWorkspaceMode.Alerts;
+        set { if (value && AlertCentre is not null) WorkspaceMode = CruiseWorkspaceMode.Alerts; }
     }
 
     public void Activate()
     {
+        _ = AlertCoordinator?.RefreshCountAsync();
         if (IsSavedCruisesMode)
         {
             _ = ActivateSavedCruisesAsync();
+        }
+        else if (IsAlertsMode)
+        {
+            _ = ActivateAlertsAsync();
         }
         else
         {
@@ -135,6 +166,8 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
         History?.Deactivate();
         SavedCruises?.Deactivate();
         BrowserFeasibility.Evaluation?.Deactivate();
+        AlertCentre?.Deactivate();
+        AlertCoordinator?.Cancel();
     }
 
     private async Task ActivateSavedCruisesAsync()
@@ -150,6 +183,18 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
         {
             // Child ViewModels expose controlled errors; keep an unexpected
             // presentation exception at this mode-switch boundary.
+        }
+    }
+
+    private async Task ActivateAlertsAsync()
+    {
+        try
+        {
+            if (AlertCentre is not null) await AlertCentre.ActivateAsync();
+        }
+        catch
+        {
+            // The child exposes controlled local failures.
         }
     }
 

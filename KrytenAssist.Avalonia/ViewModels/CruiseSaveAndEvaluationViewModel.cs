@@ -33,6 +33,7 @@ public sealed class CruiseSaveAndEvaluationViewModel : INotifyPropertyChanged
     private readonly ListShips _listShips;
     private readonly SnapshotFactory _factory;
     private readonly IClock _clock;
+    private readonly CruiseAlertCoordinator? _alertCoordinator;
     private readonly AsyncCommand _saveEvaluationCommand;
     private readonly DelegateCommand _cancelChangesCommand;
     private readonly AsyncCommand _toggleFavouriteCommand;
@@ -60,7 +61,8 @@ public sealed class CruiseSaveAndEvaluationViewModel : INotifyPropertyChanged
         SetShip setShip,
         ListShips listShips,
         SnapshotFactory factory,
-        IClock clock)
+        IClock clock,
+        CruiseAlertCoordinator? alertCoordinator = null)
     {
         _saveCruise = saveCruise;
         _getSaved = getSaved;
@@ -70,6 +72,7 @@ public sealed class CruiseSaveAndEvaluationViewModel : INotifyPropertyChanged
         _listShips = listShips;
         _factory = factory;
         _clock = clock;
+        _alertCoordinator = alertCoordinator;
         _saveEvaluationCommand = new AsyncCommand(SaveEvaluationAsync, () => CanEdit);
         _cancelChangesCommand = new DelegateCommand(CancelChanges, () => IsEditorOpen && !IsBusy);
         _toggleFavouriteCommand = new AsyncCommand(ToggleFavouriteAsync, () => CanEdit);
@@ -133,6 +136,8 @@ public sealed class CruiseSaveAndEvaluationViewModel : INotifyPropertyChanged
                     _ => "This cruise is already saved."
                 };
                 Message = AppendCriteriaFeedback(Message, result.SavedCriteriaAlerts);
+                if (result.SavedCriteriaAlerts is { CreatedAlerts.Count: > 0 } created && _alertCoordinator is not null)
+                    await _alertCoordinator.NotifyAlertsCreatedAsync(created.CreatedAlerts.Count);
                 NotifySaved();
                 RaiseSavedCruiseChanged();
                 return Message;

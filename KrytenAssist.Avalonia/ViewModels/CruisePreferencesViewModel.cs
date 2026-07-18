@@ -24,6 +24,7 @@ public sealed class CruisePreferencesViewModel : INotifyPropertyChanged
     private readonly GetPreferences _getPreferences;
     private readonly SavePreferences _savePreferences;
     private readonly IClock _clock;
+    private readonly CruiseAlertCoordinator? _alertCoordinator;
     private readonly AsyncCommand _saveCommand;
     private readonly AsyncCommand _retryCommand;
     private readonly DelegateCommand _cancelChangesCommand;
@@ -50,11 +51,13 @@ public sealed class CruisePreferencesViewModel : INotifyPropertyChanged
     public CruisePreferencesViewModel(
         GetPreferences getPreferences,
         SavePreferences savePreferences,
-        IClock clock)
+        IClock clock,
+        CruiseAlertCoordinator? alertCoordinator = null)
     {
         _getPreferences = getPreferences;
         _savePreferences = savePreferences;
         _clock = clock;
+        _alertCoordinator = alertCoordinator;
         MonthOptions = Enumerable.Range(1, 12)
             .Select(month => new CruisePreferenceMonthOptionViewModel(
                 month,
@@ -259,6 +262,8 @@ public sealed class CruisePreferencesViewModel : INotifyPropertyChanged
                         _ =>
                             $"{Message} {alerts.AttemptedCount} shortlisted sailings were evaluated; {alerts.CreatedAlertCount} alert{(alerts.CreatedAlertCount == 1 ? string.Empty : "s")} {(alerts.CreatedAlertCount == 1 ? "was" : "were")} created, {alerts.FailedCount} evaluations failed."
                     };
+                    if (alerts.CreatedAlertCount > 0 && _alertCoordinator is not null)
+                        await _alertCoordinator.NotifyAlertsCreatedAsync(alerts.CreatedAlertCount);
                 }
             }
             else if (result.Mutation.Status == MutationStatus.Cancelled)

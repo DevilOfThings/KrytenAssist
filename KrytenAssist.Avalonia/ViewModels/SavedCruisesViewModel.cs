@@ -29,6 +29,7 @@ public sealed class SavedCruisesViewModel : INotifyPropertyChanged
     private readonly RemoveUseCase _remove;
     private readonly CruiseSaveAndEvaluationViewModel _evaluation;
     private readonly CruisePreferencesViewModel? _preferences;
+    private readonly CruiseAlertCoordinator? _alertCoordinator;
     private readonly IClock _clock;
     private readonly AsyncCommand _refreshCommand;
     private readonly AsyncCommand _changeLifecycleCommand;
@@ -59,7 +60,8 @@ public sealed class SavedCruisesViewModel : INotifyPropertyChanged
         RemoveUseCase remove,
         CruiseSaveAndEvaluationViewModel evaluation,
         IClock clock,
-        CruisePreferencesViewModel? preferences = null)
+        CruisePreferencesViewModel? preferences = null,
+        CruiseAlertCoordinator? alertCoordinator = null)
     {
         _list = list;
         _dismiss = dismiss;
@@ -68,6 +70,7 @@ public sealed class SavedCruisesViewModel : INotifyPropertyChanged
         _evaluation = evaluation;
         _clock = clock;
         _preferences = preferences;
+        _alertCoordinator = alertCoordinator;
         _refreshCommand = new AsyncCommand(RefreshAsync, () => !IsLoading && !IsMutating);
         _changeLifecycleCommand = new AsyncCommand(ChangeLifecycleAsync, () => SelectedItem is not null && !IsLoading && !IsMutating);
         _requestRemoveCommand = new DelegateCommand(RequestRemove, () => SelectedItem is not null && !IsMutating);
@@ -346,6 +349,8 @@ public sealed class SavedCruisesViewModel : INotifyPropertyChanged
                         _ when alerts.CreatedAlerts.Count > 1 => $"{Message} {alerts.CreatedAlerts.Count} alerts were created.",
                         _ => Message
                     };
+                    if (alerts.CreatedAlerts.Count > 0 && _alertCoordinator is not null)
+                        await _alertCoordinator.NotifyAlertsCreatedAsync(alerts.CreatedAlerts.Count);
                 }
                 RebuildItems(key);
             }

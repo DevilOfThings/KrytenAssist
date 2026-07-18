@@ -10,7 +10,7 @@ Phase 7 – Cruise Assistant
 
 Current Prompt
 --------------
-Prompt 039f – Alert Centre and Settings (next)
+Prompt 039g – Tests and Verification (next)
 
 Prompt 037 – Cruise History and Price Tracking, including its 037h Multiple
 Cruise Deals extension, is complete. Kryten can explicitly capture currently
@@ -37,13 +37,16 @@ context, plus an explicit guidance-only month, cabin and budget preference
 editor. Prompt 038g's architecture, SQLite-boundary and regression audit passes
 with 600 offline tests. Robin manually confirmed the complete Prompt 038
 desktop workflow on 18 July 2026. Prompt 038 is complete and Prompt 039 is next.
-Prompts 039a–039e are complete. Alert domain, pure detection, Application
+Prompts 039a–039f are complete. Alert domain, pure detection, Application
 contracts and normalized SQLite persistence are implemented. Explicit single
 and batch recording now evaluate committed current observations for Price Drop
 and Promotion alerts while preserving independent factual recording outcomes.
 Saved Criteria now evaluates after explicit Record, Save, Restore and Save
 Preferences actions with stable evidence selection and independent primary
-mutation outcomes. Alert Centre and Settings is next.
+mutation outcomes. Alert Centre and Settings now provides a durable typed inbox,
+explicit lifecycle controls, unread coordination and future-evaluation settings
+inside the three-mode Cruise workspace. The build and all 655 offline tests
+pass. Prompt 039g final audit and manual verification is next.
 
 ### Phase 1 – API Foundation
 
@@ -615,8 +618,9 @@ database-enforced deduplication and no relationships to History or Saved
 Cruises. Single and batch recording now share record-then-evaluate orchestration
 with deterministic committed-current selection and independent alert outcomes.
 Saved Criteria triggers now compose explicit Record, Save, Restore and Save
-Preferences actions without rolling back primary state. Prompt 039f – Alert
-Centre and Settings is next.
+Preferences actions without rolling back primary state. Prompt 039f adds the
+durable local Alert Centre, unread badge, lifecycle controls and explicit Alert
+Settings editor. Prompt 039g final audit and manual verification is next.
 
 Detect meaningful changes only from newly and explicitly recorded Cruise
 evidence. Prompt 039 does not introduce unattended browsing or imply live

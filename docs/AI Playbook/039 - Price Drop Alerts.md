@@ -333,7 +333,7 @@ See the 039e Codex prompt for complete results and tests.
 
 ### Status
 
-In progress. Steps 039a–039e are complete. Robin agreed the explicit-recording trigger,
+In progress. Steps 039a–039f are complete. Robin agreed the explicit-recording trigger,
 same-source comparable price and promotion rules, supported month/budget
 criteria, cabin deferral, in-app lifecycle, settings defaults, retained
 dismissal, deterministic deduplication and record-before-alert failure boundary
@@ -348,4 +348,7 @@ orchestration, deterministic committed-current evidence selection and
 independent alert feedback without changing factual recording outcomes. Prompt
 039e added explicit Record/Save/Restore/Preferences criteria triggers, stable
 bulk evaluation, honest recorded-versus-saved evidence and independent primary
-mutation outcomes. Prompt 039f – Alert Centre and Settings is next.
+mutation outcomes. Prompt 039f added the durable local Alert Centre, typed
+evidence detail, explicit lifecycle controls, unread coordination, Alert
+Settings drafts and the three-mode Cruise workspace. The build and all 655
+offline tests pass. Prompt 039g – Tests and Verification is next.
