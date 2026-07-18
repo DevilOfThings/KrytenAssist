@@ -32,6 +32,12 @@ public sealed class CruisePersistenceSchemaAndMigrationTests
         Assert.Contains("CruisePreferenceProfiles", schema.Keys);
         Assert.Contains("CruisePreferenceMonths", schema.Keys);
         Assert.Contains("CruisePreferenceCabins", schema.Keys);
+        Assert.Contains("CruiseAlerts", schema.Keys);
+        Assert.Contains("CruisePriceDropAlertDetails", schema.Keys);
+        Assert.Contains("CruisePromotionAlertDetails", schema.Keys);
+        Assert.Contains("CruiseSavedCriteriaAlertDetails", schema.Keys);
+        Assert.Contains("CruiseAlertSettings", schema.Keys);
+        Assert.Contains("SavedCruiseCriteriaEvaluationStates", schema.Keys);
         Assert.Contains("CK_CruiseHistories_DurationNights", schema["CruiseHistories"]);
         Assert.Contains("CK_CruiseObservations_Fingerprint_Length", schema["CruiseObservations"]);
         Assert.Contains("CK_CruiseObservationPrices_Amount", schema["CruiseObservationPrices"]);
@@ -44,6 +50,8 @@ public sealed class CruisePersistenceSchemaAndMigrationTests
         Assert.Contains("UX_FavouriteCruiseShips_Operator_Ship", indexes.Keys);
         Assert.Contains("UX_CruisePreferenceMonths_Profile_Month", indexes.Keys);
         Assert.Contains("UX_CruisePreferenceCabins_Profile_Cabin", indexes.Keys);
+        Assert.Contains("UX_CruiseAlerts_EventKey", indexes.Keys);
+        Assert.Contains("UX_SavedCriteriaStates_Sailing_Fingerprint", indexes.Keys);
     }
 
     [Fact]
@@ -89,11 +97,12 @@ public sealed class CruisePersistenceSchemaAndMigrationTests
         await context.Database.MigrateAsync();
         var applied = await context.Database.GetAppliedMigrationsAsync();
 
-        Assert.Equal(4, applied.Count());
+        Assert.Equal(5, applied.Count());
         Assert.Contains(InitialMigration, applied);
         Assert.Contains(applied, migration => migration.EndsWith("_AddCruiseHistoryPersistence", StringComparison.Ordinal));
         Assert.Contains(applied, migration => migration.EndsWith("_HardenCruiseHistoryRecording", StringComparison.Ordinal));
         Assert.Contains(applied, migration => migration.EndsWith("_AddPersonalCruiseState", StringComparison.Ordinal));
+        Assert.Contains(applied, migration => migration.EndsWith("_AddCruiseAlertPersistence", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -143,6 +152,31 @@ public sealed class CruisePersistenceSchemaAndMigrationTests
                 DisplayOrder = storedPrice.DisplayOrder
             });
             await Assert.ThrowsAsync<DbUpdateException>(() => priceContext.SaveChangesAsync());
+        }
+    }
+
+    [Fact]
+    public async Task AlertAndCriteriaState_HaveNoRelationshipsToHistoryOrSavedCruises()
+    {
+        await using var database = new CruisePersistenceTestDatabase();
+        await database.OpenAndMigrateAsync();
+
+        foreach (var table in new[] { "CruiseAlerts", "CruiseAlertSettings", "SavedCruiseCriteriaEvaluationStates" })
+        {
+            await using var command = database.Connection.CreateCommand();
+            command.CommandText = $"PRAGMA foreign_key_list(\"{table}\")";
+            await using var reader = await command.ExecuteReaderAsync();
+            Assert.False(await reader.ReadAsync());
+        }
+
+        foreach (var table in new[] { "CruisePriceDropAlertDetails", "CruisePromotionAlertDetails", "CruiseSavedCriteriaAlertDetails" })
+        {
+            await using var command = database.Connection.CreateCommand();
+            command.CommandText = $"PRAGMA foreign_key_list(\"{table}\")";
+            await using var reader = await command.ExecuteReaderAsync();
+            Assert.True(await reader.ReadAsync());
+            Assert.Equal("CruiseAlerts", reader.GetString(reader.GetOrdinal("table")));
+            Assert.False(await reader.ReadAsync());
         }
     }
 

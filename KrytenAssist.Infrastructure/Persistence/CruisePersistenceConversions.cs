@@ -16,4 +16,8 @@ internal static class CruisePersistenceConversions
     public static readonly ValueConverter<decimal, string> Decimal = new(
         value => value.ToString("G29", CultureInfo.InvariantCulture),
         value => decimal.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture));
+
+    public static readonly ValueConverter<decimal?, string?> NullableDecimal = new(
+        value => value.HasValue ? value.Value.ToString("G29", CultureInfo.InvariantCulture) : null,
+        value => value == null ? null : decimal.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture));
 }

@@ -240,6 +240,16 @@ detection, orchestration and test contract.
 - verify migration, restart, cancellation, concurrency and independence from
   History/Saved Cruises
 
+The agreed analysis uses a common alert header with one owned one-to-one typed
+detail table for each Price Drop, Promotion and Saved Criteria payload; JSON and
+a nullable detail property bag are excluded. Event-key uniqueness is enforced
+by SQLite and concurrent inserts return the existing aggregate. A singleton
+settings row and independent sailing/criteria transition state preserve exact
+decimal and offset-bearing values. UTC ordering columns make list/state
+concurrency deterministic across offsets. There are no relationships or
+cascades to History, Saved Cruises or preferences. See the 039c Codex prompt
+for the complete schema, repository, migration, concurrency and test contract.
+
 ### Step 4 – 039d: Observation Recording Integration
 
 - integrate alert evaluation after successful single and batch recording
@@ -304,11 +314,14 @@ detection, orchestration and test contract.
 
 ### Status
 
-In progress. Steps 039a–039b are complete. Robin agreed the explicit-recording trigger,
+In progress. Steps 039a–039c are complete. Robin agreed the explicit-recording trigger,
 same-source comparable price and promotion rules, supported month/budget
 criteria, cabin deferral, in-app lifecycle, settings defaults, retained
 dismissal, deterministic deduplication and record-before-alert failure boundary
 on 18 July 2026. Prompt 039b implemented the immutable alert/settings model,
 typed evidence payloads, stable event identity, pure detection policies,
 Application persistence abstractions and controlled evaluation/lifecycle
-contracts. Prompt 039c – SQLite Alert Persistence is next.
+contracts. Prompt 039c added the normalized alert header and typed-detail
+schema, singleton settings, independent criteria state, exact value round trips,
+database-enforced event deduplication, deterministic concurrency and complete
+repository/DI wiring. Prompt 039d – Observation Recording Integration is next.

@@ -1,0 +1,149 @@
+using KrytenAssist.Application.Abstractions.Persistence;
+using KrytenAssist.Application.Cruises;
+using KrytenAssist.Core.Cruises;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+
+namespace KrytenAssist.Infrastructure.Persistence;
+
+public sealed class SqliteCruiseAlertRepository(KrytenAssistDbContext dbContext) : ICruiseAlertRepository
+{
+    public async Task<CruiseAlert?> GetAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        if (id == Guid.Empty) throw new ArgumentException("Alert id is required.", nameof(id));
+        cancellationToken.ThrowIfCancellationRequested();
+        var entity = await CompleteQuery().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        return entity is null ? null : Map(entity);
+    }
+
+    public async Task<IReadOnlyList<CruiseAlert>> ListAsync(CruiseAlertQuery query, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(query); cancellationToken.ThrowIfCancellationRequested();
+        var values = CompleteQuery();
+        if (query.Type is not null) values = values.Where(x => x.Type == (int)query.Type.Value);
+        if (query.Status is not null) values = values.Where(x => x.Status == (int)query.Status.Value);
+        var entities = await values.OrderByDescending(x => x.EventTimeUtcTicks).ThenByDescending(x => x.CreatedAtUtcTicks)
+            .ThenBy(x => x.EventKey).ThenBy(x => x.Id).ToArrayAsync(cancellationToken);
+        return Array.AsReadOnly(entities.Select(Map).ToArray());
+    }
+
+    public Task<int> CountUnreadAsync(CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return dbContext.CruiseAlerts.CountAsync(x => x.Status == (int)CruiseAlertStatus.Unread, cancellationToken);
+    }
+
+    public async Task<CruiseAlertAddRepositoryResult> AddIfAbsentAsync(CruiseAlert alert, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(alert); cancellationToken.ThrowIfCancellationRequested();
+        var known = await FindByEventKeyAsync(alert.EventKey, cancellationToken);
+        if (known is not null) return new(false, known);
+
+        try
+        {
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+            dbContext.CruiseAlerts.Add(ToEntity(alert));
+            await dbContext.SaveChangesAsync(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            await transaction.CommitAsync(cancellationToken);
+            return new(true, alert);
+        }
+        catch (DbUpdateException exception) when (IsUniqueConstraint(exception))
+        {
+            dbContext.ChangeTracker.Clear();
+            var existing = await FindByEventKeyAsync(alert.EventKey, cancellationToken);
+            if (existing is null) throw;
+            return new(false, existing);
+        }
+    }
+
+    public async Task<bool> UpdateStatusAsync(Guid id, CruiseAlertStatus status, CancellationToken cancellationToken = default)
+    {
+        if (id == Guid.Empty) throw new ArgumentException("Alert id is required.", nameof(id));
+        if (!Enum.IsDefined(status)) throw new ArgumentOutOfRangeException(nameof(status));
+        cancellationToken.ThrowIfCancellationRequested();
+        return await dbContext.CruiseAlerts.Where(x => x.Id == id)
+            .ExecuteUpdateAsync(update => update.SetProperty(x => x.Status, (int)status), cancellationToken) > 0;
+    }
+
+    private IQueryable<CruiseAlertEntity> CompleteQuery() => dbContext.CruiseAlerts.AsNoTracking()
+        .Include(x => x.PriceDropDetails).Include(x => x.PromotionDetails).Include(x => x.SavedCriteriaDetails);
+
+    private async Task<CruiseAlert?> FindByEventKeyAsync(string eventKey, CancellationToken token)
+    {
+        var entity = await CompleteQuery().SingleOrDefaultAsync(x => x.EventKey == eventKey, token);
+        return entity is null ? null : Map(entity);
+    }
+
+    private static CruiseAlertEntity ToEntity(CruiseAlert alert)
+    {
+        var entity = new CruiseAlertEntity
+        {
+            Id = alert.Id, EventKey = alert.EventKey, Type = (int)alert.Type, Status = (int)alert.Status,
+            OperatorId = alert.SailingKey.OperatorId, ShipName = alert.SailingKey.ShipName,
+            DepartureDate = alert.SailingKey.DepartureDate, DurationNights = alert.SailingKey.DurationNights,
+            RetailSourceId = alert.Source?.Id, RetailSourceName = alert.Source?.Name,
+            EventTime = alert.EventTime, EventTimeUtcTicks = alert.EventTime.UtcTicks,
+            CreatedAt = alert.CreatedAt, CreatedAtUtcTicks = alert.CreatedAt.UtcTicks
+        };
+        switch (alert.Details)
+        {
+            case CruisePriceDropAlertDetails detail:
+                entity.PriceDropDetails = new CruisePriceDropAlertDetailEntity
+                {
+                    PreviousAmount = detail.PreviousPrice.Amount, PreviousCurrency = detail.PreviousPrice.Currency, PreviousBasis = detail.PreviousPrice.Basis,
+                    CurrentAmount = detail.CurrentPrice.Amount, CurrentCurrency = detail.CurrentPrice.Currency, CurrentBasis = detail.CurrentPrice.Basis,
+                    Reduction = detail.Reduction, PercentageReduction = detail.PercentageReduction, EvidenceKey = detail.EvidenceKey
+                };
+                break;
+            case CruisePromotionAlertDetails detail:
+                entity.PromotionDetails = new CruisePromotionAlertDetailEntity { PreviousSummary = detail.PreviousSummary, CurrentSummary = detail.CurrentSummary, EvidenceKey = detail.EvidenceKey };
+                break;
+            case CruiseSavedCriteriaAlertDetails detail:
+                entity.SavedCriteriaDetails = new CruiseSavedCriteriaAlertDetailEntity
+                {
+                    MonthConfiguredAndMatched = detail.MonthConfiguredAndMatched,
+                    ConfiguredBudgetAmount = detail.ConfiguredBudget?.Amount, ConfiguredBudgetCurrency = detail.ConfiguredBudget?.Currency, ConfiguredBudgetBasis = (int?)detail.ConfiguredBudget?.Basis,
+                    MatchedPriceAmount = detail.MatchedPrice?.Amount, MatchedPriceCurrency = detail.MatchedPrice?.Currency, MatchedPriceBasis = detail.MatchedPrice?.Basis,
+                    CriteriaFingerprint = detail.CriteriaFingerprint, EvidenceOrigin = (int)detail.EvidenceOrigin, EvidenceKey = detail.EvidenceKey,
+                    EvidenceTime = detail.EvidenceTime, CabinPreferencesUnavailable = detail.CabinPreferencesUnavailable
+                };
+                break;
+            default: throw new InvalidOperationException("Unsupported alert details.");
+        }
+        return entity;
+    }
+
+    private static CruiseAlert Map(CruiseAlertEntity entity)
+    {
+        var key = new CruiseSailingKey(entity.OperatorId, entity.ShipName, entity.DepartureDate, entity.DurationNights);
+        var source = entity.RetailSourceId is null ? null : new CruiseSource(entity.RetailSourceId, entity.RetailSourceName!);
+        CruiseAlertDetails details = (CruiseAlertType)entity.Type switch
+        {
+            CruiseAlertType.PriceDrop when entity.PriceDropDetails is not null && entity.PromotionDetails is null && entity.SavedCriteriaDetails is null => MapPriceDrop(entity.PriceDropDetails),
+            CruiseAlertType.Promotion when entity.PromotionDetails is not null && entity.PriceDropDetails is null && entity.SavedCriteriaDetails is null => MapPromotion(entity.PromotionDetails),
+            CruiseAlertType.SavedCriteria when entity.SavedCriteriaDetails is not null && entity.PriceDropDetails is null && entity.PromotionDetails is null => MapCriteria(entity.SavedCriteriaDetails),
+            _ => throw new InvalidDataException("Persisted alert has an invalid typed detail payload.")
+        };
+        var evidenceKey = details switch { CruisePriceDropAlertDetails x => x.EvidenceKey, CruisePromotionAlertDetails x => x.EvidenceKey, CruiseSavedCriteriaAlertDetails x => x.EvidenceKey, _ => throw new InvalidOperationException() };
+        var criteria = (details as CruiseSavedCriteriaAlertDetails)?.CriteriaFingerprint;
+        var candidate = new CruiseAlertCandidate((CruiseAlertType)entity.Type, key, source, details, entity.EventTime, evidenceKey, criteria);
+        if (!string.Equals(candidate.EventKey, entity.EventKey, StringComparison.Ordinal)) throw new InvalidDataException("Persisted alert event identity is inconsistent.");
+        return new CruiseAlert(entity.Id, candidate, entity.CreatedAt, (CruiseAlertStatus)entity.Status);
+    }
+
+    private static CruisePriceDropAlertDetails MapPriceDrop(CruisePriceDropAlertDetailEntity entity)
+    {
+        var details = new CruisePriceDropAlertDetails(new(entity.PreviousAmount, entity.PreviousCurrency, entity.PreviousBasis), new(entity.CurrentAmount, entity.CurrentCurrency, entity.CurrentBasis), entity.EvidenceKey);
+        if (details.Reduction != entity.Reduction || details.PercentageReduction != entity.PercentageReduction) throw new InvalidDataException("Persisted Price Drop calculation is inconsistent.");
+        return details;
+    }
+    private static CruisePromotionAlertDetails MapPromotion(CruisePromotionAlertDetailEntity entity) => new(entity.PreviousSummary, entity.CurrentSummary, entity.EvidenceKey);
+    private static CruiseSavedCriteriaAlertDetails MapCriteria(CruiseSavedCriteriaAlertDetailEntity entity)
+    {
+        CruiseBudget? budget = entity.ConfiguredBudgetAmount is null ? null : new(entity.ConfiguredBudgetAmount.Value, entity.ConfiguredBudgetCurrency!, (CruiseBudgetBasis)entity.ConfiguredBudgetBasis!.Value);
+        CruisePrice? price = entity.MatchedPriceAmount is null ? null : new(entity.MatchedPriceAmount.Value, entity.MatchedPriceCurrency!, entity.MatchedPriceBasis);
+        return new(entity.MonthConfiguredAndMatched, budget, price, entity.CriteriaFingerprint, (CruiseAlertEvidenceOrigin)entity.EvidenceOrigin, entity.EvidenceKey, entity.EvidenceTime, entity.CabinPreferencesUnavailable);
+    }
+    private static bool IsUniqueConstraint(DbUpdateException exception) => exception.InnerException is SqliteException { SqliteErrorCode: 19 };
+}

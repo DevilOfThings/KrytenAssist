@@ -10,7 +10,7 @@ Phase 7 – Cruise Assistant
 
 Current Prompt
 --------------
-Prompt 039c – SQLite Alert Persistence (next)
+Prompt 039d – Observation Recording Integration (next)
 
 Prompt 037 – Cruise History and Price Tracking, including its 037h Multiple
 Cruise Deals extension, is complete. Kryten can explicitly capture currently
@@ -38,7 +38,8 @@ editor. Prompt 038g's architecture, SQLite-boundary and regression audit passes
 with 600 offline tests. Robin manually confirmed the complete Prompt 038
 desktop workflow on 18 July 2026. Prompt 038 is complete and Prompt 039 is next.
 Prompts 039a–039b are complete. Alert domain, pure detection and Application
-contracts are now implemented; SQLite persistence is next.
+contracts and normalized SQLite persistence are now implemented. Observation
+recording integration is next.
 
 ### Phase 1 – API Foundation
 
@@ -604,8 +605,10 @@ and choices as the first explicit preference data for later cruise comparison.
 Current status: In progress. Steps 039a–039b are complete. Provider-independent
 alerts, typed evidence details, lifecycle/settings, deterministic event keys,
 pure observation and saved-criteria detectors, Application-owned repositories
-and controlled use-case results are implemented. Prompt 039c – SQLite Alert
-Persistence is next.
+and controlled use-case results are implemented. Prompt 039c added normalized
+SQLite alert, typed-detail, settings and criteria-state persistence with
+database-enforced deduplication and no relationships to History or Saved
+Cruises. Prompt 039d – Observation Recording Integration is next.
 
 Detect meaningful changes only from newly and explicitly recorded Cruise
 evidence. Prompt 039 does not introduce unattended browsing or imply live

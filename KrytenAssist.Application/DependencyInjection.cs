@@ -33,6 +33,15 @@ public static class DependencyInjection
         services.AddSingleton<CruiseObservationAlertDetector>();
         services.AddSingleton<SavedCruiseCriteriaAlertDetector>();
         services.AddSingleton<CruiseCriteriaEvidenceSelector>();
+        services.AddScoped<ListCruiseAlerts>();
+        services.AddScoped<GetCruiseAlert>();
+        services.AddScoped<CountUnreadCruiseAlerts>();
+        services.AddScoped<ChangeCruiseAlertStatus>();
+        services.AddScoped<GetCruiseAlertSettings>();
+        services.AddScoped<SaveCruiseAlertSettings>();
+        services.AddScoped<MaterializeCruiseAlertCandidates>();
+        services.AddScoped<EvaluateRecordedCruiseAlerts>();
+        services.AddScoped<EvaluateSavedCruiseCriteriaAlerts>();
 
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
 

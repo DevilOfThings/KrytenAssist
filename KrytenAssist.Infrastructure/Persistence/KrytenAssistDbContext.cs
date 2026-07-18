@@ -19,6 +19,12 @@ public sealed class KrytenAssistDbContext : DbContext
     public DbSet<CruisePreferenceProfileEntity> CruisePreferenceProfiles => Set<CruisePreferenceProfileEntity>();
     public DbSet<CruisePreferenceMonthEntity> CruisePreferenceMonths => Set<CruisePreferenceMonthEntity>();
     public DbSet<CruisePreferenceCabinEntity> CruisePreferenceCabins => Set<CruisePreferenceCabinEntity>();
+    public DbSet<CruiseAlertEntity> CruiseAlerts => Set<CruiseAlertEntity>();
+    public DbSet<CruisePriceDropAlertDetailEntity> CruisePriceDropAlertDetails => Set<CruisePriceDropAlertDetailEntity>();
+    public DbSet<CruisePromotionAlertDetailEntity> CruisePromotionAlertDetails => Set<CruisePromotionAlertDetailEntity>();
+    public DbSet<CruiseSavedCriteriaAlertDetailEntity> CruiseSavedCriteriaAlertDetails => Set<CruiseSavedCriteriaAlertDetailEntity>();
+    public DbSet<CruiseAlertSettingsEntity> CruiseAlertSettings => Set<CruiseAlertSettingsEntity>();
+    public DbSet<SavedCruiseCriteriaEvaluationStateEntity> SavedCruiseCriteriaEvaluationStates => Set<SavedCruiseCriteriaEvaluationStateEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
