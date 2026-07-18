@@ -30,6 +30,9 @@ public static class DependencyInjection
         services.AddScoped<GetCruisePreferences>();
         services.AddScoped<SaveCruisePreferences>();
         services.AddSingleton<SavedCruiseSnapshotFactory>();
+        services.AddSingleton<CruiseObservationAlertDetector>();
+        services.AddSingleton<SavedCruiseCriteriaAlertDetector>();
+        services.AddSingleton<CruiseCriteriaEvidenceSelector>();
 
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
 

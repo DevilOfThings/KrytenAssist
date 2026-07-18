@@ -220,6 +220,18 @@ No production implementation belongs to this step.
   recording semantics
 - add comprehensive Core/Application tests
 
+The agreed analysis uses an immutable alert aggregate with typed Price Drop,
+Promotion and Saved Criteria details, separate Unread/Read/Dismissed lifecycle,
+default-enabled settings and versioned deterministic event keys. Pure Core
+detectors compare the latest same-source observations and supported saved
+month/budget criteria. Application owns alert/settings/criteria-state
+repositories, controlled queries/mutations/evaluation results and a composite
+record-then-evaluate contract that cannot roll back committed History. Saved
+criteria evidence explicitly distinguishes latest Recorded Observation from
+the bounded Price when saved snapshot; cabin preferences remain unavailable
+context until Prompt 040. See the 039b Codex prompt for the complete model,
+detection, orchestration and test contract.
+
 ### Step 3 – 039c: SQLite Alert Persistence
 
 - add normalized alert, settings and criteria-transition persistence
@@ -292,8 +304,11 @@ No production implementation belongs to this step.
 
 ### Status
 
-In progress. Step 039a is complete. Robin agreed the explicit-recording trigger,
+In progress. Steps 039a–039b are complete. Robin agreed the explicit-recording trigger,
 same-source comparable price and promotion rules, supported month/budget
 criteria, cabin deferral, in-app lifecycle, settings defaults, retained
 dismissal, deterministic deduplication and record-before-alert failure boundary
-on 18 July 2026. Prompt 039b – Alert Domain and Application Contracts is next.
+on 18 July 2026. Prompt 039b implemented the immutable alert/settings model,
+typed evidence payloads, stable event identity, pure detection policies,
+Application persistence abstractions and controlled evaluation/lifecycle
+contracts. Prompt 039c – SQLite Alert Persistence is next.
