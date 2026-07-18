@@ -1,3 +1,4 @@
+extern alias KrytenApplication;
 extern alias KrytenInfrastructure;
 
 using FluentAssertions;
@@ -6,6 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using FavouriteRepository = KrytenInfrastructure::KrytenAssist.Infrastructure.Persistence.SqliteFavouriteCruiseShipRepository;
 using PreferencesRepository = KrytenInfrastructure::KrytenAssist.Infrastructure.Persistence.SqliteCruisePreferencesRepository;
 using SavedRepository = KrytenInfrastructure::KrytenAssist.Infrastructure.Persistence.SqliteSavedCruiseRepository;
+using GetPreferences = KrytenApplication::KrytenAssist.Application.Cruises.GetCruisePreferences;
+using SavePreferences = KrytenApplication::KrytenAssist.Application.Cruises.SaveCruisePreferences;
 
 namespace KrytenAssist.Avalonia.Tests.Infrastructure.Persistence;
 
@@ -73,6 +76,34 @@ public sealed class PersonalCruisePersistenceTests
         var value = new CruisePreferences([9, 5], [CruiseCabinType.Suite, CruiseCabinType.Balcony], new CruiseBudget(3000, "GBP", CruiseBudgetBasis.TotalBooking));
         await repository.SaveAsync(value); (await repository.GetAsync()).Should().Be(value);
         await repository.SaveAsync(new CruisePreferences()); (await repository.GetAsync()).Should().Be(new CruisePreferences());
+    }
+
+    [Fact]
+    public async Task Preference_use_cases_save_load_and_clear_across_fresh_contexts()
+    {
+        await using var database = new CruisePersistenceTestDatabase();
+        await database.OpenAndMigrateAsync();
+        var value = new CruisePreferences(
+            [4, 10],
+            [CruiseCabinType.Inside, CruiseCabinType.Balcony],
+            new CruiseBudget(2750, "GBP", CruiseBudgetBasis.PerPerson));
+
+        await using (var context = database.CreateContext())
+        {
+            (await new SavePreferences(new PreferencesRepository(context)).ExecuteAsync(value)).Status
+                .Should().Be(KrytenApplication::KrytenAssist.Application.Cruises.PersonalCruisePreferenceMutationStatus.Updated);
+        }
+
+        await using (var reopened = database.CreateContext())
+        {
+            (await new GetPreferences(new PreferencesRepository(reopened)).ExecuteAsync()).Preferences
+                .Should().Be(value);
+            await new SavePreferences(new PreferencesRepository(reopened)).ExecuteAsync(new CruisePreferences());
+        }
+
+        await using var cleared = database.CreateContext();
+        (await new GetPreferences(new PreferencesRepository(cleared)).ExecuteAsync()).Preferences
+            .Should().Be(new CruisePreferences());
     }
 
     [Fact]

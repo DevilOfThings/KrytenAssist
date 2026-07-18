@@ -26,6 +26,7 @@ public sealed class SavedCruisesViewModel : INotifyPropertyChanged
     private readonly RestoreUseCase _restore;
     private readonly RemoveUseCase _remove;
     private readonly CruiseSaveAndEvaluationViewModel _evaluation;
+    private readonly CruisePreferencesViewModel? _preferences;
     private readonly AsyncCommand _refreshCommand;
     private readonly AsyncCommand _changeLifecycleCommand;
     private readonly DelegateCommand _requestRemoveCommand;
@@ -46,19 +47,22 @@ public sealed class SavedCruisesViewModel : INotifyPropertyChanged
     private IReadOnlyList<SavedCruiseItemViewModel> _items = [];
     private SavedCruiseItemViewModel? _selectedItem;
     private bool _isRemoveConfirmationOpen;
+    private bool _isPreferencesMode;
 
     public SavedCruisesViewModel(
         ListUseCase list,
         DismissUseCase dismiss,
         RestoreUseCase restore,
         RemoveUseCase remove,
-        CruiseSaveAndEvaluationViewModel evaluation)
+        CruiseSaveAndEvaluationViewModel evaluation,
+        CruisePreferencesViewModel? preferences = null)
     {
         _list = list;
         _dismiss = dismiss;
         _restore = restore;
         _remove = remove;
         _evaluation = evaluation;
+        _preferences = preferences;
         _refreshCommand = new AsyncCommand(RefreshAsync, () => !IsLoading && !IsMutating);
         _changeLifecycleCommand = new AsyncCommand(ChangeLifecycleAsync, () => SelectedItem is not null && !IsLoading && !IsMutating);
         _requestRemoveCommand = new DelegateCommand(RequestRemove, () => SelectedItem is not null && !IsMutating);
@@ -71,6 +75,37 @@ public sealed class SavedCruisesViewModel : INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public CruiseSaveAndEvaluationViewModel Evaluation => _evaluation;
+    public CruisePreferencesViewModel? Preferences => _preferences;
+    public bool IsOrganisationMode
+    {
+        get => !IsPreferencesMode;
+        set { if (value) IsPreferencesMode = false; }
+    }
+    public bool IsPreferencesMode
+    {
+        get => _isPreferencesMode;
+        set
+        {
+            if (_isPreferencesMode == value || (value && Preferences is null)) return;
+            _isPreferencesMode = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsOrganisationMode));
+            OnPropertyChanged(nameof(ShowOrganisationItems));
+            if (value)
+            {
+                _evaluation.ClearTarget();
+                _loadGeneration++;
+                CancelAndDispose(ref _loadCancellation);
+                IsLoading = false;
+                _ = ActivatePreferencesAsync();
+            }
+            else
+            {
+                Preferences?.Deactivate();
+                if (_isActive && !HasLoaded) _ = RefreshAsync();
+            }
+        }
+    }
     public ICommand RefreshCommand => _refreshCommand;
     public ICommand ChangeLifecycleCommand => _changeLifecycleCommand;
     public ICommand RequestRemoveCommand => _requestRemoveCommand;
@@ -78,6 +113,7 @@ public sealed class SavedCruisesViewModel : INotifyPropertyChanged
     public ICommand CancelRemoveCommand => _cancelRemoveCommand;
     public IReadOnlyList<SavedCruiseItemViewModel> Items => _items;
     public bool HasItems => Items.Count > 0;
+    public bool ShowOrganisationItems => IsOrganisationMode && HasItems;
     public bool HasAnySavedCruises => _allDetails.Count > 0;
     public bool IsEmpty => HasLoaded && !IsLoading && !HasAnySavedCruises && !HasError;
     public bool IsFilterEmpty => HasLoaded && !IsLoading && HasAnySavedCruises && !HasItems && !HasError;
@@ -191,7 +227,9 @@ public sealed class SavedCruisesViewModel : INotifyPropertyChanged
     public Task ActivateAsync()
     {
         _isActive = true;
-        return RefreshAsync();
+        return IsPreferencesMode && Preferences is not null
+            ? Preferences.ActivateAsync()
+            : RefreshAsync();
     }
 
     public void Deactivate()
@@ -204,7 +242,20 @@ public sealed class SavedCruisesViewModel : INotifyPropertyChanged
         IsLoading = false;
         IsMutating = false;
         IsRemoveConfirmationOpen = false;
+        Preferences?.Deactivate();
         _evaluation.ClearTarget();
+    }
+
+    private async Task ActivatePreferencesAsync()
+    {
+        try
+        {
+            if (_isActive && Preferences is not null) await Preferences.ActivateAsync();
+        }
+        catch
+        {
+            // Preference operations expose controlled errors at their boundary.
+        }
     }
 
     public async Task RefreshAsync()
@@ -386,6 +437,7 @@ public sealed class SavedCruisesViewModel : INotifyPropertyChanged
         _items = filtered;
         OnPropertyChanged(nameof(Items));
         OnPropertyChanged(nameof(HasItems));
+        OnPropertyChanged(nameof(ShowOrganisationItems));
         OnPropertyChanged(nameof(HasAnySavedCruises));
         OnPropertyChanged(nameof(IsEmpty));
         OnPropertyChanged(nameof(IsFilterEmpty));

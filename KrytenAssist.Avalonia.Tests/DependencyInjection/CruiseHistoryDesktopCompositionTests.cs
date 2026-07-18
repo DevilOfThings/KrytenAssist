@@ -41,8 +41,10 @@ public sealed class CruiseHistoryDesktopCompositionTests
             Assert.NotNull(scope.ServiceProvider.GetRequiredService<ListSavedDetails>());
             Assert.NotNull(scope.ServiceProvider.GetRequiredService<SavePreferences>());
             var editor = scope.ServiceProvider.GetRequiredService<CruiseSaveAndEvaluationViewModel>();
+            var preferences = scope.ServiceProvider.GetRequiredService<CruisePreferencesViewModel>();
             var organiser = scope.ServiceProvider.GetRequiredService<SavedCruisesViewModel>();
             Assert.Same(editor, organiser.Evaluation);
+            Assert.Same(preferences, organiser.Preferences);
             Assert.True(File.Exists(databasePath));
         }
         finally

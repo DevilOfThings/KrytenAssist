@@ -49,11 +49,21 @@ internal sealed class FakeCruisePreferencesRepository : PreferencesRepository
 {
     internal CruisePreferences Value { get; set; } = new();
     internal Exception? Exception { get; set; }
+    internal int GetCalls { get; private set; }
     internal int SaveCalls { get; private set; }
-    public Task<CruisePreferences> GetAsync(CancellationToken token = default) => Exception is null ? Task.FromResult(Value) : Task.FromException<CruisePreferences>(Exception);
+    internal Func<CancellationToken, Task<CruisePreferences>>? GetHandler { get; set; }
+    internal Func<CruisePreferences, CancellationToken, Task>? SaveHandler { get; set; }
+    public Task<CruisePreferences> GetAsync(CancellationToken token = default)
+    {
+        GetCalls++;
+        if (GetHandler is not null) return GetHandler(token);
+        return Exception is null ? Task.FromResult(Value) : Task.FromException<CruisePreferences>(Exception);
+    }
     public Task SaveAsync(CruisePreferences value, CancellationToken token = default)
     {
         if (Exception is not null) return Task.FromException(Exception);
-        SaveCalls++; Value = value; return Task.CompletedTask;
+        SaveCalls++;
+        if (SaveHandler is not null) return SaveHandler(value, token);
+        Value = value; return Task.CompletedTask;
     }
 }

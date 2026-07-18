@@ -10,7 +10,7 @@ Phase 7 – Cruise Assistant
 
 Current Prompt
 --------------
-Prompt 038f – Cruise Preference Profile (next)
+Prompt 038g – Tests and Verification (next)
 
 Prompt 037 – Cruise History and Price Tracking, including its 037h Multiple
 Cruise Deals extension, is complete. Kryten can explicitly capture currently
@@ -28,12 +28,13 @@ compact active-browser History, local Cruise/Ship grouping and an explicit
 mobile-default browser presentation while preserving trusted navigation,
 capture and local History.
 
-Prompts 038a–038e are complete. Saved Cruise personal state now has accepted
+Prompts 038a–038f are complete. Saved Cruise personal state now has accepted
 provider-independent contracts, normalized local SQLite persistence and
 explicit Save Cruise/evaluation actions that remain independent from factual
 Cruise History. A distinct Saved Cruises workspace now organises shortlist,
 strong-candidate, favourite and Not for us state with optional recorded price
-context. Prompt 038f – Cruise Preference Profile is next.
+context, plus an explicit guidance-only month, cabin and budget preference
+editor. Prompt 038g – Tests and Verification is next.
 
 ### Phase 1 – API Foundation
 
@@ -566,13 +567,13 @@ Cruises organisation without changing factual History behaviour.
 
 ## Prompt 038 – Saved Cruises and Preferences
 
-Current status: In progress. Prompts 038a–038e are complete. Saved sailings,
+Current status: In progress. Prompts 038a–038f are complete. Saved sailings,
 bounded snapshots, shortlist/dismissed lifecycle, optional evaluations,
 favourite ship identity and explicit multi-value preferences now have accepted
 provider-independent Core and Application contracts, normalized SQLite
 persistence, explicit save/evaluation actions and a distinct organisation
-workspace with optional local History context. Prompt 038f – Cruise Preference
-Profile is next.
+workspace with optional local History context and a guidance-only preference
+editor. Prompt 038g – Tests and Verification is next.
 
 Allow Robin to save, organise and evaluate interesting cruises.
 

@@ -16,6 +16,8 @@ using SetFavourite = KrytenApplication::KrytenAssist.Application.Cruises.SetSave
 using SetShip = KrytenApplication::KrytenAssist.Application.Cruises.SetFavouriteCruiseShip;
 using Factory = KrytenApplication::KrytenAssist.Application.Cruises.SavedCruiseSnapshotFactory;
 using UpdateEvaluation = KrytenApplication::KrytenAssist.Application.Cruises.UpdateCruiseEvaluation;
+using GetPreferences = KrytenApplication::KrytenAssist.Application.Cruises.GetCruisePreferences;
+using SavePreferences = KrytenApplication::KrytenAssist.Application.Cruises.SaveCruisePreferences;
 
 namespace KrytenAssist.Avalonia.Tests.ViewModels;
 
@@ -105,19 +107,45 @@ public sealed class SavedCruisesViewModelTests
         context.Observations.RecordCalls.Should().Be(0);
     }
 
+    [Fact]
+    public async Task Preferences_secondary_mode_preserves_unsaved_draft_and_does_not_change_saved_filters()
+    {
+        var context = CreateContext();
+        var saved = Saved("Keep listed", "Voyager", new DateOnly(2027, 8, 1));
+        context.Saved.Items.Add(saved.SailingKey, saved);
+        await context.ViewModel.ActivateAsync();
+        context.ViewModel.ShortlistCount.Should().Be(1);
+
+        context.ViewModel.IsPreferencesMode = true;
+        await context.Preferences.ActivateAsync();
+        context.Preferences.MonthOptions.Single(option => option.Month == 9).IsSelected = true;
+        context.ViewModel.IsOrganisationMode = true;
+        context.ViewModel.IsPreferencesMode = true;
+        await context.Preferences.ActivateAsync();
+
+        context.Preferences.MonthOptions.Single(option => option.Month == 9).IsSelected.Should().BeTrue();
+        context.Preferences.HasUnsavedChanges.Should().BeTrue();
+        context.PreferencesRepository.SaveCalls.Should().Be(0);
+        context.ViewModel.ShortlistCount.Should().Be(1);
+    }
+
     private static TestContext CreateContext()
     {
         var saved = new FakeSavedCruiseRepository();
         var ships = new FakeFavouriteCruiseShipRepository();
         var observations = new FakeCruiseObservationRepository();
+        var preferencesRepository = new FakeCruisePreferencesRepository();
+        var preferences = new CruisePreferencesViewModel(
+            new GetPreferences(preferencesRepository),
+            new SavePreferences(preferencesRepository));
         var evaluation = new CruiseSaveAndEvaluationViewModel(
             new SaveUseCase(saved), new GetSaved(saved), new UpdateEvaluation(saved),
             new SetFavourite(saved), new SetShip(ships), new ListShips(ships),
             new Factory(), new FixedClock());
         var viewModel = new SavedCruisesViewModel(
             new ListDetails(saved, ships, observations, new CruisePriceHistoryAnalyzer()),
-            new DismissUseCase(saved), new RestoreUseCase(saved), new RemoveUseCase(saved), evaluation);
-        return new(viewModel, evaluation, saved, ships, observations);
+            new DismissUseCase(saved), new RestoreUseCase(saved), new RemoveUseCase(saved), evaluation, preferences);
+        return new(viewModel, evaluation, preferences, saved, ships, observations, preferencesRepository);
     }
 
     private static SavedCruise Saved(
@@ -137,9 +165,11 @@ public sealed class SavedCruisesViewModelTests
     private sealed record TestContext(
         SavedCruisesViewModel ViewModel,
         CruiseSaveAndEvaluationViewModel Evaluation,
+        CruisePreferencesViewModel Preferences,
         FakeSavedCruiseRepository Saved,
         FakeFavouriteCruiseShipRepository Ships,
-        FakeCruiseObservationRepository Observations);
+        FakeCruiseObservationRepository Observations,
+        FakeCruisePreferencesRepository PreferencesRepository);
 
     private sealed class FixedClock : IClock
     {

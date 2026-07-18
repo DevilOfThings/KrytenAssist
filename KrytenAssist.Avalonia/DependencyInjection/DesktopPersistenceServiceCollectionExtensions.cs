@@ -43,6 +43,7 @@ public static class DesktopPersistenceServiceCollectionExtensions
         InfrastructureRegistration.AddInfrastructure(services, desktopConfiguration);
         services.AddTransient<CruiseHistoryViewModel>();
         services.AddScoped<CruiseSaveAndEvaluationViewModel>();
+        services.AddScoped<CruisePreferencesViewModel>();
         services.AddTransient<SavedCruisesViewModel>();
         return services;
     }

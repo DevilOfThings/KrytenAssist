@@ -7,7 +7,7 @@
     <Border Classes="workspace-surface"
             Margin="20,0,20,20"
             Padding="14">
-        <Grid RowDefinitions="Auto,Auto,*"
+        <Grid RowDefinitions="Auto,Auto,Auto,*"
               RowSpacing="10">
             <Grid ColumnDefinitions="*,Auto"
                   ColumnSpacing="12">
@@ -22,11 +22,25 @@
                 <Button Grid.Column="1"
                         Content="Refresh"
                         Classes="secondary"
+                        IsVisible="{Binding IsOrganisationMode}"
                         Command="{Binding RefreshCommand}" />
             </Grid>
 
-            <StackPanel Grid.Row="1"
-                        Spacing="8">
+            <WrapPanel Grid.Row="1"
+                       Orientation="Horizontal"
+                       ItemSpacing="14"
+                       LineSpacing="6">
+                <RadioButton Content="Saved list"
+                             GroupName="SavedCruisesSecondaryMode"
+                             IsChecked="{Binding IsOrganisationMode}" />
+                <RadioButton Content="Preferences"
+                             GroupName="SavedCruisesSecondaryMode"
+                             IsChecked="{Binding IsPreferencesMode}" />
+            </WrapPanel>
+
+            <StackPanel Grid.Row="2"
+                        Spacing="8"
+                        IsVisible="{Binding IsOrganisationMode}">
                 <WrapPanel Orientation="Horizontal"
                            ItemSpacing="12"
                            LineSpacing="6">
@@ -71,9 +85,9 @@
                            IsVisible="{Binding ShowEmptyMessage}" />
             </StackPanel>
 
-            <Grid Grid.Row="2"
+            <Grid Grid.Row="3"
                   ColumnDefinitions="2*,12,3*"
-                  IsVisible="{Binding HasItems}">
+                  IsVisible="{Binding ShowOrganisationItems}">
                 <ListBox Grid.Column="0"
                          ItemsSource="{Binding Items}"
                          SelectedItem="{Binding SelectedItem}">
@@ -199,6 +213,11 @@
                         </Border>
                     </StackPanel>
                 </ScrollViewer>
+            </Grid>
+
+            <Grid Grid.Row="3"
+                  IsVisible="{Binding IsPreferencesMode}">
+                <views:CruisePreferencesView DataContext="{Binding Preferences}" />
             </Grid>
         </Grid>
     </Border>

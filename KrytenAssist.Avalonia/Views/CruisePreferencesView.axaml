@@ -1,0 +1,161 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="clr-namespace:KrytenAssist.Avalonia.ViewModels"
+             x:Class="KrytenAssist.Avalonia.Views.CruisePreferencesView"
+             x:DataType="viewModels:CruisePreferencesViewModel">
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="14"
+                    MaxWidth="900"
+                    HorizontalAlignment="Stretch">
+            <StackPanel Spacing="4">
+                <TextBlock Text="Cruise Preferences"
+                           FontSize="18"
+                           FontWeight="SemiBold" />
+                <TextBlock Text="Preferences are guidance only. They do not filter, rank or recommend cruises."
+                           Classes="secondary-text"
+                           TextWrapping="Wrap" />
+                <TextBlock Text="{Binding UnsavedChangesText}"
+                           FontWeight="SemiBold" />
+            </StackPanel>
+
+            <Border Classes="status-surface"
+                    Padding="12"
+                    IsVisible="{Binding IsLoading}">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBlock Text="Loading cruise preferences…"
+                               Classes="busy-text" />
+                    <Button Content="Cancel Operation"
+                            Classes="secondary"
+                            Command="{Binding CancelOperationCommand}" />
+                </StackPanel>
+            </Border>
+
+            <Border Classes="status-surface"
+                    Padding="12"
+                    IsVisible="{Binding HasError}">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="{Binding ErrorMessage}"
+                               Classes="error-text"
+                               TextWrapping="Wrap" />
+                    <Button Content="Try Again"
+                            HorizontalAlignment="Left"
+                            Classes="secondary"
+                            Command="{Binding RetryCommand}" />
+                </StackPanel>
+            </Border>
+
+            <StackPanel Spacing="14"
+                        IsEnabled="{Binding CanEdit}">
+                <Border Classes="status-surface" Padding="14">
+                    <StackPanel Spacing="9">
+                        <TextBlock Text="Preferred departure months"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding MonthSummary}"
+                                   Classes="secondary-text" />
+                        <ItemsControl ItemsSource="{Binding MonthOptions}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal"
+                                               ItemSpacing="14"
+                                               LineSpacing="8" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="viewModels:CruisePreferenceMonthOptionViewModel">
+                                    <CheckBox Content="{Binding Label}"
+                                              IsChecked="{Binding IsSelected}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <Border Classes="status-surface" Padding="14">
+                    <StackPanel Spacing="9">
+                        <TextBlock Text="Preferred cabin types"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding CabinSummary}"
+                                   Classes="secondary-text" />
+                        <ItemsControl ItemsSource="{Binding CabinOptions}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal"
+                                               ItemSpacing="14"
+                                               LineSpacing="8" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="viewModels:CruisePreferenceCabinOptionViewModel">
+                                    <CheckBox Content="{Binding Label}"
+                                              IsChecked="{Binding IsSelected}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <Border Classes="status-surface" Padding="14">
+                    <StackPanel Spacing="9">
+                        <CheckBox Content="Set a maximum budget"
+                                  IsChecked="{Binding IsMaximumBudgetEnabled}" />
+                        <Grid ColumnDefinitions="2*,*,2*"
+                              ColumnSpacing="10"
+                              IsEnabled="{Binding IsMaximumBudgetEnabled}">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Amount" FontWeight="SemiBold" />
+                                <TextBox Text="{Binding MaximumBudgetAmount}"
+                                         PlaceholderText="2500" />
+                                <TextBlock Text="{Binding BudgetAmountError}"
+                                           Classes="error-text"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="4">
+                                <TextBlock Text="Currency" FontWeight="SemiBold" />
+                                <TextBox Text="{Binding MaximumBudgetCurrency}"
+                                         MaxLength="3"
+                                         PlaceholderText="GBP" />
+                                <TextBlock Text="{Binding CurrencyError}"
+                                           Classes="error-text"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Spacing="4">
+                                <TextBlock Text="Basis" FontWeight="SemiBold" />
+                                <ComboBox ItemsSource="{Binding BudgetBasisOptions}"
+                                          SelectedItem="{Binding BudgetBasis}" />
+                                <TextBlock Text="{Binding BasisError}"
+                                           Classes="error-text"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Text="{Binding ValidationSummary}"
+                                   Classes="error-text"
+                                   IsVisible="{Binding HasValidationError}" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <TextBlock Text="{Binding Message}"
+                       Classes="secondary-text"
+                       TextWrapping="Wrap" />
+
+            <WrapPanel Orientation="Horizontal"
+                       ItemSpacing="8"
+                       LineSpacing="8">
+                <Button Content="Save Preferences"
+                        Classes="primary"
+                        Command="{Binding SaveCommand}" />
+                <Button Content="Cancel Changes"
+                        Classes="secondary"
+                        Command="{Binding CancelChangesCommand}" />
+                <Button Content="Clear Draft"
+                        Classes="secondary"
+                        Command="{Binding ClearDraftCommand}" />
+                <Button Content="Cancel Operation"
+                        Classes="secondary"
+                        IsVisible="{Binding IsSaving}"
+                        Command="{Binding CancelOperationCommand}" />
+            </WrapPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

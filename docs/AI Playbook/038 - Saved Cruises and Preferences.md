@@ -307,6 +307,15 @@ prompt for the complete interaction, lifecycle and test contract.
 - do not filter, score, alert or recommend automatically
 - add deterministic ViewModel and persistence tests
 
+The agreed analysis places Preferences as a secondary mode inside Saved
+Cruises. It uses explicit multi-select month and cabin controls plus an optional
+fully specified amount/currency/basis budget, keeps a confirmed baseline and
+unsaved draft, and persists only through Save Preferences. Cancel Changes and
+Clear Draft are distinct, invalid or failed saves retain the draft, and the
+profile remains guidance only with no effect on list membership or ordering.
+See the 038f Codex prompt for the complete interaction, validation, lifecycle
+and test contract.
+
 ### Step 7 – 038g: Tests and Verification
 
 - audit separation between personal state and provider evidence
@@ -348,10 +357,9 @@ Prompt 038 is complete only when:
 
 ### Status
 
-In progress. Steps 038a–038e are complete. Saved Cruises is now a distinct
-Cruise workspace beside Discovery with exact Shortlist, Strong candidates,
-Favourites and Not for us filters. Personal snapshots remain useful without
-History, matching recorded context is joined only through sailing identity,
-and edit, dismiss, restore and confirmed removal preserve factual observations
-and independent ship favourites. Prompt 038f – Cruise Preference Profile is
-next.
+In progress. Steps 038a–038f are complete. The Saved Cruises workspace now also
+contains an explicit Preferences editor for multiple departure months, cabin
+types and an optional amount/currency/basis maximum budget. Confirmed baseline,
+unsaved draft, validation and cancellation behaviour are deterministic;
+preferences persist only through Save Preferences and do not filter, rank or
+recommend cruises. Prompt 038g – Tests and Verification is next.
