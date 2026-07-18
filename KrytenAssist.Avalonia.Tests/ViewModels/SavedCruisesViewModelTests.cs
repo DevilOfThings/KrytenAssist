@@ -137,14 +137,18 @@ public sealed class SavedCruisesViewModelTests
         var preferencesRepository = new FakeCruisePreferencesRepository();
         var preferences = new CruisePreferencesViewModel(
             new GetPreferences(preferencesRepository),
-            new SavePreferences(preferencesRepository));
+            CruiseCriteriaTestFactory.CreateSavePreferences(
+                saved,
+                preferencesRepository,
+                observations),
+            new FixedClock());
         var evaluation = new CruiseSaveAndEvaluationViewModel(
-            new SaveUseCase(saved), new GetSaved(saved), new UpdateEvaluation(saved),
+            CruiseCriteriaTestFactory.CreateSave(saved, preferencesRepository, observations), new GetSaved(saved), new UpdateEvaluation(saved),
             new SetFavourite(saved), new SetShip(ships), new ListShips(ships),
             new Factory(), new FixedClock());
         var viewModel = new SavedCruisesViewModel(
             new ListDetails(saved, ships, observations, new CruisePriceHistoryAnalyzer()),
-            new DismissUseCase(saved), new RestoreUseCase(saved), new RemoveUseCase(saved), evaluation, preferences);
+            new DismissUseCase(saved), CruiseCriteriaTestFactory.CreateRestore(saved, preferencesRepository, observations), new RemoveUseCase(saved), evaluation, new FixedClock(), preferences);
         return new(viewModel, evaluation, preferences, saved, ships, observations, preferencesRepository);
     }
 

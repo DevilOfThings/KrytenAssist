@@ -13,7 +13,9 @@ using KrytenAssist.Core.Cruises;
 using GetPreferences = KrytenApplication::KrytenAssist.Application.Cruises.GetCruisePreferences;
 using MutationStatus = KrytenApplication::KrytenAssist.Application.Cruises.PersonalCruisePreferenceMutationStatus;
 using QueryStatus = KrytenApplication::KrytenAssist.Application.Cruises.PersonalCruisePreferenceQueryStatus;
-using SavePreferences = KrytenApplication::KrytenAssist.Application.Cruises.SaveCruisePreferences;
+using SavePreferences = KrytenApplication::KrytenAssist.Application.Cruises.SaveCruisePreferencesAndEvaluateCriteria;
+using AlertStatus = KrytenApplication::KrytenAssist.Application.Cruises.CruiseAlertOperationStatus;
+using KrytenAssist.Avalonia.Tools;
 
 namespace KrytenAssist.Avalonia.ViewModels;
 
@@ -21,6 +23,7 @@ public sealed class CruisePreferencesViewModel : INotifyPropertyChanged
 {
     private readonly GetPreferences _getPreferences;
     private readonly SavePreferences _savePreferences;
+    private readonly IClock _clock;
     private readonly AsyncCommand _saveCommand;
     private readonly AsyncCommand _retryCommand;
     private readonly DelegateCommand _cancelChangesCommand;
@@ -44,10 +47,14 @@ public sealed class CruisePreferencesViewModel : INotifyPropertyChanged
     private string? _basisError;
     private CruisePreferences? _confirmed;
 
-    public CruisePreferencesViewModel(GetPreferences getPreferences, SavePreferences savePreferences)
+    public CruisePreferencesViewModel(
+        GetPreferences getPreferences,
+        SavePreferences savePreferences,
+        IClock clock)
     {
         _getPreferences = getPreferences;
         _savePreferences = savePreferences;
+        _clock = clock;
         MonthOptions = Enumerable.Range(1, 12)
             .Select(month => new CruisePreferenceMonthOptionViewModel(
                 month,
@@ -232,17 +239,29 @@ public sealed class CruisePreferencesViewModel : INotifyPropertyChanged
         Message = "Saving cruise preferences…";
         try
         {
-            var result = await _savePreferences.ExecuteAsync(draft, token);
+            var result = await _savePreferences.ExecuteAsync(draft, _clock.Now, token);
             if (!IsCurrent(generation)) return;
-            if (result.Status is MutationStatus.Updated or MutationStatus.Unchanged)
+            if (result.Mutation.Status is MutationStatus.Updated or MutationStatus.Unchanged)
             {
                 _confirmed = draft;
                 ApplyConfirmed();
-                Message = result.Status == MutationStatus.Updated
+                Message = result.Mutation.Status == MutationStatus.Updated
                     ? "Cruise preferences saved."
                     : "These cruise preferences are already saved.";
+                if (result.SavedCriteriaAlerts is { } alerts)
+                {
+                    Message = alerts.Status switch
+                    {
+                        AlertStatus.Cancelled =>
+                            $"{Message} {alerts.AttemptedCount} of {alerts.EligibleCount} shortlisted sailings were evaluated before cancellation; {alerts.CreatedAlertCount} alert{(alerts.CreatedAlertCount == 1 ? string.Empty : "s")} {(alerts.CreatedAlertCount == 1 ? "was" : "were")} created.",
+                        AlertStatus.Failed =>
+                            $"{Message} Saved criteria could not be evaluated locally.",
+                        _ =>
+                            $"{Message} {alerts.AttemptedCount} shortlisted sailings were evaluated; {alerts.CreatedAlertCount} alert{(alerts.CreatedAlertCount == 1 ? string.Empty : "s")} {(alerts.CreatedAlertCount == 1 ? "was" : "were")} created, {alerts.FailedCount} evaluations failed."
+                    };
+                }
             }
-            else if (result.Status == MutationStatus.Cancelled)
+            else if (result.Mutation.Status == MutationStatus.Cancelled)
             {
                 Message = "Saving cruise preferences was cancelled. You can try again.";
             }

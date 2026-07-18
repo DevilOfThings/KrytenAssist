@@ -258,12 +258,22 @@ public sealed class CruiseCaptureCandidateReviewItemViewModel : INotifyPropertyC
                 "Recording was cancelled. You can try this observation again.",
             _ => "The observation could not be recorded. You can try it again."
         };
-        _createdAlertCount = result.Alerts?.CreatedAlerts.Count ?? 0;
-        _alertEvaluationStatus = result.Alerts?.Status;
-        var message = result.Alerts?.Status switch
+        _createdAlertCount = result.CreatedAlertCount;
+        _alertEvaluationStatus = result.AnyAlertEvaluationFailed
+            ? AlertStatus.Failed
+            : result.AnyAlertEvaluationCancelled
+                ? AlertStatus.Cancelled
+                : result.AlertEvaluationWasAttempted
+                    ? AlertStatus.Success
+                    : null;
+        var message = _alertEvaluationStatus switch
         {
+            AlertStatus.Cancelled when _createdAlertCount > 0 =>
+                $"{recordingMessage} {_createdAlertCount} alert{(_createdAlertCount == 1 ? string.Empty : "s")} {(_createdAlertCount == 1 ? "was" : "were")} created, but some alert evaluation was cancelled.",
             AlertStatus.Cancelled =>
                 $"{recordingMessage} Alert evaluation was cancelled after recording.",
+            AlertStatus.Failed when _createdAlertCount > 0 =>
+                $"{recordingMessage} {_createdAlertCount} alert{(_createdAlertCount == 1 ? string.Empty : "s")} {(_createdAlertCount == 1 ? "was" : "were")} created, but some alerts could not be evaluated locally.",
             AlertStatus.Failed =>
                 $"{recordingMessage} Alerts could not be evaluated locally after recording.",
             _ when _createdAlertCount == 1 => $"{recordingMessage} 1 alert was created.",

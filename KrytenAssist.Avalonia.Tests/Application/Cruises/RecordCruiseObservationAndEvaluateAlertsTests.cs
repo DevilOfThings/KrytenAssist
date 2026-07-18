@@ -165,6 +165,81 @@ public sealed class RecordCruiseObservationAndEvaluateAlertsTests
         repository.GetCalls.Should().Be(0);
     }
 
+    [Fact]
+    public async Task FirstObservation_ForSavedMatchingSailingCreatesOnlyCriteriaAlert()
+    {
+        var observation = Observation(949m, CreatedAt.AddDays(-1));
+        var repository = new FakeCruiseObservationRepository
+        {
+            RecordResult = Result(RepositoryState.FirstObservationRecorded, observation)
+        };
+        var saved = new FakeSavedCruiseRepository();
+        var snapshot = new SavedCruiseSnapshot(
+            CruiseSailingKey.From(observation),
+            observation.Snapshot.Offer.Title,
+            observation.Snapshot.Offer.Provider.Name,
+            observation.Snapshot.Prices[0],
+            CreatedAt.AddDays(-2));
+        saved.Items[snapshot.SailingKey] = new SavedCruise(snapshot);
+        var preferences = new FakeCruisePreferencesRepository
+        {
+            Value = new CruisePreferences([snapshot.SailingKey.DepartureDate.Month])
+        };
+        var alerts = new TestAlertRepository();
+        var useCase = CruiseAlertApplicationTestFactory.CreateRecorder(
+            repository,
+            new CruisePriceHistoryAnalyzer(),
+            alerts,
+            saved: saved,
+            preferences: preferences);
+
+        var result = await useCase.ExecuteAsync(observation, CreatedAt);
+
+        result.ObservationAlerts.Should().BeNull();
+        result.SavedCriteriaAlerts!.CreatedAlerts.Should().ContainSingle();
+        result.SavedCriteriaAlerts.CreatedAlerts[0].Type.Should().Be(CruiseAlertType.SavedCriteria);
+        result.CreatedAlertCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ChangedObservation_CanCreateObservationAndCriteriaAlertsIndependently()
+    {
+        var previous = Observation(988m, CreatedAt.AddDays(-2));
+        var current = Observation(949m, CreatedAt.AddDays(-1));
+        var repository = new FakeCruiseObservationRepository
+        {
+            RecordResult = new RepositoryResult(
+                RepositoryState.ChangedObservationRecorded,
+                CruiseHistoryApplicationTestData.History(previous, current))
+        };
+        var saved = new FakeSavedCruiseRepository();
+        var snapshot = new SavedCruiseSnapshot(
+            CruiseSailingKey.From(current),
+            current.Snapshot.Offer.Title,
+            current.Snapshot.Offer.Provider.Name,
+            current.Snapshot.Prices[0],
+            CreatedAt.AddDays(-3));
+        saved.Items[snapshot.SailingKey] = new SavedCruise(snapshot);
+        var preferences = new FakeCruisePreferencesRepository
+        {
+            Value = new CruisePreferences([snapshot.SailingKey.DepartureDate.Month])
+        };
+        var alerts = new TestAlertRepository();
+        var useCase = CruiseAlertApplicationTestFactory.CreateRecorder(
+            repository,
+            new CruisePriceHistoryAnalyzer(),
+            alerts,
+            saved: saved,
+            preferences: preferences);
+
+        var result = await useCase.ExecuteAsync(current, CreatedAt);
+
+        result.ObservationAlerts!.CreatedAlerts.Should().ContainSingle();
+        result.SavedCriteriaAlerts!.CreatedAlerts.Should().ContainSingle();
+        result.CreatedAlertCount.Should().Be(2);
+        result.AnyAlertEvaluationFailed.Should().BeFalse();
+    }
+
     private static CruiseObservation Observation(
         decimal price,
         DateTimeOffset observedAt,

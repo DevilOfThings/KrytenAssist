@@ -39,8 +39,21 @@ public sealed record CruiseAlertEvaluationResult(CruiseAlertOperationStatus Stat
     public static CruiseAlertEvaluationResult Failed() => new(CruiseAlertOperationStatus.Failed, 0, [], 0, null, "Alerts could not be evaluated locally.");
 }
 
-public sealed record CruiseRecordAndAlertResult(CruiseObservationRecordResult Recording, CruiseAlertEvaluationResult? Alerts)
+public sealed record CruiseRecordAndAlertResult(
+    CruiseObservationRecordResult Recording,
+    CruiseAlertEvaluationResult? ObservationAlerts,
+    CruiseAlertEvaluationResult? SavedCriteriaAlerts = null)
 {
+    public CruiseAlertEvaluationResult? Alerts => ObservationAlerts;
     public bool RecordingSucceeded => Recording.Status is CruiseObservationRecordStatus.FirstObservationRecorded or CruiseObservationRecordStatus.ChangedObservationRecorded or CruiseObservationRecordStatus.AlreadyCurrent;
-    public bool AlertEvaluationWasAttempted => Alerts is not null;
+    public bool AlertEvaluationWasAttempted => ObservationAlerts is not null || SavedCriteriaAlerts is not null;
+    public int CreatedAlertCount =>
+        (ObservationAlerts?.CreatedAlerts.Count ?? 0) +
+        (SavedCriteriaAlerts?.CreatedAlerts.Count ?? 0);
+    public bool AnyAlertEvaluationFailed =>
+        ObservationAlerts?.Status == CruiseAlertOperationStatus.Failed ||
+        SavedCriteriaAlerts?.Status == CruiseAlertOperationStatus.Failed;
+    public bool AnyAlertEvaluationCancelled =>
+        ObservationAlerts?.Status == CruiseAlertOperationStatus.Cancelled ||
+        SavedCriteriaAlerts?.Status == CruiseAlertOperationStatus.Cancelled;
 }

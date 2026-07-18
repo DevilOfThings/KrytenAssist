@@ -63,7 +63,8 @@ public sealed class CruisePreferencesViewModelTests
             [2, 12], [CruiseCabinType.Solo],
             new CruiseBudget(3000.50m, "GBP", CruiseBudgetBasis.PerPerson)));
         viewModel.HasUnsavedChanges.Should().BeFalse();
-        viewModel.Message.Should().Be("Cruise preferences saved.");
+        viewModel.Message.Should().Be(
+            "Cruise preferences saved. 0 shortlisted sailings were evaluated; 0 alerts were created, 0 evaluations failed.");
     }
 
     [Theory]
@@ -134,5 +135,16 @@ public sealed class CruisePreferencesViewModelTests
     }
 
     private static CruisePreferencesViewModel Create(FakeCruisePreferencesRepository repository) =>
-        new(new GetPreferences(repository), new SavePreferences(repository));
+        new(
+            new GetPreferences(repository),
+            CruiseCriteriaTestFactory.CreateSavePreferences(
+                new FakeSavedCruiseRepository(),
+                repository,
+                new FakeCruiseObservationRepository()),
+            new FixedClock());
+
+    private sealed class FixedClock : KrytenAssist.Avalonia.Tools.IClock
+    {
+        public DateTimeOffset Now => new(2026, 7, 18, 10, 0, 0, TimeSpan.Zero);
+    }
 }

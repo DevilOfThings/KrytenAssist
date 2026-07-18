@@ -100,19 +100,33 @@ internal static class CruiseAlertApplicationTestFactory
         FakeCruiseObservationRepository repository,
         CruisePriceHistoryAnalyzer analyzer,
         AlertRepository? alerts = null,
-        AlertSettingsRepository? settings = null) =>
-        new(
+        AlertSettingsRepository? settings = null,
+        FakeSavedCruiseRepository? saved = null,
+        FakeCruisePreferencesRepository? preferences = null)
+    {
+        saved ??= new FakeSavedCruiseRepository();
+        preferences ??= new FakeCruisePreferencesRepository();
+        var alertRepository = alerts ?? new TestAlertRepository();
+        return new(
             new RecordObservation(repository, analyzer),
             new GetHistory(repository, analyzer),
             new EvaluateAlerts(
                 new CruiseObservationAlertDetector(analyzer),
                 settings ?? new TestAlertSettingsRepository(),
-                new MaterializeAlerts(alerts ?? new TestAlertRepository())));
+                new MaterializeAlerts(alertRepository)),
+            CruiseCriteriaTestFactory.CreateForSailing(
+                saved,
+                preferences,
+                repository,
+                alertRepository as TestAlertRepository));
+    }
 }
 
 internal sealed class TestAlertRepository : AlertRepository
 {
     private readonly List<CruiseAlert> _alerts = [];
+    internal bool ThrowOnNextAdd { get; set; }
+    internal int AddCalls { get; private set; }
 
     public Task<CruiseAlert?> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
         Task.FromResult(_alerts.SingleOrDefault(alert => alert.Id == id));
@@ -129,6 +143,12 @@ internal sealed class TestAlertRepository : AlertRepository
         CruiseAlert alert,
         CancellationToken cancellationToken = default)
     {
+        AddCalls++;
+        if (ThrowOnNextAdd)
+        {
+            ThrowOnNextAdd = false;
+            return Task.FromException<AlertAddResult>(new InvalidOperationException("private failure"));
+        }
         var existing = _alerts.SingleOrDefault(item => item.EventKey == alert.EventKey);
         if (existing is not null)
         {

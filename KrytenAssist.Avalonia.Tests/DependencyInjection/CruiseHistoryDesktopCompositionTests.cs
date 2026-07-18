@@ -9,6 +9,9 @@ using GetHistory = KrytenApplication::KrytenAssist.Application.Cruises.GetCruise
 using ListHistories = KrytenApplication::KrytenAssist.Application.Cruises.ListCruiseHistories;
 using RecordObservation = KrytenApplication::KrytenAssist.Application.Cruises.RecordCruiseObservation;
 using RecordAndEvaluate = KrytenApplication::KrytenAssist.Application.Cruises.RecordCruiseObservationAndEvaluateAlerts;
+using SaveAndEvaluate = KrytenApplication::KrytenAssist.Application.Cruises.SaveCruiseAndEvaluateCriteria;
+using RestoreAndEvaluate = KrytenApplication::KrytenAssist.Application.Cruises.RestoreCruiseAndEvaluateCriteria;
+using SavePreferencesAndEvaluate = KrytenApplication::KrytenAssist.Application.Cruises.SaveCruisePreferencesAndEvaluateCriteria;
 using SaveCruise = KrytenApplication::KrytenAssist.Application.Cruises.SaveCruise;
 using SavePreferences = KrytenApplication::KrytenAssist.Application.Cruises.SaveCruisePreferences;
 using ListSaved = KrytenApplication::KrytenAssist.Application.Cruises.ListSavedCruises;
@@ -35,6 +38,9 @@ public sealed class CruiseHistoryDesktopCompositionTests
 
             Assert.NotNull(scope.ServiceProvider.GetRequiredService<RecordObservation>());
             Assert.NotNull(scope.ServiceProvider.GetRequiredService<RecordAndEvaluate>());
+            Assert.NotNull(scope.ServiceProvider.GetRequiredService<SaveAndEvaluate>());
+            Assert.NotNull(scope.ServiceProvider.GetRequiredService<RestoreAndEvaluate>());
+            Assert.NotNull(scope.ServiceProvider.GetRequiredService<SavePreferencesAndEvaluate>());
             Assert.NotNull(scope.ServiceProvider.GetRequiredService<GetHistory>());
             Assert.NotNull(scope.ServiceProvider.GetRequiredService<ListHistories>());
             Assert.NotNull(scope.ServiceProvider.GetRequiredService<CruiseHistoryViewModel>());

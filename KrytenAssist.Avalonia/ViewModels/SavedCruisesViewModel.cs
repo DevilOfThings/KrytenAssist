@@ -15,7 +15,9 @@ using ListStatus = KrytenApplication::KrytenAssist.Application.Cruises.SavedCrui
 using ListUseCase = KrytenApplication::KrytenAssist.Application.Cruises.ListSavedCruiseDetails;
 using MutationStatus = KrytenApplication::KrytenAssist.Application.Cruises.SavedCruiseMutationStatus;
 using RemoveUseCase = KrytenApplication::KrytenAssist.Application.Cruises.RemoveSavedCruise;
-using RestoreUseCase = KrytenApplication::KrytenAssist.Application.Cruises.RestoreCruise;
+using RestoreUseCase = KrytenApplication::KrytenAssist.Application.Cruises.RestoreCruiseAndEvaluateCriteria;
+using AlertStatus = KrytenApplication::KrytenAssist.Application.Cruises.CruiseAlertOperationStatus;
+using KrytenAssist.Avalonia.Tools;
 
 namespace KrytenAssist.Avalonia.ViewModels;
 
@@ -27,6 +29,7 @@ public sealed class SavedCruisesViewModel : INotifyPropertyChanged
     private readonly RemoveUseCase _remove;
     private readonly CruiseSaveAndEvaluationViewModel _evaluation;
     private readonly CruisePreferencesViewModel? _preferences;
+    private readonly IClock _clock;
     private readonly AsyncCommand _refreshCommand;
     private readonly AsyncCommand _changeLifecycleCommand;
     private readonly DelegateCommand _requestRemoveCommand;
@@ -55,6 +58,7 @@ public sealed class SavedCruisesViewModel : INotifyPropertyChanged
         RestoreUseCase restore,
         RemoveUseCase remove,
         CruiseSaveAndEvaluationViewModel evaluation,
+        IClock clock,
         CruisePreferencesViewModel? preferences = null)
     {
         _list = list;
@@ -62,6 +66,7 @@ public sealed class SavedCruisesViewModel : INotifyPropertyChanged
         _restore = restore;
         _remove = remove;
         _evaluation = evaluation;
+        _clock = clock;
         _preferences = preferences;
         _refreshCommand = new AsyncCommand(RefreshAsync, () => !IsLoading && !IsMutating);
         _changeLifecycleCommand = new AsyncCommand(ChangeLifecycleAsync, () => SelectedItem is not null && !IsLoading && !IsMutating);
@@ -302,26 +307,51 @@ public sealed class SavedCruisesViewModel : INotifyPropertyChanged
         var generation = BeginMutation();
         try
         {
-            var result = selected.IsDismissed
-                ? await _restore.ExecuteAsync(key, _mutationCancellation!.Token)
-                : await _dismiss.ExecuteAsync(key, _mutationCancellation!.Token);
-            if (!IsCurrentMutation(generation, key)) return;
-            if (result.Status is MutationStatus.Dismissed or MutationStatus.Restored or MutationStatus.Unchanged)
+            KrytenApplication::KrytenAssist.Application.Cruises.SavedCruiseMutationAndAlertResult? restored = null;
+            KrytenApplication::KrytenAssist.Application.Cruises.SavedCruiseMutationResult mutation;
+            if (selected.IsDismissed)
             {
-                var updated = result.SavedCruise ?? selected.SavedCruise.WithStatus(
+                restored = await _restore.ExecuteAsync(
+                    key,
+                    _clock.Now,
+                    _mutationCancellation!.Token);
+                mutation = restored.Mutation;
+            }
+            else
+            {
+                mutation = await _dismiss.ExecuteAsync(
+                    key,
+                    _mutationCancellation!.Token);
+            }
+
+            if (!IsCurrentMutation(generation, key)) return;
+            if (mutation.Status is MutationStatus.Dismissed or MutationStatus.Restored or MutationStatus.Unchanged)
+            {
+                var updated = mutation.SavedCruise ?? selected.SavedCruise.WithStatus(
                     selected.IsDismissed ? SavedCruiseStatus.Shortlisted : SavedCruiseStatus.Dismissed);
                 ReplaceSavedCruise(updated);
-                Message = result.Status switch
+                Message = mutation.Status switch
                 {
                     MutationStatus.Dismissed => "Cruise moved to Not for us.",
                     MutationStatus.Restored => "Cruise restored to your shortlist.",
                     _ => "Saved cruise status was already up to date."
                 };
+                if (restored?.SavedCriteriaAlerts is { } alerts)
+                {
+                    Message = alerts.Status switch
+                    {
+                        AlertStatus.Cancelled => $"{Message} Saved criteria evaluation was cancelled.",
+                        AlertStatus.Failed => $"{Message} Saved criteria could not be evaluated locally.",
+                        _ when alerts.CreatedAlerts.Count == 1 => $"{Message} 1 alert was created.",
+                        _ when alerts.CreatedAlerts.Count > 1 => $"{Message} {alerts.CreatedAlerts.Count} alerts were created.",
+                        _ => Message
+                    };
+                }
                 RebuildItems(key);
             }
             else
             {
-                HandleMutationFailure(result.Status, key);
+                HandleMutationFailure(mutation.Status, key);
             }
         }
         finally

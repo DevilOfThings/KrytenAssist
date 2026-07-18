@@ -7,7 +7,6 @@ using KrytenAssist.Avalonia.ViewModels;
 using KrytenAssist.Core.Cruises;
 using GetSaved = KrytenApplication::KrytenAssist.Application.Cruises.GetSavedCruise;
 using ListShips = KrytenApplication::KrytenAssist.Application.Cruises.ListFavouriteCruiseShips;
-using SaveUseCase = KrytenApplication::KrytenAssist.Application.Cruises.SaveCruise;
 using SetFavourite = KrytenApplication::KrytenAssist.Application.Cruises.SetSavedCruiseFavourite;
 using SetShip = KrytenApplication::KrytenAssist.Application.Cruises.SetFavouriteCruiseShip;
 using Factory = KrytenApplication::KrytenAssist.Application.Cruises.SavedCruiseSnapshotFactory;
@@ -46,7 +45,7 @@ public sealed class CruiseSaveAndEvaluationViewModelTests
     }
 
     private static CruiseSaveAndEvaluationViewModel Create(FakeSavedCruiseRepository saved)
-    { var ships=new FakeFavouriteCruiseShipRepository(); return new(new SaveUseCase(saved),new GetSaved(saved),new UpdateEvaluation(saved),new SetFavourite(saved),new SetShip(ships),new ListShips(ships),new Factory(),new FixedClock()); }
+    { var ships=new FakeFavouriteCruiseShipRepository(); var preferences=new FakeCruisePreferencesRepository(); var observations=new FakeCruiseObservationRepository(); return new(CruiseCriteriaTestFactory.CreateSave(saved,preferences,observations),new GetSaved(saved),new UpdateEvaluation(saved),new SetFavourite(saved),new SetShip(ships),new ListShips(ships),new Factory(),new FixedClock()); }
     private static CruiseObservation Observation()
     { var offer=new CruiseOffer(new CruiseProvider("marella","Marella Cruises"),"offer","Escape","Voyager",new DateOnly(2027,8,2),7);return new CruiseObservation(new CruiseSnapshot(offer,[new CruisePrice(999,"GBP")]),FixedClock.Value,"https://www.tui.co.uk/cruise/example",new CruiseSource("tui","TUI")); }
     private sealed class FixedClock:IClock { internal static readonly DateTimeOffset Value=new(2026,7,18,10,0,0,TimeSpan.Zero); public DateTimeOffset Now=>Value; }

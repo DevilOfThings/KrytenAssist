@@ -275,6 +275,16 @@ See the 039d Codex prompt for the complete orchestration and test results.
 - exclude Dismissed items and unavailable/ambiguous basis data honestly
 - leave cabin matching deferred to Prompt 040
 
+The implemented orchestration evaluates Saved Criteria after successful Record
+Observation, Save Cruise/refresh, Restore to Shortlist and Save Preferences
+actions. Primary factual/personal mutations commit independently. Evidence
+selection prefers the latest recorded observation across sources and otherwise
+uses the bounded saved snapshot explicitly. Preference saves evaluate one
+stable, deterministic Shortlisted snapshot sequentially. Observation-change
+and criteria outcomes remain independently reportable, and failed alert
+materialisation no longer advances Met transition state before a safe retry.
+See the 039e Codex prompt for complete results and tests.
+
 ### Step 6 – 039f: Alert Centre and Settings
 
 - add in-app Alerts mode, unread badge, filters and selected detail
@@ -323,7 +333,7 @@ See the 039d Codex prompt for the complete orchestration and test results.
 
 ### Status
 
-In progress. Steps 039a–039d are complete. Robin agreed the explicit-recording trigger,
+In progress. Steps 039a–039e are complete. Robin agreed the explicit-recording trigger,
 same-source comparable price and promotion rules, supported month/budget
 criteria, cabin deferral, in-app lifecycle, settings defaults, retained
 dismissal, deterministic deduplication and record-before-alert failure boundary
@@ -336,4 +346,6 @@ database-enforced event deduplication, deterministic concurrency and complete
 repository/DI wiring. Prompt 039d added shared single/batch record-then-evaluate
 orchestration, deterministic committed-current evidence selection and
 independent alert feedback without changing factual recording outcomes. Prompt
-039e – Saved Criteria Evaluation is next.
+039e added explicit Record/Save/Restore/Preferences criteria triggers, stable
+bulk evaluation, honest recorded-versus-saved evidence and independent primary
+mutation outcomes. Prompt 039f – Alert Centre and Settings is next.

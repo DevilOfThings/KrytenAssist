@@ -467,21 +467,25 @@ public sealed class CruiseHistoryViewModel : INotifyPropertyChanged
             _ => "The observation could not be recorded. Please try again."
         };
 
-        if (!result.RecordingSucceeded || result.Alerts is null)
+        if (!result.RecordingSucceeded || !result.AlertEvaluationWasAttempted)
         {
             return recordingMessage;
         }
 
-        return result.Alerts.Status switch
+        return (result.AnyAlertEvaluationCancelled, result.AnyAlertEvaluationFailed, result.CreatedAlertCount) switch
         {
-            AlertStatus.Cancelled =>
+            (true, _, > 0) =>
+                $"{recordingMessage} {result.CreatedAlertCount} alert{(result.CreatedAlertCount == 1 ? string.Empty : "s")} {(result.CreatedAlertCount == 1 ? "was" : "were")} created, but some alert evaluation was cancelled.",
+            (true, _, _) =>
                 $"{recordingMessage} Alert evaluation was cancelled after the observation was recorded.",
-            AlertStatus.Failed =>
-                $"{recordingMessage} Alerts could not be evaluated locally after the observation was recorded.",
-            _ when result.Alerts.CreatedAlerts.Count == 1 =>
+            (_, true, > 0) =>
+                $"{recordingMessage} {result.CreatedAlertCount} alert{(result.CreatedAlertCount == 1 ? string.Empty : "s")} {(result.CreatedAlertCount == 1 ? "was" : "were")} created, but some alerts could not be evaluated locally.",
+            (_, true, _) =>
+                $"{recordingMessage} Some alerts could not be evaluated locally after the observation was recorded.",
+            (_, _, 1) =>
                 $"{recordingMessage} 1 alert was created.",
-            _ when result.Alerts.CreatedAlerts.Count > 1 =>
-                $"{recordingMessage} {result.Alerts.CreatedAlerts.Count} alerts were created.",
+            (_, _, > 1) =>
+                $"{recordingMessage} {result.CreatedAlertCount} alerts were created.",
             _ => recordingMessage
         };
     }

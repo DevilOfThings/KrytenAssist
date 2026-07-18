@@ -15,7 +15,7 @@ using ListShips = KrytenApplication::KrytenAssist.Application.Cruises.ListFavour
 using MutationStatus = KrytenApplication::KrytenAssist.Application.Cruises.SavedCruiseMutationStatus;
 using PreferenceStatus = KrytenApplication::KrytenAssist.Application.Cruises.PersonalCruisePreferenceMutationStatus;
 using QueryStatus = KrytenApplication::KrytenAssist.Application.Cruises.SavedCruiseQueryStatus;
-using SaveCruiseUseCase = KrytenApplication::KrytenAssist.Application.Cruises.SaveCruise;
+using SaveCruiseUseCase = KrytenApplication::KrytenAssist.Application.Cruises.SaveCruiseAndEvaluateCriteria;
 using SetFavourite = KrytenApplication::KrytenAssist.Application.Cruises.SetSavedCruiseFavourite;
 using SetShip = KrytenApplication::KrytenAssist.Application.Cruises.SetFavouriteCruiseShip;
 using SnapshotFactory = KrytenApplication::KrytenAssist.Application.Cruises.SavedCruiseSnapshotFactory;
@@ -118,26 +118,27 @@ public sealed class CruiseSaveAndEvaluationViewModel : INotifyPropertyChanged
         Message = "Saving cruise…";
         try
         {
-            var result = await _saveCruise.ExecuteAsync(snapshot, token);
+            var result = await _saveCruise.ExecuteAsync(snapshot, _clock.Now, token);
             if (generation != _generation) return "Save result ignored because the capture changed.";
-            if (result.Status is MutationStatus.Created or MutationStatus.Updated or MutationStatus.Unchanged)
+            if (result.Mutation.Status is MutationStatus.Created or MutationStatus.Updated or MutationStatus.Unchanged)
             {
-                _saved = result.SavedCruise;
+                _saved = result.Mutation.SavedCruise;
                 await LoadShipFavouriteAsync(generation, token);
                 ApplySaved();
                 IsEditorOpen = true;
-                Message = result.Status switch
+                Message = result.Mutation.Status switch
                 {
                     MutationStatus.Created => "Cruise saved to your shortlist.",
                     MutationStatus.Updated => "Saved cruise details refreshed; your evaluation was preserved.",
                     _ => "This cruise is already saved."
                 };
+                Message = AppendCriteriaFeedback(Message, result.SavedCriteriaAlerts);
                 NotifySaved();
                 RaiseSavedCruiseChanged();
                 return Message;
             }
 
-            Message = result.Status == MutationStatus.Cancelled
+            Message = result.Mutation.Status == MutationStatus.Cancelled
                 ? "Saving this cruise was cancelled. You can try again."
                 : "This cruise could not be saved locally. Please try again.";
             return Message;
@@ -146,6 +147,24 @@ public sealed class CruiseSaveAndEvaluationViewModel : INotifyPropertyChanged
         {
             if (generation == _generation) IsBusy = false;
         }
+    }
+
+    private static string AppendCriteriaFeedback(
+        string message,
+        KrytenApplication::KrytenAssist.Application.Cruises.CruiseAlertEvaluationResult? alerts)
+    {
+        if (alerts is null) return message;
+        return alerts.Status switch
+        {
+            KrytenApplication::KrytenAssist.Application.Cruises.CruiseAlertOperationStatus.Cancelled =>
+                $"{message} Saved criteria evaluation was cancelled.",
+            KrytenApplication::KrytenAssist.Application.Cruises.CruiseAlertOperationStatus.Failed =>
+                $"{message} Saved criteria could not be evaluated locally.",
+            _ when alerts.CreatedAlerts.Count == 1 => $"{message} 1 alert was created.",
+            _ when alerts.CreatedAlerts.Count > 1 =>
+                $"{message} {alerts.CreatedAlerts.Count} alerts were created.",
+            _ => message
+        };
     }
 
     public async Task InspectAsync(CruiseObservation observation)
