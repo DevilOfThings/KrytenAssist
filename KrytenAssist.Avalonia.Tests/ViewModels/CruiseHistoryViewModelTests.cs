@@ -11,7 +11,6 @@ using KrytenAssist.Avalonia.Skills.Models;
 using KrytenAssist.Core.Cruises;
 using GetHistory = KrytenApplication::KrytenAssist.Application.Cruises.GetCruiseHistory;
 using ListHistories = KrytenApplication::KrytenAssist.Application.Cruises.ListCruiseHistories;
-using RecordObservation = KrytenApplication::KrytenAssist.Application.Cruises.RecordCruiseObservation;
 using RepositoryResult = KrytenApplication::KrytenAssist.Application.Cruises.CruiseObservationRepositoryRecordResult;
 using RepositoryState = KrytenApplication::KrytenAssist.Application.Cruises.CruiseObservationRepositoryRecordState;
 
@@ -71,6 +70,7 @@ public sealed class CruiseHistoryViewModelTests
 
         Assert.Contains("£39", changedViewModel.RecordMessage);
         Assert.Contains("lower", changedViewModel.RecordMessage, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("1 alert was created", changedViewModel.RecordMessage);
 
         var (currentViewModel, currentRepository) = CreateViewModel();
         currentRepository.RecordResult = new RepositoryResult(
@@ -82,6 +82,7 @@ public sealed class CruiseHistoryViewModelTests
         currentViewModel.RecordObservationCommand.Execute(null);
 
         Assert.Contains("No new snapshot", currentViewModel.RecordMessage);
+        Assert.Equal(0, currentRepository.GetCalls);
         Assert.False(currentViewModel.RecordObservationCommand.CanExecute(null));
     }
 
@@ -491,7 +492,7 @@ public sealed class CruiseHistoryViewModelTests
         var analyzer = new CruisePriceHistoryAnalyzer();
         return (
             new CruiseHistoryViewModel(
-                new RecordObservation(repository, analyzer),
+                CruiseAlertApplicationTestFactory.CreateRecorder(repository, analyzer),
                 new GetHistory(repository, analyzer),
                 new ListHistories(repository, analyzer),
                 new FixedClock()),

@@ -10,7 +10,7 @@ Phase 7 – Cruise Assistant
 
 Current Prompt
 --------------
-Prompt 039d – Observation Recording Integration (next)
+Prompt 039e – Saved Criteria Evaluation (next)
 
 Prompt 037 – Cruise History and Price Tracking, including its 037h Multiple
 Cruise Deals extension, is complete. Kryten can explicitly capture currently
@@ -37,9 +37,11 @@ context, plus an explicit guidance-only month, cabin and budget preference
 editor. Prompt 038g's architecture, SQLite-boundary and regression audit passes
 with 600 offline tests. Robin manually confirmed the complete Prompt 038
 desktop workflow on 18 July 2026. Prompt 038 is complete and Prompt 039 is next.
-Prompts 039a–039b are complete. Alert domain, pure detection and Application
-contracts and normalized SQLite persistence are now implemented. Observation
-recording integration is next.
+Prompts 039a–039d are complete. Alert domain, pure detection, Application
+contracts and normalized SQLite persistence are implemented. Explicit single
+and batch recording now evaluate committed current observations for Price Drop
+and Promotion alerts while preserving independent factual recording outcomes.
+Saved Criteria Evaluation is next.
 
 ### Phase 1 – API Foundation
 
@@ -580,7 +582,7 @@ persistence, explicit save/evaluation actions and a distinct organisation
 workspace with optional local History context and a guidance-only preference
 editor. The solution builds and 600 offline tests pass; no architecture or
 schema defects were found. Robin manually confirmed the complete desktop
-workflow on 18 July 2026. Prompt 039 is now in progress through Step 039b.
+workflow on 18 July 2026. Prompt 039 is now in progress through Step 039d.
 
 Allow Robin to save, organise and evaluate interesting cruises.
 
@@ -602,13 +604,15 @@ and choices as the first explicit preference data for later cruise comparison.
 
 ## Prompt 039 – Price Drop Alerts
 
-Current status: In progress. Steps 039a–039b are complete. Provider-independent
+Current status: In progress. Steps 039a–039d are complete. Provider-independent
 alerts, typed evidence details, lifecycle/settings, deterministic event keys,
 pure observation and saved-criteria detectors, Application-owned repositories
 and controlled use-case results are implemented. Prompt 039c added normalized
 SQLite alert, typed-detail, settings and criteria-state persistence with
 database-enforced deduplication and no relationships to History or Saved
-Cruises. Prompt 039d – Observation Recording Integration is next.
+Cruises. Single and batch recording now share record-then-evaluate orchestration
+with deterministic committed-current selection and independent alert outcomes.
+Prompt 039e – Saved Criteria Evaluation is next.
 
 Detect meaningful changes only from newly and explicitly recorded Cruise
 evidence. Prompt 039 does not introduce unattended browsing or imply live

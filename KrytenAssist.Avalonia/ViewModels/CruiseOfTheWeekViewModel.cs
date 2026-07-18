@@ -14,7 +14,7 @@ using KrytenAssist.Avalonia.Tools;
 using KrytenAssist.Core.Cruises;
 using ICruisePageCaptureService = KrytenApplication::KrytenAssist.Application.Cruises.ICruisePageCaptureService;
 using ICruisePageBatchCaptureService = KrytenApplication::KrytenAssist.Application.Cruises.ICruisePageBatchCaptureService;
-using RecordObservation = KrytenApplication::KrytenAssist.Application.Cruises.RecordCruiseObservation;
+using RecordObservation = KrytenApplication::KrytenAssist.Application.Cruises.RecordCruiseObservationAndEvaluateAlerts;
 
 namespace KrytenAssist.Avalonia.ViewModels;
 

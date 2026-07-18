@@ -12,7 +12,6 @@ using CandidateStatus = KrytenApplication::KrytenAssist.Application.Cruises.Crui
 using CaptureRequest = KrytenApplication::KrytenAssist.Application.Cruises.CruisePageCaptureRequest;
 using GetHistory = KrytenApplication::KrytenAssist.Application.Cruises.GetCruiseHistory;
 using ListHistories = KrytenApplication::KrytenAssist.Application.Cruises.ListCruiseHistories;
-using RecordObservation = KrytenApplication::KrytenAssist.Application.Cruises.RecordCruiseObservation;
 
 namespace KrytenAssist.Avalonia.Tests.ViewModels;
 
@@ -348,7 +347,7 @@ public sealed class CruiseBatchCaptureReviewViewModelTests
         var repository = new FakeCruiseObservationRepository();
         var analyzer = new CruisePriceHistoryAnalyzer();
         return new CruiseHistoryViewModel(
-            new RecordObservation(repository, analyzer),
+            CruiseAlertApplicationTestFactory.CreateRecorder(repository, analyzer),
             new GetHistory(repository, analyzer),
             new ListHistories(repository, analyzer),
             new FixedClock());

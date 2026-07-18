@@ -12,7 +12,6 @@ using CandidateResult = KrytenApplication::KrytenAssist.Application.Cruises.Crui
 using CaptureRequest = KrytenApplication::KrytenAssist.Application.Cruises.CruisePageCaptureRequest;
 using GetHistory = KrytenApplication::KrytenAssist.Application.Cruises.GetCruiseHistory;
 using ListHistories = KrytenApplication::KrytenAssist.Application.Cruises.ListCruiseHistories;
-using RecordObservation = KrytenApplication::KrytenAssist.Application.Cruises.RecordCruiseObservation;
 using RepositoryResult = KrytenApplication::KrytenAssist.Application.Cruises.CruiseObservationRepositoryRecordResult;
 using RepositoryState = KrytenApplication::KrytenAssist.Application.Cruises.CruiseObservationRepositoryRecordState;
 
@@ -194,13 +193,79 @@ public sealed class CruiseBatchObservationRecordingViewModelTests
         Assert.DoesNotContain("newly", viewModel.CapturedCandidates[0].RecordingMessage);
     }
 
+    [Fact]
+    public async Task ChangedObservation_ReportsCreatedAlertPerRowAndInSummary()
+    {
+        var current = Observation(1);
+        var previous = WithPrice(current, 900m, current.ObservedAt.AddDays(-1));
+        var (viewModel, repository) = await CreateReviewedViewModel([
+            Ready(current),
+            CandidateResult.Incomplete("Incomplete", Reference(9), "Missing.", ["prices"])
+        ]);
+        repository.RecordResult = new RepositoryResult(
+            RepositoryState.ChangedObservationRecorded,
+            CruiseHistoryApplicationTestData.History(previous, current));
+        repository.ListResult = [History(current)];
+
+        viewModel.RecordAllObservationsCommand.Execute(null);
+        await WaitUntilAsync(viewModel, () => !viewModel.IsBatchRecording);
+
+        var candidate = Assert.Single(viewModel.CapturedCandidates, item => item.IsReady);
+        Assert.Equal(CruiseBatchRecordingStatus.ChangedObservationRecorded, candidate.RecordingStatus);
+        Assert.Equal(1, candidate.CreatedAlertCount);
+        Assert.Contains("1 alert was created", candidate.RecordingMessage);
+        Assert.Contains("1 alert created", viewModel.BatchRecordingSummary);
+        Assert.Contains("0 alert evaluations failed", viewModel.BatchRecordingSummary);
+    }
+
+    [Fact]
+    public async Task AlertFailureAfterChangedCommit_RemainsARecordingSuccessAndIsCountedSeparately()
+    {
+        var current = Observation(1);
+        var previous = WithPrice(current, 900m, current.ObservedAt.AddDays(-1));
+        var repository = new FakeCruiseObservationRepository();
+        var analyzer = new CruisePriceHistoryAnalyzer();
+        var record = CruiseAlertApplicationTestFactory.CreateRecorder(
+            repository,
+            analyzer,
+            settings: new TestAlertSettingsRepository(new InvalidOperationException("private failure")));
+        var history = new CruiseHistoryViewModel(
+            record,
+            new GetHistory(repository, analyzer),
+            new ListHistories(repository, analyzer),
+            new FixedClock());
+        var viewModel = await CreateReviewedViewModel(
+            [
+                Ready(current),
+                CandidateResult.Incomplete("Incomplete", Reference(9), "Missing.", ["prices"])
+            ],
+            repository,
+            record,
+            history);
+        repository.RecordResult = new RepositoryResult(
+            RepositoryState.ChangedObservationRecorded,
+            CruiseHistoryApplicationTestData.History(previous, current));
+        repository.ListResult = [History(current)];
+
+        viewModel.RecordAllObservationsCommand.Execute(null);
+        await WaitUntilAsync(viewModel, () => !viewModel.IsBatchRecording);
+
+        var candidate = Assert.Single(viewModel.CapturedCandidates, item => item.IsReady);
+        Assert.Equal(CruiseBatchRecordingStatus.ChangedObservationRecorded, candidate.RecordingStatus);
+        Assert.True(candidate.AlertEvaluationFailed);
+        Assert.DoesNotContain("private failure", candidate.RecordingMessage);
+        Assert.Contains("1 alert evaluations failed", viewModel.BatchRecordingSummary);
+        Assert.Contains("0 failed, 0 cancelled", viewModel.BatchRecordingSummary);
+        Assert.Equal(1, repository.ListCalls);
+    }
+
     private static async Task<(CruiseBrowserFeasibilityViewModel ViewModel,
         FakeCruiseObservationRepository Repository)> CreateReviewedViewModel(
         IReadOnlyList<CandidateResult> candidates)
     {
         var repository = new FakeCruiseObservationRepository();
         var analyzer = new CruisePriceHistoryAnalyzer();
-        var record = new RecordObservation(repository, analyzer);
+        var record = CruiseAlertApplicationTestFactory.CreateRecorder(repository, analyzer);
         var history = new CruiseHistoryViewModel(
             record,
             new GetHistory(repository, analyzer),
@@ -220,6 +285,28 @@ public sealed class CruiseBatchObservationRecordingViewModelTests
         viewModel.CaptureCommand.Execute(null);
         await viewModel.ProcessCapturePayloadAsync(Payload, address);
         return (viewModel, repository);
+    }
+
+    private static async Task<CruiseBrowserFeasibilityViewModel> CreateReviewedViewModel(
+        IReadOnlyList<CandidateResult> candidates,
+        FakeCruiseObservationRepository repository,
+        KrytenApplication::KrytenAssist.Application.Cruises.RecordCruiseObservationAndEvaluateAlerts record,
+        CruiseHistoryViewModel history)
+    {
+        var viewModel = new CruiseBrowserFeasibilityViewModel(
+            new CruiseDiscoverySourceCatalog(),
+            new CruiseTrustedHostPolicy(),
+            clock: new FixedClock(),
+            history: history,
+            batchCaptureService: new FixedBatchService(BatchResult.Completed(candidates)),
+            recordObservation: record);
+        viewModel.LoadCommand.Execute(null);
+        var address = new Uri(viewModel.CurrentAddress!);
+        viewModel.ReportNavigationCompleted(address);
+        viewModel.CapturePayloadRequested += (_, _) => { };
+        viewModel.CaptureCommand.Execute(null);
+        await viewModel.ProcessCapturePayloadAsync(Payload, address);
+        return viewModel;
     }
 
     private static CandidateResult Ready(CruiseObservation observation) =>
@@ -242,6 +329,19 @@ public sealed class CruiseBatchObservationRecordingViewModelTests
             ObservedAt,
             Reference(index),
             new CruiseSource("tui", "TUI"));
+
+    private static CruiseObservation WithPrice(
+        CruiseObservation observation,
+        decimal price,
+        DateTimeOffset observedAt) =>
+        new(
+            new CruiseSnapshot(
+                observation.Snapshot.Offer,
+                [new CruisePrice(price, "GBP", "per person")],
+                observation.Snapshot.PromotionSummary),
+            observedAt,
+            observation.SourceReference,
+            observation.Source);
 
     private static string Reference(int index) =>
         $"https://www.tui.co.uk/cruise/bookitineraries/Cruise-{index}?itineraryCodeOne={index}";

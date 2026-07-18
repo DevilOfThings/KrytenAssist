@@ -258,6 +258,15 @@ for the complete schema, repository, migration, concurrency and test contract.
 - surface created-alert counts and controlled evaluation failures
 - preserve all existing capture selection and recording behaviour
 
+The implemented Application orchestrator records first, then reloads the exact
+committed same-source History for changed outcomes. It evaluates only when the
+supplied observation is the deterministic current observation, so an older
+historical insertion cannot create a false alert. First observations and
+`AlreadyCurrent` evidence do not invoke change evaluation. Single and
+sequential batch workflows preserve factual success while surfacing created
+alert counts and controlled post-commit cancellation/failure independently.
+See the 039d Codex prompt for the complete orchestration and test results.
+
 ### Step 5 – 039e: Saved Criteria Evaluation
 
 - evaluate Shortlisted saved sailings against supported month/budget criteria
@@ -314,7 +323,7 @@ for the complete schema, repository, migration, concurrency and test contract.
 
 ### Status
 
-In progress. Steps 039a–039c are complete. Robin agreed the explicit-recording trigger,
+In progress. Steps 039a–039d are complete. Robin agreed the explicit-recording trigger,
 same-source comparable price and promotion rules, supported month/budget
 criteria, cabin deferral, in-app lifecycle, settings defaults, retained
 dismissal, deterministic deduplication and record-before-alert failure boundary
@@ -324,4 +333,7 @@ Application persistence abstractions and controlled evaluation/lifecycle
 contracts. Prompt 039c added the normalized alert header and typed-detail
 schema, singleton settings, independent criteria state, exact value round trips,
 database-enforced event deduplication, deterministic concurrency and complete
-repository/DI wiring. Prompt 039d – Observation Recording Integration is next.
+repository/DI wiring. Prompt 039d added shared single/batch record-then-evaluate
+orchestration, deterministic committed-current evidence selection and
+independent alert feedback without changing factual recording outcomes. Prompt
+039e – Saved Criteria Evaluation is next.

@@ -13,9 +13,11 @@ using CruiseCaptureCandidateResult =
 using CruiseCaptureCandidateStatus =
     KrytenApplication::KrytenAssist.Application.Cruises.CruiseCaptureCandidateStatus;
 using RecordResult =
-    KrytenApplication::KrytenAssist.Application.Cruises.CruiseObservationRecordResult;
+    KrytenApplication::KrytenAssist.Application.Cruises.CruiseRecordAndAlertResult;
 using RecordStatus =
     KrytenApplication::KrytenAssist.Application.Cruises.CruiseObservationRecordStatus;
+using AlertStatus =
+    KrytenApplication::KrytenAssist.Application.Cruises.CruiseAlertOperationStatus;
 
 namespace KrytenAssist.Avalonia.ViewModels;
 
@@ -26,6 +28,8 @@ public sealed class CruiseCaptureCandidateReviewItemViewModel : INotifyPropertyC
     private bool _isSelectionLocked;
     private CruiseBatchRecordingStatus _recordingStatus;
     private string? _recordingMessage;
+    private int _createdAlertCount;
+    private AlertStatus? _alertEvaluationStatus;
     private readonly Func<CruiseObservation, Task<string>>? _saveCruise;
     private bool _isSaving;
     private string? _saveMessage;
@@ -171,6 +175,14 @@ public sealed class CruiseCaptureCandidateReviewItemViewModel : INotifyPropertyC
 
     public bool HasRecordingMessage => !string.IsNullOrWhiteSpace(RecordingMessage);
 
+    public int CreatedAlertCount => _createdAlertCount;
+
+    public AlertStatus? AlertEvaluationStatus => _alertEvaluationStatus;
+
+    public bool AlertEvaluationCancelled => AlertEvaluationStatus == AlertStatus.Cancelled;
+
+    public bool AlertEvaluationFailed => AlertEvaluationStatus == AlertStatus.Failed;
+
     public bool IsRecording => RecordingStatus == CruiseBatchRecordingStatus.Recording;
 
     public bool IsRecordingComplete => RecordingStatus is
@@ -224,7 +236,7 @@ public sealed class CruiseCaptureCandidateReviewItemViewModel : INotifyPropertyC
     public void ApplyRecordingResult(RecordResult result)
     {
         ArgumentNullException.ThrowIfNull(result);
-        var status = result.Status switch
+        var status = result.Recording.Status switch
         {
             RecordStatus.FirstObservationRecorded =>
                 CruiseBatchRecordingStatus.FirstObservationRecorded,
@@ -234,7 +246,7 @@ public sealed class CruiseCaptureCandidateReviewItemViewModel : INotifyPropertyC
             RecordStatus.Cancelled => CruiseBatchRecordingStatus.Cancelled,
             _ => CruiseBatchRecordingStatus.Failed
         };
-        var message = status switch
+        var recordingMessage = status switch
         {
             CruiseBatchRecordingStatus.FirstObservationRecorded =>
                 "Observation recorded as the first evidence for this sailing.",
@@ -246,7 +258,24 @@ public sealed class CruiseCaptureCandidateReviewItemViewModel : INotifyPropertyC
                 "Recording was cancelled. You can try this observation again.",
             _ => "The observation could not be recorded. You can try it again."
         };
+        _createdAlertCount = result.Alerts?.CreatedAlerts.Count ?? 0;
+        _alertEvaluationStatus = result.Alerts?.Status;
+        var message = result.Alerts?.Status switch
+        {
+            AlertStatus.Cancelled =>
+                $"{recordingMessage} Alert evaluation was cancelled after recording.",
+            AlertStatus.Failed =>
+                $"{recordingMessage} Alerts could not be evaluated locally after recording.",
+            _ when _createdAlertCount == 1 => $"{recordingMessage} 1 alert was created.",
+            _ when _createdAlertCount > 1 =>
+                $"{recordingMessage} {_createdAlertCount} alerts were created.",
+            _ => recordingMessage
+        };
         SetRecordingState(status, message);
+        OnPropertyChanged(nameof(CreatedAlertCount));
+        OnPropertyChanged(nameof(AlertEvaluationStatus));
+        OnPropertyChanged(nameof(AlertEvaluationCancelled));
+        OnPropertyChanged(nameof(AlertEvaluationFailed));
     }
 
     private void SetRecordingState(CruiseBatchRecordingStatus status, string message)

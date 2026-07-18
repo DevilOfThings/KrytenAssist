@@ -42,6 +42,7 @@ public static class DependencyInjection
         services.AddScoped<MaterializeCruiseAlertCandidates>();
         services.AddScoped<EvaluateRecordedCruiseAlerts>();
         services.AddScoped<EvaluateSavedCruiseCriteriaAlerts>();
+        services.AddScoped<RecordCruiseObservationAndEvaluateAlerts>();
 
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
 

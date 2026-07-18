@@ -13,7 +13,9 @@ using KrytenAssist.Core.Cruises;
 using GetHistory = KrytenApplication::KrytenAssist.Application.Cruises.GetCruiseHistory;
 using ListHistories = KrytenApplication::KrytenAssist.Application.Cruises.ListCruiseHistories;
 using ListStatus = KrytenApplication::KrytenAssist.Application.Cruises.CruiseHistoryListStatus;
-using RecordObservation = KrytenApplication::KrytenAssist.Application.Cruises.RecordCruiseObservation;
+using RecordObservation = KrytenApplication::KrytenAssist.Application.Cruises.RecordCruiseObservationAndEvaluateAlerts;
+using RecordAndAlertResult = KrytenApplication::KrytenAssist.Application.Cruises.CruiseRecordAndAlertResult;
+using AlertStatus = KrytenApplication::KrytenAssist.Application.Cruises.CruiseAlertOperationStatus;
 using RecordResult = KrytenApplication::KrytenAssist.Application.Cruises.CruiseObservationRecordResult;
 using RecordStatus = KrytenApplication::KrytenAssist.Application.Cruises.CruiseObservationRecordStatus;
 
@@ -272,14 +274,17 @@ public sealed class CruiseHistoryViewModel : INotifyPropertyChanged
         RecordMessage = "Recording this observation...";
         try
         {
-            var result = await _recordObservation.ExecuteAsync(observation, cancellation.Token);
+            var result = await _recordObservation.ExecuteAsync(
+                observation,
+                _clock.Now,
+                cancellation.Token);
             if (generation != _captureGeneration)
             {
                 return;
             }
 
             RecordMessage = CreateRecordMessage(result, observation.Source);
-            if (result.Status is RecordStatus.FirstObservationRecorded
+            if (result.Recording.Status is RecordStatus.FirstObservationRecorded
                 or RecordStatus.ChangedObservationRecorded
                 or RecordStatus.AlreadyCurrent)
             {
@@ -448,18 +453,36 @@ public sealed class CruiseHistoryViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(IsHistoryEmpty));
     }
 
-    private static string CreateRecordMessage(RecordResult result, CruiseSource? source)
+    private static string CreateRecordMessage(RecordAndAlertResult result, CruiseSource? source)
     {
         var sourceName = source?.Name ?? "this source";
-        return result.Status switch
+        var recordingMessage = result.Recording.Status switch
         {
             RecordStatus.FirstObservationRecorded =>
                 $"Observation recorded. This is the first price seen for this sailing from {sourceName}.",
-            RecordStatus.ChangedObservationRecorded => CreateChangedMessage(result),
+            RecordStatus.ChangedObservationRecorded => CreateChangedMessage(result.Recording),
             RecordStatus.AlreadyCurrent =>
                 "No new snapshot was needed. This advertised observation matches the latest recorded values.",
             RecordStatus.Cancelled => "Recording the cruise observation was cancelled. You can try again.",
             _ => "The observation could not be recorded. Please try again."
+        };
+
+        if (!result.RecordingSucceeded || result.Alerts is null)
+        {
+            return recordingMessage;
+        }
+
+        return result.Alerts.Status switch
+        {
+            AlertStatus.Cancelled =>
+                $"{recordingMessage} Alert evaluation was cancelled after the observation was recorded.",
+            AlertStatus.Failed =>
+                $"{recordingMessage} Alerts could not be evaluated locally after the observation was recorded.",
+            _ when result.Alerts.CreatedAlerts.Count == 1 =>
+                $"{recordingMessage} 1 alert was created.",
+            _ when result.Alerts.CreatedAlerts.Count > 1 =>
+                $"{recordingMessage} {result.Alerts.CreatedAlerts.Count} alerts were created.",
+            _ => recordingMessage
         };
     }
 

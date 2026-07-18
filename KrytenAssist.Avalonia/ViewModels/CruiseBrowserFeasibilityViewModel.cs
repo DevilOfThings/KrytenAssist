@@ -17,8 +17,9 @@ using CruiseCaptureBatchStatus = KrytenApplication::KrytenAssist.Application.Cru
 using CruisePageCaptureRequest = KrytenApplication::KrytenAssist.Application.Cruises.CruisePageCaptureRequest;
 using ICruisePageBatchCaptureService = KrytenApplication::KrytenAssist.Application.Cruises.ICruisePageBatchCaptureService;
 using ICruisePageCaptureService = KrytenApplication::KrytenAssist.Application.Cruises.ICruisePageCaptureService;
-using RecordObservation = KrytenApplication::KrytenAssist.Application.Cruises.RecordCruiseObservation;
+using RecordObservation = KrytenApplication::KrytenAssist.Application.Cruises.RecordCruiseObservationAndEvaluateAlerts;
 using RecordStatus = KrytenApplication::KrytenAssist.Application.Cruises.CruiseObservationRecordStatus;
+using AlertStatus = KrytenApplication::KrytenAssist.Application.Cruises.CruiseAlertOperationStatus;
 
 namespace KrytenAssist.Avalonia.ViewModels;
 
@@ -347,12 +348,14 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
 
     public bool CanRecordSelected =>
         _recordObservation is not null &&
+        _clock is not null &&
         !IsCapturing &&
         !IsBatchRecording &&
         CapturedCandidates.Any(candidate => candidate.IsSelected && candidate.CanRecord);
 
     public bool CanRecordAllObservations =>
         _recordObservation is not null &&
+        _clock is not null &&
         !IsCapturing &&
         !IsBatchRecording &&
         CapturedCandidates.Any(candidate => candidate.CanRecord);
@@ -1145,7 +1148,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
 
     private void StartBatchRecording(bool selectedOnly)
     {
-        if (_recordObservation is null || IsBatchRecording)
+        if (_recordObservation is null || _clock is null || IsBatchRecording)
         {
             return;
         }
@@ -1195,6 +1198,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
                 item.MarkRecording();
                 var result = await _recordObservation!.ExecuteAsync(
                     item.Observation,
+                    _clock!.Now,
                     cancellation.Token);
                 if (generation != _batchRecordingGeneration)
                 {
@@ -1202,7 +1206,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
                 }
 
                 item.ApplyRecordingResult(result);
-                if (result.Status is RecordStatus.FirstObservationRecorded
+                if (result.Recording.Status is RecordStatus.FirstObservationRecorded
                     or RecordStatus.ChangedObservationRecorded
                     or RecordStatus.AlreadyCurrent)
                 {
@@ -1211,7 +1215,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
                 }
 
                 NotifyBatchRecordingCountsChanged();
-                if (result.Status == RecordStatus.Cancelled || cancellation.IsCancellationRequested)
+                if (result.Recording.Status == RecordStatus.Cancelled || cancellation.IsCancellationRequested)
                 {
                     break;
                 }
@@ -1292,11 +1296,19 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
             candidate.IsReady &&
             candidate.RecordingStatus == CruiseBatchRecordingStatus.NotAttempted);
         var checkedCount = first + changed + current + failed + cancelled;
+        var createdAlerts = CapturedCandidates.Sum(candidate => candidate.CreatedAlertCount);
+        var alertCancelled = CapturedCandidates.Count(candidate =>
+            candidate.AlertEvaluationStatus == AlertStatus.Cancelled);
+        var alertFailed = CapturedCandidates.Count(candidate =>
+            candidate.AlertEvaluationStatus == AlertStatus.Failed);
         var prefix = wasCancelled ? "Recording cancelled. " : string.Empty;
         return prefix +
                $"{checkedCount} observations checked against local history. " +
                $"{first} first, {changed} changed, {current} already current, " +
-               $"{failed} failed, {cancelled} cancelled, {notAttempted} not attempted.";
+               $"{failed} failed, {cancelled} cancelled, {notAttempted} not attempted. " +
+               $"{createdAlerts} alert{(createdAlerts == 1 ? string.Empty : "s")} created, " +
+               $"{alertFailed} alert evaluations failed, " +
+               $"{alertCancelled} alert evaluations cancelled.";
     }
 
     private void NotifyBatchRecordingCountsChanged()
