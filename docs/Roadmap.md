@@ -10,7 +10,7 @@ Phase 7 – Cruise Assistant
 
 Current Prompt
 --------------
-Prompt 039 – Price Drop Alerts (next)
+Prompt 039b – Alert Domain and Application Contracts (next)
 
 Prompt 037 – Cruise History and Price Tracking, including its 037h Multiple
 Cruise Deals extension, is complete. Kryten can explicitly capture currently
@@ -37,6 +37,7 @@ context, plus an explicit guidance-only month, cabin and budget preference
 editor. Prompt 038g's architecture, SQLite-boundary and regression audit passes
 with 600 offline tests. Robin manually confirmed the complete Prompt 038
 desktop workflow on 18 July 2026. Prompt 038 is complete and Prompt 039 is next.
+Prompt 039a is now analysed; production implementation remains unstarted.
 
 ### Phase 1 – API Foundation
 
@@ -577,7 +578,8 @@ persistence, explicit save/evaluation actions and a distinct organisation
 workspace with optional local History context and a guidance-only preference
 editor. The solution builds and 600 offline tests pass; no architecture or
 schema defects were found. Robin manually confirmed the complete desktop
-workflow on 18 July 2026. Prompt 039 remains unstarted and is next.
+workflow on 18 July 2026. Prompt 039a is analysed and ready for agreement;
+Prompt 039 production implementation remains unstarted.
 
 Allow Robin to save, organise and evaluate interesting cruises.
 
@@ -599,13 +601,30 @@ and choices as the first explicit preference data for later cruise comparison.
 
 ## Prompt 039 – Price Drop Alerts
 
-Detect meaningful price reductions.
+Current status: In progress. Step 039a is complete. The alert trigger, detection
+rules, settings defaults, lifecycle, retention, deduplication, failure boundary
+and current month/budget/cabin data limits are agreed. Prompt 039b – Alert
+Domain and Application Contracts is next.
+
+Detect meaningful changes only from newly and explicitly recorded Cruise
+evidence. Prompt 039 does not introduce unattended browsing or imply live
+monitoring.
 
 Notify users when:
 
-- Prices fall
-- New promotions appear
-- Saved cruises meet budget or preference criteria
+- comparable same-retailer prices fall by the explicit threshold
+- a promotion appears or materially changes after prior evidence
+- Shortlisted saved cruises newly meet the month/budget criteria supported by
+  current evidence
+
+Alerts will be durable and in-app, with unread/read/dismissed lifecycle,
+deterministic evidence-based deduplication and settings. Observation recording
+commits independently before alert evaluation, so alert failure cannot roll
+back factual History. Cabin preference matching is deferred to Prompt 040
+because current Cruise observations contain no cabin availability evidence.
+
+See `docs/AI Playbook/039 - Price Drop Alerts.md` and the 039a Codex prompt for
+the proposed contract and implementation sequence.
 
 ---
 
