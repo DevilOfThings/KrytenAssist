@@ -10,7 +10,7 @@ Phase 7 – Cruise Assistant
 
 Current Prompt
 --------------
-Prompt 038 – Saved Cruises and Preferences (next)
+Prompt 038c – SQLite Personal-State Persistence (next)
 
 Prompt 037 – Cruise History and Price Tracking, including its 037h Multiple
 Cruise Deals extension, is complete. Kryten can explicitly capture currently
@@ -28,9 +28,9 @@ compact active-browser History, local Cruise/Ship grouping and an explicit
 mobile-default browser presentation while preserving trusted navigation,
 capture and local History.
 
-Prompt 038 remains unstarted.
-
-Prompt 038 – Saved Cruises and Preferences remains unstarted.
+Prompts 038a and 038b are complete. The Saved Cruise experience and accepted
+provider-independent domain/Application contracts are established. Prompt 038c
+is next and will add the matching local SQLite persistence and composition.
 
 ### Phase 1 – API Foundation
 
@@ -529,7 +529,7 @@ or introduce support for the separate `small-product-card` template.
 Robin manually verified the redesigned workspace on 17 July 2026. Its planned
 presentation refinements were completed in Prompt 037j.
 
-Prompt 038 remains unstarted.
+Prompt 038 is in planning. Provisional foundation code exists for review.
 
 ---
 
@@ -555,11 +555,18 @@ existing capture-clearing navigation lifecycle. The setting is not persisted.
 Robin manually verified the refinements on 17 July 2026. The verified baseline
 is 545 offline tests: 105 Core, 431 Avalonia and 9 API, with 0 failures.
 
-Prompt 038 remains unstarted.
+Prompt 038 is now in progress; Prompt 038a completed its experience and
+contract without changing the verified Prompt 037j presentation.
 
 ---
 
 ## Prompt 038 – Saved Cruises and Preferences
+
+Current status: In progress. Prompts 038a and 038b are complete. Saved sailings,
+bounded snapshots, shortlist/dismissed lifecycle, optional evaluations,
+favourite ship identity and explicit multi-value preferences now have accepted
+provider-independent Core and Application contracts. Prompt 038c – SQLite
+Personal-State Persistence is next.
 
 Allow Robin to save, organise and evaluate interesting cruises.
 
