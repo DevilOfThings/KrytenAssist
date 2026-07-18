@@ -333,7 +333,7 @@ See the 039e Codex prompt for complete results and tests.
 
 ### Status
 
-In progress. Steps 039a–039f are complete. Robin agreed the explicit-recording trigger,
+Complete. Steps 039a–039g are complete. Robin agreed the explicit-recording trigger,
 same-source comparable price and promotion rules, supported month/budget
 criteria, cabin deferral, in-app lifecycle, settings defaults, retained
 dismissal, deterministic deduplication and record-before-alert failure boundary
@@ -350,5 +350,22 @@ independent alert feedback without changing factual recording outcomes. Prompt
 bulk evaluation, honest recorded-versus-saved evidence and independent primary
 mutation outcomes. Prompt 039f added the durable local Alert Centre, typed
 evidence detail, explicit lifecycle controls, unread coordination, Alert
-Settings drafts and the three-mode Cruise workspace. The build and all 655
-offline tests pass. Prompt 039g – Tests and Verification is next.
+Settings drafts and the three-mode Cruise workspace. Prompt 039g's automated
+architecture, SQLite-boundary, composition and regression audit passes with all
+656 offline tests. No production defect or schema change was required. Robin
+manually confirmed the complete desktop acceptance checklist on 19 July 2026.
+Prompt 039 is complete. Prompt 040 is next and remains unstarted.
+
+### Lessons Learned
+
+- Record-before-evaluate orchestration preserves factual truth even when the
+  derived alert layer is cancelled or fails.
+- Immutable typed alert evidence keeps later presentation explainable without
+  rereading mutable History, preferences or saved state.
+- Database-enforced event identity plus retry-safe transition state is required
+  for deterministic deduplication across failures and concurrency.
+- Treating created-alert counts as refresh signals, then confirming the durable
+  unread count, avoids optimistic badge drift.
+- Physical SQLite deletion-boundary tests complement contract tests by proving
+  alerts, factual evidence and personal state remain independent in both
+  directions.
