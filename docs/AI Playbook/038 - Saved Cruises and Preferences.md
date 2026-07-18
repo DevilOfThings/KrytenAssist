@@ -357,9 +357,30 @@ Prompt 038 is complete only when:
 
 ### Status
 
-In progress. Steps 038a–038f are complete. The Saved Cruises workspace now also
-contains an explicit Preferences editor for multiple departure months, cabin
-types and an optional amount/currency/basis maximum budget. Confirmed baseline,
-unsaved draft, validation and cancellation behaviour are deterministic;
-preferences persist only through Save Preferences and do not filter, rank or
-recommend cruises. Prompt 038g – Tests and Verification is next.
+Complete. Steps 038a–038g are complete. Cross-boundary SQLite verification
+proves that save, evaluation,
+favourite, dismiss, restore, retailer refresh and personal removal remain
+physically independent from factual History in both directions. Architecture,
+schema and composition audits found no production defects. The solution builds
+and all 600 offline tests pass. Robin manually confirmed the complete desktop
+workflow on 18 July 2026. Prompt 039 remains unstarted and is next.
+
+### Lessons Learned
+
+- A bounded personal snapshot makes an unrecorded saved sailing useful without
+  pretending that it is provider evidence.
+- Keeping shortlist lifecycle separate from optional interest makes Not for us
+  reversible without inventing a rating answer.
+- Stable sailing and operator/ship value identities allow Application joins
+  and favourite propagation without database relationships to History.
+- Source-specific History can remain evidentially honest while a read-only
+  Application query composes all matching context for one personal sailing.
+- Explicit user actions and separate controlled outcomes are clearer than a
+  combined save/record/evaluate transaction.
+- Generation-based cancellation is necessary whenever capture targets,
+  selections or workspace modes can change during local asynchronous work.
+- A confirmed preference baseline plus raw unsaved draft supports validation,
+  cancellation and retry without accidental persistence or automatic filtering.
+- Final cross-boundary integration tests add value beyond isolated unit tests by
+  proving that the intended Clean Architecture separation is also physically
+  true in SQLite.

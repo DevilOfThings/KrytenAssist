@@ -10,7 +10,7 @@ Phase 7 – Cruise Assistant
 
 Current Prompt
 --------------
-Prompt 038g – Tests and Verification (next)
+Prompt 039 – Price Drop Alerts (next)
 
 Prompt 037 – Cruise History and Price Tracking, including its 037h Multiple
 Cruise Deals extension, is complete. Kryten can explicitly capture currently
@@ -34,7 +34,9 @@ explicit Save Cruise/evaluation actions that remain independent from factual
 Cruise History. A distinct Saved Cruises workspace now organises shortlist,
 strong-candidate, favourite and Not for us state with optional recorded price
 context, plus an explicit guidance-only month, cabin and budget preference
-editor. Prompt 038g – Tests and Verification is next.
+editor. Prompt 038g's architecture, SQLite-boundary and regression audit passes
+with 600 offline tests. Robin manually confirmed the complete Prompt 038
+desktop workflow on 18 July 2026. Prompt 038 is complete and Prompt 039 is next.
 
 ### Phase 1 – API Foundation
 
@@ -567,13 +569,15 @@ Cruises organisation without changing factual History behaviour.
 
 ## Prompt 038 – Saved Cruises and Preferences
 
-Current status: In progress. Prompts 038a–038f are complete. Saved sailings,
+Current status: Complete. Prompts 038a–038g are complete. Saved sailings,
 bounded snapshots, shortlist/dismissed lifecycle, optional evaluations,
 favourite ship identity and explicit multi-value preferences now have accepted
 provider-independent Core and Application contracts, normalized SQLite
 persistence, explicit save/evaluation actions and a distinct organisation
 workspace with optional local History context and a guidance-only preference
-editor. Prompt 038g – Tests and Verification is next.
+editor. The solution builds and 600 offline tests pass; no architecture or
+schema defects were found. Robin manually confirmed the complete desktop
+workflow on 18 July 2026. Prompt 039 remains unstarted and is next.
 
 Allow Robin to save, organise and evaluate interesting cruises.
 
