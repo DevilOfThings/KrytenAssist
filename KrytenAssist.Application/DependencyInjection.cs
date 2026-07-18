@@ -24,6 +24,7 @@ public static class DependencyInjection
         services.AddScoped<SetSavedCruiseFavourite>();
         services.AddScoped<GetSavedCruise>();
         services.AddScoped<ListSavedCruises>();
+        services.AddScoped<ListSavedCruiseDetails>();
         services.AddScoped<SetFavouriteCruiseShip>();
         services.AddScoped<ListFavouriteCruiseShips>();
         services.AddScoped<GetCruisePreferences>();

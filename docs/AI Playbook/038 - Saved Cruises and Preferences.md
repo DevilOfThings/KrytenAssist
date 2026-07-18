@@ -289,6 +289,15 @@ operations and rejects stale asynchronous results by target generation. See the
 - surface favourite-ship state consistently across relevant sailings
 - preserve useful empty, loading and failure states
 
+The agreed analysis adds a distinct Saved Cruises mode beside Discovery with
+four exact filters: all Shortlisted items, Shortlisted Strong candidates,
+Shortlisted favourite sailings or favourite ships, and Dismissed/Not for us.
+It composes personal state with optional source-independent History context in
+Application without adding a database relationship, clearly distinguishes
+Price when saved from Latest recorded price, reuses the shared 038d editor and
+requires confirmed removal to preserve factual History. See the 038e Codex
+prompt for the complete interaction, lifecycle and test contract.
+
 ### Step 6 – 038f: Cruise Preference Profile
 
 - add editing for preferred departure months, cabin types, maximum budget and
@@ -339,9 +348,10 @@ Prompt 038 is complete only when:
 
 ### Status
 
-In progress. Steps 038a–038d are complete. Robin can deliberately save a single
-capture, an individual Ready batch candidate or a selected recorded History
-sailing without recording another observation. One shared workspace editor now
-supports optional personal evaluation plus independent sailing and ship
-favourites, with controlled outcomes and stale-result protection. Prompt 038e
-– Saved Cruises Organisation is next.
+In progress. Steps 038a–038e are complete. Saved Cruises is now a distinct
+Cruise workspace beside Discovery with exact Shortlist, Strong candidates,
+Favourites and Not for us filters. Personal snapshots remain useful without
+History, matching recorded context is joined only through sailing identity,
+and edit, dismiss, restore and confirmed removal preserve factual observations
+and independent ship favourites. Prompt 038f – Cruise Preference Profile is
+next.

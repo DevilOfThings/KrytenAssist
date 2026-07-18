@@ -11,6 +11,7 @@ using RecordObservation = KrytenApplication::KrytenAssist.Application.Cruises.Re
 using SaveCruise = KrytenApplication::KrytenAssist.Application.Cruises.SaveCruise;
 using SavePreferences = KrytenApplication::KrytenAssist.Application.Cruises.SaveCruisePreferences;
 using ListSaved = KrytenApplication::KrytenAssist.Application.Cruises.ListSavedCruises;
+using ListSavedDetails = KrytenApplication::KrytenAssist.Application.Cruises.ListSavedCruiseDetails;
 
 namespace KrytenAssist.Avalonia.Tests.DependencyInjection;
 
@@ -37,7 +38,11 @@ public sealed class CruiseHistoryDesktopCompositionTests
             Assert.NotNull(scope.ServiceProvider.GetRequiredService<CruiseHistoryViewModel>());
             Assert.NotNull(scope.ServiceProvider.GetRequiredService<SaveCruise>());
             Assert.NotNull(scope.ServiceProvider.GetRequiredService<ListSaved>());
+            Assert.NotNull(scope.ServiceProvider.GetRequiredService<ListSavedDetails>());
             Assert.NotNull(scope.ServiceProvider.GetRequiredService<SavePreferences>());
+            var editor = scope.ServiceProvider.GetRequiredService<CruiseSaveAndEvaluationViewModel>();
+            var organiser = scope.ServiceProvider.GetRequiredService<SavedCruisesViewModel>();
+            Assert.Same(editor, organiser.Evaluation);
             Assert.True(File.Exists(databasePath));
         }
         finally

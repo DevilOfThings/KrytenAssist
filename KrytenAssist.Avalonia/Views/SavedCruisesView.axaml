@@ -1,0 +1,205 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="clr-namespace:KrytenAssist.Avalonia.ViewModels"
+             xmlns:views="clr-namespace:KrytenAssist.Avalonia.Views"
+             x:Class="KrytenAssist.Avalonia.Views.SavedCruisesView"
+             x:DataType="viewModels:SavedCruisesViewModel">
+    <Border Classes="workspace-surface"
+            Margin="20,0,20,20"
+            Padding="14">
+        <Grid RowDefinitions="Auto,Auto,*"
+              RowSpacing="10">
+            <Grid ColumnDefinitions="*,Auto"
+                  ColumnSpacing="12">
+                <StackPanel Spacing="3">
+                    <TextBlock Text="Saved Cruises"
+                               FontSize="17"
+                               FontWeight="SemiBold" />
+                    <TextBlock Text="Your personal shortlist and evaluations, kept separate from Recorded History."
+                               Classes="secondary-text"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+                <Button Grid.Column="1"
+                        Content="Refresh"
+                        Classes="secondary"
+                        Command="{Binding RefreshCommand}" />
+            </Grid>
+
+            <StackPanel Grid.Row="1"
+                        Spacing="8">
+                <WrapPanel Orientation="Horizontal"
+                           ItemSpacing="12"
+                           LineSpacing="6">
+                    <RadioButton Content="{Binding ShortlistFilterText}"
+                                 GroupName="SavedCruiseFilter"
+                                 IsChecked="{Binding IsShortlistFilter}" />
+                    <RadioButton Content="{Binding StrongCandidatesFilterText}"
+                                 GroupName="SavedCruiseFilter"
+                                 IsChecked="{Binding IsStrongCandidatesFilter}" />
+                    <RadioButton Content="{Binding FavouritesFilterText}"
+                                 GroupName="SavedCruiseFilter"
+                                 IsChecked="{Binding IsFavouritesFilter}" />
+                    <RadioButton Content="{Binding NotForUsFilterText}"
+                                 GroupName="SavedCruiseFilter"
+                                 IsChecked="{Binding IsNotForUsFilter}" />
+                </WrapPanel>
+
+                <TextBlock Text="Loading saved cruises…"
+                           Classes="busy-text"
+                           IsVisible="{Binding IsLoading}" />
+                <TextBlock Text="{Binding Message}"
+                           Classes="secondary-text"
+                           TextWrapping="Wrap" />
+                <Border Classes="status-surface"
+                        Padding="10"
+                        IsVisible="{Binding HasError}">
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="10">
+                        <TextBlock Text="{Binding ErrorMessage}"
+                                   Classes="error-text"
+                                   TextWrapping="Wrap" />
+                        <Button Content="Try Again"
+                                Classes="secondary"
+                                Command="{Binding RefreshCommand}" />
+                    </StackPanel>
+                </Border>
+                <TextBlock Text="{Binding EmptyMessage}"
+                           Classes="secondary-text"
+                           TextWrapping="Wrap"
+                           HorizontalAlignment="Center"
+                           Margin="0,18"
+                           IsVisible="{Binding ShowEmptyMessage}" />
+            </StackPanel>
+
+            <Grid Grid.Row="2"
+                  ColumnDefinitions="2*,12,3*"
+                  IsVisible="{Binding HasItems}">
+                <ListBox Grid.Column="0"
+                         ItemsSource="{Binding Items}"
+                         SelectedItem="{Binding SelectedItem}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="viewModels:SavedCruiseItemViewModel">
+                            <Grid Margin="4"
+                                  ColumnDefinitions="*,Auto"
+                                  RowDefinitions="Auto,Auto,Auto,Auto"
+                                  ColumnSpacing="8"
+                                  RowSpacing="3">
+                                <TextBlock Text="{Binding Title}"
+                                           FontWeight="SemiBold"
+                                           TextWrapping="Wrap" />
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding DepartureText}" />
+                                <TextBlock Grid.Row="1"
+                                           Text="{Binding ShipName}"
+                                           Classes="secondary-text" />
+                                <TextBlock Grid.Row="1"
+                                           Grid.Column="1"
+                                           Text="{Binding InterestText}" />
+                                <TextBlock Grid.Row="2"
+                                           Text="{Binding PriceWhenSavedText}" />
+                                <TextBlock Grid.Row="2"
+                                           Grid.Column="1"
+                                           Text="{Binding OverallRatingText}" />
+                                <TextBlock Grid.Row="3"
+                                           Grid.ColumnSpan="2"
+                                           Text="{Binding FavouriteText}"
+                                           Classes="secondary-text" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <ScrollViewer Grid.Column="2"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Spacing="12"
+                                IsVisible="{Binding HasSelectedItem}">
+                        <Border Classes="status-surface"
+                                Padding="12">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="{Binding SelectedItem.Title}"
+                                           FontSize="17"
+                                           FontWeight="SemiBold"
+                                           TextWrapping="Wrap" />
+                                <TextBlock Text="{Binding SelectedItem.OperatorName}"
+                                           Classes="secondary-text" />
+                                <Grid ColumnDefinitions="Auto,*"
+                                      RowDefinitions="Auto,Auto,Auto,Auto,Auto"
+                                      ColumnSpacing="12"
+                                      RowSpacing="5">
+                                    <TextBlock Text="Ship" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Column="1" Text="{Binding SelectedItem.ShipName}" />
+                                    <TextBlock Grid.Row="1" Text="Departure" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedItem.DepartureText}" />
+                                    <TextBlock Grid.Row="2" Text="Duration" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedItem.DurationText}" />
+                                    <TextBlock Grid.Row="3" Text="Interest" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedItem.InterestText}" />
+                                    <TextBlock Grid.Row="4" Text="Favourite" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SelectedItem.FavouriteText}" />
+                                </Grid>
+                                <TextBlock Text="{Binding SelectedItem.ItinerarySummary}"
+                                           TextWrapping="Wrap"
+                                           IsVisible="{Binding SelectedItem.HasItinerary}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Grid ColumnDefinitions="*,*"
+                              ColumnSpacing="10">
+                            <Border Classes="status-surface" Padding="12">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Price when saved" FontWeight="SemiBold" />
+                                    <TextBlock Text="{Binding SelectedItem.PriceWhenSavedText}" />
+                                    <TextBlock Text="{Binding SelectedItem.SavedAtText}"
+                                               Classes="secondary-text" />
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="1" Classes="status-surface" Padding="12">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Latest recorded price" FontWeight="SemiBold" />
+                                    <TextBlock Text="{Binding SelectedItem.LatestRecordedPriceText}"
+                                               TextWrapping="Wrap" />
+                                    <TextBlock Text="{Binding SelectedItem.LatestRecordedAtText}"
+                                               Classes="secondary-text" />
+                                    <TextBlock Text="{Binding SelectedItem.RecordedContextText}"
+                                               Classes="secondary-text"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <views:CruiseEvaluationEditorView DataContext="{Binding Evaluation}" />
+
+                        <WrapPanel Orientation="Horizontal"
+                                   ItemSpacing="8"
+                                   LineSpacing="8">
+                            <Button Content="{Binding SelectedItem.LifecycleButtonText}"
+                                    Classes="secondary"
+                                    Command="{Binding ChangeLifecycleCommand}" />
+                            <Button Content="Remove Saved Cruise"
+                                    Classes="secondary"
+                                    Command="{Binding RequestRemoveCommand}" />
+                        </WrapPanel>
+
+                        <Border Classes="status-surface"
+                                Padding="12"
+                                IsVisible="{Binding IsRemoveConfirmationOpen}">
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="{Binding RemoveConfirmationMessage}"
+                                           TextWrapping="Wrap" />
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Button Content="Remove"
+                                            Classes="primary"
+                                            Command="{Binding ConfirmRemoveCommand}" />
+                                    <Button Content="Keep Saved Cruise"
+                                            Classes="secondary"
+                                            Command="{Binding CancelRemoveCommand}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

@@ -34,6 +34,7 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
     private CruiseObservation? _observation;
     private bool _isBusy;
     private string? _errorMessage;
+    private bool _isSavedCruisesMode;
 
     public CruiseOfTheWeekViewModel(
         ISkillRegistry skillRegistry,
@@ -44,13 +45,15 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
         CruiseHistoryViewModel? history = null,
         ICruisePageBatchCaptureService? batchCaptureService = null,
         RecordObservation? recordObservation = null,
-        CruiseSaveAndEvaluationViewModel? evaluation = null)
+        CruiseSaveAndEvaluationViewModel? evaluation = null,
+        SavedCruisesViewModel? savedCruises = null)
     {
         ArgumentNullException.ThrowIfNull(skillRegistry);
         ArgumentNullException.ThrowIfNull(clock);
 
         _skill = skillRegistry.Find(SkillId);
         _clock = clock;
+        var sharedEvaluation = savedCruises?.Evaluation ?? evaluation;
         BrowserFeasibility = new CruiseBrowserFeasibilityViewModel(
             sourceCatalog ?? new CruiseDiscoverySourceCatalog(),
             trustedHostPolicy ?? new CruiseTrustedHostPolicy(),
@@ -59,7 +62,8 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
             history,
             batchCaptureService,
             recordObservation,
-            evaluation);
+            sharedEvaluation);
+        SavedCruises = savedCruises;
         _retrieveCommand = new AsyncCommand(RetrieveAsync, () => CanRetrieve);
         _cancelCommand = new DelegateCommand(Cancel, () => IsBusy);
     }
@@ -74,9 +78,80 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
 
     public CruiseHistoryViewModel? History => BrowserFeasibility.History;
 
-    public void Activate() => History?.Activate();
+    public SavedCruisesViewModel? SavedCruises { get; }
 
-    public void Deactivate() { History?.Deactivate(); BrowserFeasibility.Evaluation?.Deactivate(); }
+    public bool IsDiscoveryMode
+    {
+        get => !IsSavedCruisesMode;
+        set
+        {
+            if (value)
+            {
+                IsSavedCruisesMode = false;
+            }
+        }
+    }
+
+    public bool IsSavedCruisesMode
+    {
+        get => _isSavedCruisesMode;
+        set
+        {
+            if (_isSavedCruisesMode == value || (value && SavedCruises is null))
+            {
+                return;
+            }
+
+            _isSavedCruisesMode = value;
+            BrowserFeasibility.Evaluation?.ClearTarget();
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsDiscoveryMode));
+            if (value)
+            {
+                _ = ActivateSavedCruisesAsync();
+            }
+            else
+            {
+                SavedCruises?.Deactivate();
+                History?.Activate();
+            }
+        }
+    }
+
+    public void Activate()
+    {
+        if (IsSavedCruisesMode)
+        {
+            _ = ActivateSavedCruisesAsync();
+        }
+        else
+        {
+            History?.Activate();
+        }
+    }
+
+    public void Deactivate()
+    {
+        History?.Deactivate();
+        SavedCruises?.Deactivate();
+        BrowserFeasibility.Evaluation?.Deactivate();
+    }
+
+    private async Task ActivateSavedCruisesAsync()
+    {
+        try
+        {
+            if (SavedCruises is not null)
+            {
+                await SavedCruises.ActivateAsync();
+            }
+        }
+        catch
+        {
+            // Child ViewModels expose controlled errors; keep an unexpected
+            // presentation exception at this mode-switch boundary.
+        }
+    }
 
     public CruiseObservation? Observation
     {

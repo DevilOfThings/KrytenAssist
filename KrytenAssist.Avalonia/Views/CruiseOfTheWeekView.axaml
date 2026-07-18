@@ -5,6 +5,24 @@
              x:Class="KrytenAssist.Avalonia.Views.CruiseOfTheWeekView"
              x:DataType="viewModels:CruiseOfTheWeekViewModel">
     <Grid RowDefinitions="Auto,*">
+        <Border Grid.Row="0"
+                Margin="20,10,20,10"
+                Padding="10"
+                Classes="workspace-surface">
+            <StackPanel Orientation="Horizontal"
+                        Spacing="16">
+                <TextBlock Text="Cruises"
+                           FontSize="18"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center" />
+                <RadioButton Content="Discovery"
+                             GroupName="CruiseWorkspaceMode"
+                             IsChecked="{Binding IsDiscoveryMode}" />
+                <RadioButton Content="Saved Cruises"
+                             GroupName="CruiseWorkspaceMode"
+                             IsChecked="{Binding IsSavedCruisesMode}" />
+            </StackPanel>
+        </Border>
         <ScrollViewer Grid.Row="0"
                       MaxHeight="220"
                       IsVisible="False"
@@ -161,9 +179,17 @@
         </StackPanel>
         </ScrollViewer>
 
-        <views:CruiseBrowserFeasibilityView Grid.Row="1"
-                                            VerticalAlignment="Stretch"
-                                            HorizontalAlignment="Stretch"
-                                            DataContext="{Binding BrowserFeasibility}" />
+        <Grid Grid.Row="1"
+              IsVisible="{Binding IsDiscoveryMode}">
+            <views:CruiseBrowserFeasibilityView VerticalAlignment="Stretch"
+                                                HorizontalAlignment="Stretch"
+                                                DataContext="{Binding BrowserFeasibility}" />
+        </Grid>
+        <Grid Grid.Row="1"
+              IsVisible="{Binding IsSavedCruisesMode}">
+            <views:SavedCruisesView VerticalAlignment="Stretch"
+                                    HorizontalAlignment="Stretch"
+                                    DataContext="{Binding SavedCruises}" />
+        </Grid>
     </Grid>
 </UserControl>
