@@ -10,7 +10,7 @@ Phase 7 – Cruise Assistant
 
 Current Prompt
 --------------
-Prompt 040 – Cabin Availability (next)
+Prompt 037k – Modern TUI Cruise Results Capture Compatibility (implemented; awaiting manual confirmation)
 
 Prompt 037 – Cruise History and Price Tracking, including its 037h Multiple
 Cruise Deals extension, is complete. Kryten can explicitly capture currently
@@ -27,6 +27,14 @@ Prompt 037j is complete. Cruise Discovery now has a clear visible identity,
 compact active-browser History, local Cruise/Ship grouping and an explicit
 mobile-default browser presentation while preserving trusted navigation,
 capture and local History.
+
+Prompt 037k is implemented as an immediate compatibility fix. TUI's current Cruise
+Packages page uses light-DOM `ResultListItem__cruiseResultItem` cards rather than
+the previously supported `tui-product-cards` shadow roots. The fix will support
+both exact structures without broadening trust, bounds or read-only behaviour.
+The production script successfully extracted ten bounded candidates from the
+reported page during live read-only verification; Robin's in-app confirmation
+remains. Prompt 040 resumes afterward.
 
 Prompts 038a–038f are complete. Saved Cruise personal state now has accepted
 provider-independent contracts, normalized local SQLite persistence and

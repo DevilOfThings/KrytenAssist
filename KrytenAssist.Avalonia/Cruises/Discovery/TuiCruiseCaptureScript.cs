@@ -10,6 +10,7 @@ public static class TuiCruiseCaptureScript
         (() => {
           const bounded = value => String(value || '').trim().slice(0, 512);
           const boundedReference = value => String(value || '').trim().slice(0, 4000);
+          const boundedCardText = value => String(value || '').trim().slice(0, 4000);
           const roots = Array.from(document.querySelectorAll('tui-product-cards'))
             .map(element => element.shadowRoot)
             .filter(Boolean)
@@ -36,25 +37,34 @@ public static class TuiCruiseCaptureScript
                 : null;
             } catch { return null; }
           };
-          const cardLinks = queryAll('a[href],[data-href],[data-url]')
-            .slice(0, 100)
+          const shadowCardLinks = queryAll('a[href],[data-href],[data-url]')
             .map(element => ({
               element,
               card: element.closest('[data-testid="product-card"]'),
               url: itineraryUrl(element)
-            }))
+            }));
+          const modernCards = Array.from(document.querySelectorAll('section.ResultListItem__cruiseResultItem'));
+          const modernCardLinks = modernCards.flatMap(card =>
+            Array.from(card.querySelectorAll('a[href],[data-href],[data-url]'))
+              .map(element => ({element, card, url: itineraryUrl(element)})));
+          const cardLinks = shadowCardLinks.concat(modernCardLinks)
+            .slice(0, 100)
             .filter(item => item.card && item.url);
           const uniqueLinks = cardLinks.filter((item, index, items) =>
             index === items.findIndex(other => other.url.href === item.url.href));
           const wasTruncated = uniqueLinks.length > 10;
           const links = uniqueLinks.slice(0, 10);
           const shipNamePattern = /\bMarella\s+(?:Discovery(?:\s+2)?|Explorer(?:\s+2)?|Voyager)\b/i;
-          const knownShips = {'150013': 'Marella Discovery 2'};
+          const knownShips = {
+            '150013': 'Marella Discovery 2',
+            '150014': 'Marella Explorer',
+            '150016': 'Marella Voyager'
+          };
           const candidates = links.map(item => {
             const card = item.card;
             const url = item.url;
-            const text = bounded(card.innerText || card.textContent);
-            const pathName = decodeURIComponent(url.pathname.split('/').pop() || '');
+            const text = boundedCardText(card.innerText || card.textContent);
+            const pathName = url.pathname.split('/').pop() || '';
             const code = url.searchParams.get('itineraryCodeOne') || url.searchParams.get('itineraryCode');
             const titlePart = code && pathName.endsWith(`-${code}`) ? pathName.slice(0, -(code.length + 1)) : pathName;
             const shipElement = card.querySelector('[data-ship-name],[data-ship],.ship-name,[data-testid*="ship" i]');
@@ -62,9 +72,11 @@ public static class TuiCruiseCaptureScript
               shipElement?.getAttribute('data-ship-name') ||
               shipElement?.textContent ||
               knownShips[url.searchParams.get('shipCode')];
-            const price = text.match(/£\s*([\d,]+(?:\.\d{1,2})?)\s*(pp|per person)\b/i);
-            const totalPrice = text.match(/£\s*([\d,]+(?:\.\d{1,2})?)\s*Total price\b/i);
-            const discount = text.match(/£\s*([\d,]+(?:\.\d{1,2})?)\s*pp\s*discount\b/i);
+            const price = text.match(/£\s*([\d,]+(?:\.\d{1,2})?)\s*(?:pp|per\s+person)\b/i);
+            const totalPrice = text.match(/Total\s+Price\s*£\s*([\d,]+(?:\.\d{1,2})?)/i) ||
+              text.match(/£\s*([\d,]+(?:\.\d{1,2})?)\s*Total\s+Price\b/i);
+            const discount = text.match(/Includes\s+£\s*[\d,]+(?:\.\d{1,2})?\s*pp(?:\s+online)?\s+discount\b/i) ||
+              text.match(/£\s*[\d,]+(?:\.\d{1,2})?\s*pp(?:\s+online)?\s+discount\b/i);
             return {
               sourceReference: boundedReference(url.href),
               providerOfferId: bounded(url.searchParams.get('packageId') || code || pathName),
@@ -79,7 +91,7 @@ public static class TuiCruiseCaptureScript
                     .concat(totalPrice ? [{amount: Number(totalPrice[1].replace(/,/g, '')), currency: 'GBP', basis: 'total based on 2 sharing'}] : [])
                 : [],
               promotionSummary: discount
-                ? bounded(`£${discount[1]} per person discount`)
+                ? bounded(discount[0])
                 : null
             };
           });

@@ -74,6 +74,12 @@ public sealed class CruiseCaptureReviewViewModelTests
         Assert.Contains("new URL(value, document.location.href)", TuiCruiseCaptureScript.Script);
         Assert.Contains("items.findIndex", TuiCruiseCaptureScript.Script);
         Assert.Contains("element.closest('[data-testid=\"product-card\"]')", TuiCruiseCaptureScript.Script);
+        Assert.Contains("document.querySelectorAll('section.ResultListItem__cruiseResultItem')", TuiCruiseCaptureScript.Script);
+        Assert.Contains("shadowCardLinks.concat(modernCardLinks)", TuiCruiseCaptureScript.Script);
+        Assert.Contains("Total\\s+Price\\s*£", TuiCruiseCaptureScript.Script);
+        Assert.Contains("(?:\\s+online)?", TuiCruiseCaptureScript.Script);
+        Assert.Contains("'150014': 'Marella Explorer'", TuiCruiseCaptureScript.Script);
+        Assert.Contains("'150016': 'Marella Voyager'", TuiCruiseCaptureScript.Script);
         Assert.Contains("sourceReference: boundedReference(url.href)", TuiCruiseCaptureScript.Script);
         Assert.Contains("const wasTruncated = uniqueLinks.length > 10", TuiCruiseCaptureScript.Script);
         Assert.Contains("JSON.stringify({version: 1, wasTruncated, candidates})", TuiCruiseCaptureScript.Script);

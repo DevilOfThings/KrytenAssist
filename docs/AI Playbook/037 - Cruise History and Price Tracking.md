@@ -1191,3 +1191,25 @@ change, so the existing manual evidence remains valid.
   booking-level discount. That richer model should be designed explicitly later.
 - Prompt 038 can now add Robin's ratings, notes and preferences without mixing
   subjective evaluation into provider observations.
+
+---
+
+## Prompt 037k – Modern TUI Cruise Results Capture Compatibility
+
+On 19 July 2026, Robin identified a current TUI Cruise Packages page that
+Cruise Discovery could display but not capture. Live read-only inspection found
+ordinary light-DOM `ResultListItem__cruiseResultItem` cards and no
+`tui-product-cards` shadow roots, which are the only roots the existing bounded
+script recognizes.
+
+Prompt 037k now retains the existing shadow-DOM adapter and adds only the exact
+demonstrated light-DOM card boundary, canonical duplicate-link handling, current
+total-price ordering and online-discount text. Trusted itinerary validation,
+explicit capture, ten-card bounds, honest partial/truncated outcomes and all
+read-only safety constraints remain unchanged. The exact production script
+returned ten valid candidates from Robin's reported page on 19 July 2026,
+including correct ship/date/duration, per-person and total prices, and standard
+or online discount wording. The complete 657-test offline suite passes. Robin's
+in-app manual confirmation remains before Prompt 040 resumes.
+
+See `docs/Codex Prompts/037k - Modern TUI Cruise Results Capture Compatibility.md`.

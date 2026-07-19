@@ -47,6 +47,35 @@ public sealed class TuiCruisePageBatchCaptureServiceTests
     }
 
     [Fact]
+    public async Task CaptureAsync_MapsModernResultPriceAndOnlinePromotionPayload()
+    {
+        var candidate = CompleteCandidate(1, "Modern Result", 1439m) with
+        {
+            ShipName = "Marella Voyager",
+            DepartureDate = "2026-10-02",
+            PromotionSummary = "Includes £38pp online discount",
+            Prices =
+            [
+                new PriceDto(1439m, "GBP", "per person"),
+                new PriceDto(2877m, "GBP", "total based on 2 sharing")
+            ]
+        };
+
+        var result = await _service.CaptureAsync(CreateRequest(CreatePayload([candidate])));
+
+        var observation = Assert.Single(result.Candidates).Observation!;
+        Assert.Equal(new DateOnly(2026, 10, 2), observation.Snapshot.Offer.DepartureDate);
+        Assert.Equal("Marella Voyager", observation.Snapshot.Offer.ShipName);
+        Assert.Equal(
+            [
+                new CruisePrice(1439m, "GBP", "per person"),
+                new CruisePrice(2877m, "GBP", "total based on 2 sharing")
+            ],
+            observation.Snapshot.Prices);
+        Assert.Equal("Includes £38pp online discount", observation.Snapshot.PromotionSummary);
+    }
+
+    [Fact]
     public async Task CaptureAsync_RetainsReadyCandidateBesideIndependentIncompleteCandidate()
     {
         var complete = CompleteCandidate(1, "Island Dreams", 899m);
