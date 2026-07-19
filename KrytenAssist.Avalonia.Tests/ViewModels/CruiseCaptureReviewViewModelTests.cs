@@ -84,7 +84,8 @@ public sealed class CruiseCaptureReviewViewModelTests
         Assert.Contains("const wasTruncated = uniqueLinks.length > 10", TuiCruiseCaptureScript.Script);
         Assert.Contains("1\\s*x\\s*Inside\\s+Cabin", TuiCruiseCaptureScript.Script);
         Assert.Contains("retailerLabel: 'Inside Cabin'", TuiCruiseCaptureScript.Script);
-        Assert.Contains("JSON.stringify({version: 2, wasTruncated, candidates})", TuiCruiseCaptureScript.Script);
+        Assert.Contains("providerItineraryId: bounded(code)", TuiCruiseCaptureScript.Script);
+        Assert.Contains("JSON.stringify({version: 3, wasTruncated, candidates})", TuiCruiseCaptureScript.Script);
         Assert.DoesNotContain("closest('article,[data-testid],[data-cruise-card],li')", TuiCruiseCaptureScript.Script);
         Assert.DoesNotContain("shipEvidence", TuiCruiseCaptureScript.Script);
         Assert.DoesNotContain("priceEvidence", TuiCruiseCaptureScript.Script);

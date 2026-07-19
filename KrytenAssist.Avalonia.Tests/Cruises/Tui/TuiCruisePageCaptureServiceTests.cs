@@ -87,7 +87,7 @@ public sealed class TuiCruisePageCaptureServiceTests
     [Theory]
     [InlineData("{}")]
     [InlineData("{\"version\":0,\"candidates\":[]}")]
-    [InlineData("{\"version\":3,\"candidates\":[]}")]
+    [InlineData("{\"version\":4,\"candidates\":[]}")]
     public async Task CaptureAsync_RejectsMissingOrUnsupportedPayloadVersion(string payload)
     {
         var result = await _service.CaptureAsync(CreateRequest(payload));

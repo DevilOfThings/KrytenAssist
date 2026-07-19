@@ -80,6 +80,7 @@ public static class TuiCruiseCaptureScript
             const insideCabin = text.match(/\b1\s*x\s*Inside\s+Cabin\b[\s\S]{0,100}?\bCheapest\s+available\b/i);
             return {
               sourceReference: boundedReference(url.href),
+              providerItineraryId: bounded(code),
               providerOfferId: bounded(url.searchParams.get('packageId') || code || pathName),
               title: bounded(titlePart.replace(/-/g, ' ')),
               shipName: bounded(ship),
@@ -99,7 +100,7 @@ public static class TuiCruiseCaptureScript
                 : null
             };
           });
-          return JSON.stringify({version: 2, wasTruncated, candidates});
+          return JSON.stringify({version: 3, wasTruncated, candidates});
         })()
         """;
 }

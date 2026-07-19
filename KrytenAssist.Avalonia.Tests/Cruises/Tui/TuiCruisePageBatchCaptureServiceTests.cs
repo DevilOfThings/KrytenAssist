@@ -78,6 +78,7 @@ public sealed class TuiCruisePageBatchCaptureServiceTests
     [Theory]
     [InlineData(1)]
     [InlineData(2)]
+    [InlineData(3)]
     public async Task CaptureAsync_PreservesPriceMappingAcrossSupportedPayloadVersions(int version)
     {
         var result = await _service.CaptureAsync(CreateRequest(
@@ -208,7 +209,7 @@ public sealed class TuiCruisePageBatchCaptureServiceTests
 
     [Theory]
     [InlineData("{}", CruiseCaptureBatchStatus.Unsupported)]
-    [InlineData("{\"version\":3,\"candidates\":[]}", CruiseCaptureBatchStatus.Unsupported)]
+    [InlineData("{\"version\":4,\"candidates\":[]}", CruiseCaptureBatchStatus.Unsupported)]
     [InlineData("{not-json", CruiseCaptureBatchStatus.Failed)]
     [InlineData("{\"version\":1,\"candidates\":[]}", CruiseCaptureBatchStatus.Incomplete)]
     [InlineData("{\"version\":1,\"candidates\":[null]}", CruiseCaptureBatchStatus.Failed)]

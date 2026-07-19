@@ -15,6 +15,7 @@ public static class TuiCruiseCaptureServiceCollectionExtensions
         services.AddSingleton<ICruisePageBatchCaptureService>(provider =>
             provider.GetRequiredService<TuiCruisePageCaptureService>());
         services.AddSingleton<ICruiseCabinPageCaptureService, TuiCruiseCabinPageCaptureService>();
+        services.AddSingleton<ICruiseItineraryPageCaptureService, TuiCruiseItineraryPageCaptureService>();
         return services;
     }
 }

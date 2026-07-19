@@ -320,8 +320,13 @@ scope, criterion/value, check, occurrence, rejection and catalogue storage.
 Atomic recording seeds baselines, confirms later first-observed events,
 preserves exact retries and prevents concurrent double-detection. Baseline
 catalogue entries correctly have no event key. Strict reconstruction verifies
-all stable identities and timestamp companions. All 734 offline tests pass;
-Prompt 041d is next.
+all stable identities and timestamp companions. Prompt 041d is also complete.
+The bounded read-only script now emits payload v3 with
+an explicit trusted provider itinerary id. A stateless TUI adapter maps the
+demonstrated package-page query to semantic scope criteria, validates route ids
+against trusted itinerary URLs and deduplicates multiple offers for one stable
+route. Price v1–v3 and cabin v2–v3 compatibility is preserved. All 743 offline
+tests pass; Prompt 041e is next.
 
 ### Existing-System Findings
 
@@ -402,6 +407,32 @@ Prompt 041d is next.
   dependent recording/query use cases without breaking API composition.
 - EF reports no pending model changes; the solution builds and all 734 offline
   tests pass.
+
+### 041d Analysis
+
+- Payload version 3 should expose the itinerary-code parameter explicitly
+  instead of treating package/offer identity as stable route identity.
+- Scope mapping belongs in the trusted adapter. The demonstrated Prompt 037k
+  URL supplies a concrete material-query allowlist and semantic known/unknown
+  values; unknown keys remain potentially material and make capture incomplete.
+- Sort/view and explicit tracking keys are non-material and do not affect scope.
+- Multiple sailing/package cards for one itinerary deduplicate by stable
+  catalogue identity without changing price capture's offer behavior.
+- Price stays compatible with payload v1–v3, cabin with v2–v3, while itinerary
+  discovery requires v3.
+- The adapter remains read-only, bounded, offline-tested and separate from 041e
+  recording/alerts and 041f presentation.
+
+### 041d Results
+
+- Existing shadow/light DOM structures and capture bounds are unchanged.
+- Payload v3 adds only explicit itinerary identity; no publication or hidden
+  page evidence is inferred.
+- The exact demonstrated search parameters map to 16 semantic known/unknown
+  criteria. Unknown query keys cannot silently merge scopes.
+- Stable-route deduplication is isolated from existing price offer handling.
+- TUI DI resolves price, cabin and itinerary adapters, and the complete suite
+  passes with 743 offline tests.
 
 ### Agreed 041a Decisions
 

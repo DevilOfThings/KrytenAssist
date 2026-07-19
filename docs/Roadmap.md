@@ -10,7 +10,7 @@ Phase 7 – Cruise Assistant
 
 Current Prompt
 --------------
-Prompt 041d – Trusted TUI Itinerary Capture (next; unstarted)
+Prompt 041e – Recording and Alert Integration (next; unstarted)
 
 Prompt 037 – Cruise History and Price Tracking, including its 037h Multiple
 Cruise Deals extension, is complete. Kryten can explicitly capture currently
@@ -752,7 +752,16 @@ discovery tables. Atomic retry-safe recording seeds scope baselines, retains
 positive checks and confirms later unseen itinerary events without concurrent
 duplicates. Strict restart reconstruction and DI composition are covered; the
 solution builds and all 734 offline tests pass. Prompt 041d – Trusted TUI
-Itinerary Capture is next and remains unstarted; Prompt 042 remains unstarted.
+Itinerary Capture is now defined. Payload version 3 adds the explicit trusted
+provider itinerary id while preserving price/cabin compatibility. A read-only
+TUI adapter maps the demonstrated package query to semantic scope criteria,
+treats unknown query keys as incomplete and deduplicates several offers for one
+stable route without changing price capture. Prompt 041d is complete. The fixed
+script emits bounded payload v3 itinerary identity, and the stateless trusted
+adapter maps 16 demonstrated semantic criteria, rejects unknown material query
+keys and preserves price v1–v3/cabin v2–v3 compatibility. The solution builds
+and all 743 offline tests pass. Prompt 041e – Recording and Alert Integration is
+next and remains unstarted; Prompt 042 remains unstarted.
 
 ---
 

@@ -22,7 +22,7 @@ public sealed class TuiCruiseCabinPageCaptureService : ICruiseCabinPageCaptureSe
         Payload? payload;
         try { payload = JsonSerializer.Deserialize<Payload>(request.PagePayload, SerializerOptions); }
         catch (JsonException) { return Task.FromResult(CruiseCabinCaptureBatchResult.Failed("The TUI cabin page data could not be read.")); }
-        if (payload?.Version != PayloadVersion) return Task.FromResult(CruiseCabinCaptureBatchResult.Unsupported("This version of the TUI cabin page data is not supported."));
+        if (payload?.Version is not (PayloadVersion or 3)) return Task.FromResult(CruiseCabinCaptureBatchResult.Unsupported("This version of the TUI cabin page data is not supported."));
         if (payload.Candidates is null || payload.Candidates.Count == 0) return Task.FromResult(CruiseCabinCaptureBatchResult.Incomplete("No supported TUI cruise cards were found."));
         if (payload.Candidates.Count > CruiseCabinCaptureBatchResult.MaximumCandidateCount) return Task.FromResult(CruiseCabinCaptureBatchResult.Failed("The TUI page returned too many cabin candidates."));
 
