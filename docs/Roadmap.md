@@ -10,7 +10,7 @@ Phase 7 – Cruise Assistant
 
 Current Prompt
 --------------
-Prompt 037k – Modern TUI Cruise Results Capture Compatibility (implemented; awaiting manual confirmation)
+Prompt 040b – Cabin Domain and Application Contracts (next)
 
 Prompt 037 – Cruise History and Price Tracking, including its 037h Multiple
 Cruise Deals extension, is complete. Kryten can explicitly capture currently
@@ -658,7 +658,20 @@ for the accepted contract and implementation sequence.
 
 ## Prompt 040 – Cabin Availability
 
-Monitor cabin availability.
+Current status: In progress. Step 040a is complete. Cabin availability is
+explicit source evidence tied to sailing, retailer, compatible
+search/occupancy context and observation time. Missing categories remain
+Unknown; partial search-card evidence must not be presented as a complete cabin
+inventory view. Capture and recording remain deliberate, offline history is
+independent from Saved Cruises and price History, and no unattended monitoring
+or booking automation is introduced. Preferred cabins use OR, configured
+criterion groups use AND, and unresolved evidence remains Unknown. Explicit
+preferred-category Unavailable/Available transitions use a separate typed Cabin
+Availability alert; first-seen and Unknown-to-Available evidence remain history
+only. Prompt 040b – Cabin Domain and Application Contracts is next.
+
+See `docs/AI Playbook/040 - Cabin Availability.md` and the 040a Codex prompt for
+the proposed evidence, preference, alert and implementation sequence.
 
 Track:
 
