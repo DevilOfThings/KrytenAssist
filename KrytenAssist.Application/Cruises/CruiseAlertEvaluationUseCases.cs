@@ -33,7 +33,10 @@ public sealed class EvaluateSavedCruiseCriteriaAlerts(SavedCruiseCriteriaAlertDe
             var currentSettings = await settings.GetAsync(token);
             var fingerprint = SavedCruiseCriteriaAlertDetector.CriteriaFingerprint(
                 preferences,
-                currentSettings);
+                currentSettings,
+                evidence.CabinObservation?.SailingKey == saved.SailingKey
+                    ? evidence.CabinObservation.SearchContext.Fingerprint
+                    : null);
             var prior = await states.GetAsync(saved.SailingKey, fingerprint, token);
             var detected = detector.Detect(
                 saved,

@@ -14,6 +14,7 @@ public sealed record CruiseAlertCandidate
             CruisePriceDropAlertDetails => CruiseAlertType.PriceDrop,
             CruisePromotionAlertDetails => CruiseAlertType.Promotion,
             CruiseSavedCriteriaAlertDetails => CruiseAlertType.SavedCriteria,
+            CruiseCabinAvailabilityAlertDetails => CruiseAlertType.CabinAvailability,
             _ => throw new ArgumentException("Unsupported alert details.", nameof(details))
         };
         if (type != expectedType)
@@ -53,7 +54,7 @@ public sealed record CruiseAlert
     public DateTimeOffset EventTime { get; }
     public DateTimeOffset CreatedAt { get; }
     public CruiseAlert WithStatus(CruiseAlertStatus status) => new(Id, new CruiseAlertCandidate(Type, SailingKey, Source, Details, EventTime, EvidenceKey(), CriteriaFingerprint()), CreatedAt, status);
-    private string EvidenceKey() => Details switch { CruisePriceDropAlertDetails x => x.EvidenceKey, CruisePromotionAlertDetails x => x.EvidenceKey, CruiseSavedCriteriaAlertDetails x => x.EvidenceKey, _ => throw new InvalidOperationException() };
+    private string EvidenceKey() => Details switch { CruisePriceDropAlertDetails x => x.EvidenceKey, CruisePromotionAlertDetails x => x.EvidenceKey, CruiseSavedCriteriaAlertDetails x => x.EvidenceKey, CruiseCabinAvailabilityAlertDetails x => x.EvidenceKey, _ => throw new InvalidOperationException() };
     private string? CriteriaFingerprint() => (Details as CruiseSavedCriteriaAlertDetails)?.CriteriaFingerprint;
 }
 

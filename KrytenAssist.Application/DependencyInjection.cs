@@ -32,6 +32,8 @@ public static class DependencyInjection
         services.AddSingleton<SavedCruiseSnapshotFactory>();
         services.AddSingleton<CruiseObservationAlertDetector>();
         services.AddSingleton<SavedCruiseCriteriaAlertDetector>();
+        services.AddSingleton<CruiseCabinHistoryAnalyzer>();
+        services.AddSingleton<CruiseCabinAvailabilityAlertDetector>();
         services.AddSingleton<CruiseCriteriaEvidenceSelector>();
         services.AddScoped<ListCruiseAlerts>();
         services.AddScoped<GetCruiseAlert>();

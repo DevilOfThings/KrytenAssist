@@ -273,6 +273,22 @@ busy/unique conflicts. No production or test access to Robin's database.
 - extend saved-criteria evaluation contract with optional cabin evidence
 - define any Cabin Availability alert contract without provider leakage
 
+The agreed analysis uses immutable observations with exactly one state for every
+existing cabin type, explicit Partial/Complete coverage and a normalized search
+context that preserves known versus unknown occupancy/package facts. A stable
+series key identifies sailing/source/context; a separate state fingerprint
+contains only coverage and ordered category states, deliberately excluding
+time, retailer evidence key and reference so refreshed equivalent evidence does
+not create false history.
+
+Application owns cabin capture and persistence abstractions plus controlled
+record/get/list/orchestration results. Pure Core policies distinguish explicit
+Available/Unavailable transitions from Unknown knowledge changes. Prompt 040b
+also versions Saved Criteria for tri-state preferred-cabin matching and extends
+alerts/settings with a default-enabled typed Cabin Availability transition.
+SQLite reconstruction compatibility is preserved until 040c. See the 040b
+Codex prompt for the complete model, identity, policy and test contract.
+
 ### 040c – SQLite Cabin Persistence
 
 - add normalized series/observation/category tables and migration
@@ -336,4 +352,10 @@ In progress. Step 040a is complete. The evidence/context identity,
 Available/Unavailable/Unknown states, Partial/Complete coverage, explicit
 capture/record workflow, preference tri-state rules, separate Cabin Availability
 alerts, retention and initial TUI boundary were agreed on 19 July 2026. Prompt
-040b – Cabin Domain and Application Contracts is next.
+040b – Cabin Domain and Application Contracts is complete. Provider-independent
+contextual observations, deterministic history/transition policies, typed Cabin
+Availability alert candidates, Saved Criteria v2 and Application-owned
+capture/persistence/use-case contracts are implemented with 672 offline tests
+passing. Cabin alert materialization remains intentionally unwired because the
+current SQLite schema supports only the Prompt 039 alert types. Prompt 040c –
+SQLite Cabin Persistence is next.

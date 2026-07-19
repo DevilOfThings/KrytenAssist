@@ -47,14 +47,21 @@ public sealed class SavedCruiseCriteriaAlertDetectorTests
     }
 
     [Fact]
-    public void CabinOnly_IsUnknownAndCabinsAlongsideMonthAreExplicitlyUnavailable()
+    public void CabinOnly_UsesCompatibleTriStateEvidence()
     {
         var cabinOnly = _detector.Detect(Saved(), new CruisePreferences(preferredCabins: [CruiseCabinType.Balcony]), new(), Evidence());
         cabinOnly.State.Result.Should().Be(SavedCruiseCriteriaResult.Unknown);
         cabinOnly.Candidate.Should().BeNull();
 
-        var withMonth = _detector.Detect(Saved(), new CruisePreferences([12], [CruiseCabinType.Balcony]), new(), Evidence());
-        ((CruiseSavedCriteriaAlertDetails)withMonth.Candidate!.Details).CabinPreferencesUnavailable.Should().BeTrue();
+        var available = _detector.Detect(Saved(), new CruisePreferences(preferredCabins: [CruiseCabinType.Balcony]), new(),
+            EvidenceWithCabin(Cabin(CruiseCabinAvailabilityState.Available)));
+        available.State.Result.Should().Be(SavedCruiseCriteriaResult.Met);
+        var details = (CruiseSavedCriteriaAlertDetails)available.Candidate!.Details;
+        details.MatchedCabins.Should().Equal(CruiseCabinType.Balcony);
+        details.CabinCriterionResult.Should().Be(SavedCruiseCriteriaResult.Met);
+
+        _detector.Detect(Saved(), new CruisePreferences(preferredCabins: [CruiseCabinType.Balcony]), new(),
+            EvidenceWithCabin(Cabin(CruiseCabinAvailabilityState.Unavailable))).State.Result.Should().Be(SavedCruiseCriteriaResult.NotMet);
     }
 
     [Fact]
@@ -96,4 +103,13 @@ public sealed class SavedCruiseCriteriaAlertDetectorTests
 
     private static CruiseCriteriaEvidence Evidence(params CruisePrice[] prices) =>
         new(CruiseAlertEvidenceOrigin.RecordedObservation, "evidence", CruiseHistoryTestData.FirstObserved, prices);
+
+    private static CruiseCriteriaEvidence EvidenceWithCabin(CruiseCabinObservation cabin) =>
+        new(CruiseAlertEvidenceOrigin.RecordedObservation, "evidence", CruiseHistoryTestData.FirstObserved, [], cabin);
+
+    private static CruiseCabinObservation Cabin(CruiseCabinAvailabilityState balcony) => new(
+        new CruiseSailingKey("marella", "Marella Example", new DateOnly(2026, 12, 18), 7),
+        new CruiseSource("tui", "TUI"), new CruiseCabinSearchContext(), CruiseCabinEvidenceCoverage.Partial,
+        CruiseCabinDomainTests.States(CruiseCabinAvailabilityState.Unknown, (CruiseCabinType.Balcony, balcony)),
+        CruiseHistoryTestData.FirstObserved, "cabin-evidence");
 }

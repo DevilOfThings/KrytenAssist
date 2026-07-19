@@ -10,7 +10,7 @@ Phase 7 – Cruise Assistant
 
 Current Prompt
 --------------
-Prompt 040b – Cabin Domain and Application Contracts (next)
+Prompt 040c – SQLite Cabin Persistence (next)
 
 Prompt 037 – Cruise History and Price Tracking, including its 037h Multiple
 Cruise Deals extension, is complete. Kryten can explicitly capture currently
@@ -668,7 +668,12 @@ or booking automation is introduced. Preferred cabins use OR, configured
 criterion groups use AND, and unresolved evidence remains Unknown. Explicit
 preferred-category Unavailable/Available transitions use a separate typed Cabin
 Availability alert; first-seen and Unknown-to-Available evidence remain history
-only. Prompt 040b – Cabin Domain and Application Contracts is next.
+only. Prompt 040b is complete: separate series/state identities, immutable
+contextual observations, pure transition rules, Saved Criteria version 2 and
+Application-owned capture/history/orchestration contracts are implemented.
+All 672 offline tests pass. Cabin alert materialization remains unwired until
+Prompt 040c adds the compatible SQLite schema and repository. Prompt 040c –
+SQLite Cabin Persistence is next.
 
 See `docs/AI Playbook/040 - Cabin Availability.md` and the 040a Codex prompt for
 the proposed evidence, preference, alert and implementation sequence.

@@ -10,7 +10,8 @@ public sealed record CruiseAlertSettings
         bool priceDropEnabled = true,
         bool promotionEnabled = true,
         bool savedCriteriaEnabled = true,
-        decimal minimumPriceDropPercentage = 0)
+        decimal minimumPriceDropPercentage = 0,
+        bool cabinAvailabilityEnabled = true)
     {
         if (minimumPriceDropPercentage is < 0 or > 100)
             throw new ArgumentOutOfRangeException(nameof(minimumPriceDropPercentage));
@@ -18,13 +19,15 @@ public sealed record CruiseAlertSettings
         PromotionEnabled = promotionEnabled;
         SavedCriteriaEnabled = savedCriteriaEnabled;
         MinimumPriceDropPercentage = minimumPriceDropPercentage;
+        CabinAvailabilityEnabled = cabinAvailabilityEnabled;
     }
 
     public bool PriceDropEnabled { get; }
     public bool PromotionEnabled { get; }
     public bool SavedCriteriaEnabled { get; }
     public decimal MinimumPriceDropPercentage { get; }
-    public string Fingerprint => Hash($"alert-settings:v1|{PriceDropEnabled}|{PromotionEnabled}|{SavedCriteriaEnabled}|{MinimumPriceDropPercentage.ToString("G29", CultureInfo.InvariantCulture)}");
+    public bool CabinAvailabilityEnabled { get; }
+    public string Fingerprint => Hash($"alert-settings:v2|{PriceDropEnabled}|{PromotionEnabled}|{SavedCriteriaEnabled}|{MinimumPriceDropPercentage.ToString("G29", CultureInfo.InvariantCulture)}|{CabinAvailabilityEnabled}");
 
     internal static string Hash(string value) =>
         Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
