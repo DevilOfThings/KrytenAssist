@@ -314,8 +314,14 @@ compatible explicit baseline, not proven retailer publication. Prompt 041b is
 complete: provider-independent stable route/catalogue identities, semantic
 discovery scopes, positive occurrence/check evidence, pure first-observed
 detection and Application capture/repository/query/use-case contracts are
-implemented. All 729 offline tests pass. Prompt 041c is next; no schema,
-migration, provider mapping, alert change or UI was added.
+implemented. Prompt 041c is also complete. Migration
+`20260719214241_AddCruiseDiscoveryPersistence` adds normalized independent
+scope, criterion/value, check, occurrence, rejection and catalogue storage.
+Atomic recording seeds baselines, confirms later first-observed events,
+preserves exact retries and prevents concurrent double-detection. Baseline
+catalogue entries correctly have no event key. Strict reconstruction verifies
+all stable identities and timestamp companions. All 734 offline tests pass;
+Prompt 041d is next.
 
 ### Existing-System Findings
 
@@ -362,6 +368,40 @@ migration, provider mapping, alert change or UI was added.
 - The pure detector is registered immediately. Repository-dependent use cases
   wait for Prompt 041c's adapter so generic API composition remains valid.
 - The solution builds with zero errors and all 729 offline tests pass.
+
+### 041c Analysis
+
+- Normalized persistence needs separate scope, semantic criterion/value, check,
+  occurrence, rejection and source-catalogue tables. Checks retain only positive
+  evidence and bounded review diagnostics.
+- Scope-row creation and the first accepted check form one transaction; a
+  committed scope row is the durable baseline marker.
+- Catalogue rows reference retained first/latest occurrences. UTC companions
+  provide deterministic ordering while original timestamp offsets round-trip.
+- The 041b catalogue projection needs one focused correction: baseline entries
+  have no first-observed event, so `FirstObservedEventKey` must be nullable and
+  the first-observed list filters null values.
+- Atomic repository recording, rather than optimistic Application detection,
+  must own baseline seeding, catalogue insertion and event confirmation so
+  retries/concurrency cannot double-detect.
+- Discovery storage remains physically independent from History, personal
+  state, alerts and cabin evidence. No TUI or alert integration belongs in
+  041c.
+
+### 041c Results
+
+- The generated migration creates seven discovery-only normalized tables with
+  internal cascades and restricted catalogue occurrence references.
+- Repository recording is one transaction with bounded SQLite contention and
+  uniqueness retries.
+- First/latest evidence survives restart with original offsets; deterministic
+  UTC/fingerprint ordering prevents regression from older checks.
+- Baseline, known-only, later-discovery, retry, migration/schema and concurrent
+  same-identity behavior are covered by isolated SQLite tests.
+- Infrastructure supplies the repository and Application now registers the
+  dependent recording/query use cases without breaking API composition.
+- EF reports no pending model changes; the solution builds and all 734 offline
+  tests pass.
 
 ### Agreed 041a Decisions
 

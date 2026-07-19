@@ -10,7 +10,7 @@ Phase 7 – Cruise Assistant
 
 Current Prompt
 --------------
-Prompt 041c – SQLite Discovery Persistence (next; unstarted)
+Prompt 041d – Trusted TUI Itinerary Capture (next; unstarted)
 
 Prompt 037 – Cruise History and Price Tracking, including its 037h Multiple
 Cruise Deals extension, is complete. Kryten can explicitly capture currently
@@ -741,9 +741,18 @@ typed itinerary alert remains deferred to 041e because existing alerts are
 sailing-based. Prompt 041b is complete with stable versioned identities,
 immutable positive evidence, pure baseline/first-observed policy, controlled
 capture/results, an atomic repository contract and recording/query use cases.
-The solution builds and all 729 offline tests pass. Prompt 041c – SQLite
-Discovery Persistence is next and remains unstarted; Prompt 042 remains
-unstarted.
+The solution builds and all 729 offline tests pass. Prompt 041c is now defined:
+normalized independent scope/check/occurrence/rejection/catalogue storage, an
+atomic baseline and first-observed transaction, concurrency-safe idempotency,
+strict reconstruction, migration and DI composition. It includes the required
+focused correction that baseline catalogue entries have no first-observed event
+key. Prompt 041c is complete. Migration
+`20260719214241_AddCruiseDiscoveryPersistence` adds seven normalized independent
+discovery tables. Atomic retry-safe recording seeds scope baselines, retains
+positive checks and confirms later unseen itinerary events without concurrent
+duplicates. Strict restart reconstruction and DI composition are covered; the
+solution builds and all 734 offline tests pass. Prompt 041d – Trusted TUI
+Itinerary Capture is next and remains unstarted; Prompt 042 remains unstarted.
 
 ---
 

@@ -9,6 +9,10 @@ internal static class CruisePersistenceConversions
         value => value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
         value => System.DateOnly.ParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture));
 
+    public static readonly ValueConverter<DateOnly?, string?> NullableDateOnly = new(
+        value => value.HasValue ? value.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) : null,
+        value => value == null ? null : System.DateOnly.ParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture));
+
     public static readonly ValueConverter<DateTimeOffset, string> DateTimeOffset = new(
         value => value.ToString("O", CultureInfo.InvariantCulture),
         value => System.DateTimeOffset.ParseExact(value, "O", CultureInfo.InvariantCulture));

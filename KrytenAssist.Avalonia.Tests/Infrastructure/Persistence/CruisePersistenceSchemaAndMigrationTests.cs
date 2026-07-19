@@ -112,13 +112,14 @@ public sealed class CruisePersistenceSchemaAndMigrationTests
         await context.Database.MigrateAsync();
         var applied = await context.Database.GetAppliedMigrationsAsync();
 
-        Assert.Equal(6, applied.Count());
+        Assert.Equal(7, applied.Count());
         Assert.Contains(InitialMigration, applied);
         Assert.Contains(applied, migration => migration.EndsWith("_AddCruiseHistoryPersistence", StringComparison.Ordinal));
         Assert.Contains(applied, migration => migration.EndsWith("_HardenCruiseHistoryRecording", StringComparison.Ordinal));
         Assert.Contains(applied, migration => migration.EndsWith("_AddPersonalCruiseState", StringComparison.Ordinal));
         Assert.Contains(applied, migration => migration.EndsWith("_AddCruiseAlertPersistence", StringComparison.Ordinal));
         Assert.Contains(applied, migration => migration.EndsWith("_AddCruiseCabinPersistence", StringComparison.Ordinal));
+        Assert.Contains(applied, migration => migration.EndsWith("_AddCruiseDiscoveryPersistence", StringComparison.Ordinal));
     }
 
     [Fact]

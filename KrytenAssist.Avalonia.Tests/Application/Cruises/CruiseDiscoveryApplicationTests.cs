@@ -74,16 +74,16 @@ public sealed class CruiseDiscoveryApplicationTests
     }
 
     [Fact]
-    public void Application_registration_includes_only_repository_independent_discovery_service()
+    public void Application_registration_includes_discovery_services_once_repository_contract_is_available()
     {
         var services = new ServiceCollection();
         ApplicationDependencyInjection.AddApplication(services);
 
         services.Should().Contain(x => x.ServiceType == typeof(CruiseNewItineraryDetector));
-        services.Should().NotContain(x => x.ServiceType == typeof(RecordCheck));
-        services.Should().NotContain(x => x.ServiceType == typeof(ListItineraries));
-        services.Should().NotContain(x => x.ServiceType == typeof(GetItinerary));
-        services.Should().NotContain(x => x.ServiceType == typeof(ListChecks));
+        services.Should().Contain(x => x.ServiceType == typeof(RecordCheck));
+        services.Should().Contain(x => x.ServiceType == typeof(ListItineraries));
+        services.Should().Contain(x => x.ServiceType == typeof(GetItinerary));
+        services.Should().Contain(x => x.ServiceType == typeof(ListChecks));
     }
 
     private static CatalogueEntry Entry(string id, DateTimeOffset time)

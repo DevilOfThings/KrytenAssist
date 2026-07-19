@@ -16,7 +16,7 @@ public sealed record CruiseItineraryCatalogueEntry(
     CruiseItineraryOccurrence LatestOccurrence,
     DateTimeOffset FirstSeenAt,
     DateTimeOffset LastSeenAt,
-    string FirstObservedEventKey);
+    string? FirstObservedEventKey);
 
 public sealed record CruiseDiscoveryRecordResult(
     CruiseDiscoveryOperationStatus Status,

@@ -31,6 +31,13 @@ public sealed class KrytenAssistDbContext : DbContext
     public DbSet<CruiseCabinContextChildAgeEntity> CruiseCabinContextChildAges => Set<CruiseCabinContextChildAgeEntity>();
     public DbSet<CruiseCabinObservationEntity> CruiseCabinObservations => Set<CruiseCabinObservationEntity>();
     public DbSet<CruiseCabinObservationStateEntity> CruiseCabinObservationStates => Set<CruiseCabinObservationStateEntity>();
+    public DbSet<CruiseDiscoveryScopeEntity> CruiseDiscoveryScopes => Set<CruiseDiscoveryScopeEntity>();
+    public DbSet<CruiseDiscoveryScopeCriterionEntity> CruiseDiscoveryScopeCriteria => Set<CruiseDiscoveryScopeCriterionEntity>();
+    public DbSet<CruiseDiscoveryScopeCriterionValueEntity> CruiseDiscoveryScopeCriterionValues => Set<CruiseDiscoveryScopeCriterionValueEntity>();
+    public DbSet<CruiseDiscoveryCheckEntity> CruiseDiscoveryChecks => Set<CruiseDiscoveryCheckEntity>();
+    public DbSet<CruiseDiscoveryOccurrenceEntity> CruiseDiscoveryOccurrences => Set<CruiseDiscoveryOccurrenceEntity>();
+    public DbSet<CruiseDiscoveryRejectionEntity> CruiseDiscoveryRejections => Set<CruiseDiscoveryRejectionEntity>();
+    public DbSet<CruiseItineraryCatalogueEntity> CruiseItineraryCatalogue => Set<CruiseItineraryCatalogueEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

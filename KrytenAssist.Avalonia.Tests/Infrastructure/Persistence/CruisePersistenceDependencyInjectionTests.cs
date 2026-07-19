@@ -20,6 +20,8 @@ using AlertSettingsRepository = KrytenInfrastructure::KrytenAssist.Infrastructur
 using CriteriaStateRepository = KrytenInfrastructure::KrytenAssist.Infrastructure.Persistence.SqliteSavedCruiseCriteriaStateRepository;
 using CabinContract = KrytenApplication::KrytenAssist.Application.Abstractions.Persistence.ICruiseCabinObservationRepository;
 using CabinRepository = KrytenInfrastructure::KrytenAssist.Infrastructure.Persistence.SqliteCruiseCabinObservationRepository;
+using DiscoveryContract = KrytenApplication::KrytenAssist.Application.Abstractions.Persistence.ICruiseDiscoveryRepository;
+using DiscoveryRepository = KrytenInfrastructure::KrytenAssist.Infrastructure.Persistence.SqliteCruiseDiscoveryRepository;
 
 namespace KrytenAssist.Avalonia.Tests.Infrastructure.Persistence;
 
@@ -52,6 +54,7 @@ public sealed class CruisePersistenceDependencyInjectionTests
             Assert.IsType<AlertSettingsRepository>(scope.ServiceProvider.GetRequiredService<AlertSettingsContract>());
             Assert.IsType<CriteriaStateRepository>(scope.ServiceProvider.GetRequiredService<CriteriaStateContract>());
             Assert.IsType<CabinRepository>(scope.ServiceProvider.GetRequiredService<CabinContract>());
+            Assert.IsType<DiscoveryRepository>(scope.ServiceProvider.GetRequiredService<DiscoveryContract>());
             Assert.True(File.Exists(databasePath));
         }
         finally
