@@ -118,7 +118,7 @@ internal static class CruiseAlertApplicationTestFactory
                 saved,
                 preferences,
                 repository,
-                alertRepository as TestAlertRepository));
+                alerts: alertRepository as TestAlertRepository));
     }
 }
 

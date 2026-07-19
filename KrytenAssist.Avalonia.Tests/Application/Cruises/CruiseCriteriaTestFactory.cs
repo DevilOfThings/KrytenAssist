@@ -8,6 +8,7 @@ using EvaluateForSailing = KrytenApplication::KrytenAssist.Application.Cruises.E
 using GetPreferences = KrytenApplication::KrytenAssist.Application.Cruises.GetCruisePreferences;
 using GetSaved = KrytenApplication::KrytenAssist.Application.Cruises.GetSavedCruise;
 using ListHistories = KrytenApplication::KrytenAssist.Application.Cruises.ListCruiseHistories;
+using ListCabinHistories = KrytenApplication::KrytenAssist.Application.Cruises.ListCruiseCabinHistories;
 using ListSaved = KrytenApplication::KrytenAssist.Application.Cruises.ListSavedCruises;
 using Materialize = KrytenApplication::KrytenAssist.Application.Cruises.MaterializeCruiseAlertCandidates;
 using Restore = KrytenApplication::KrytenAssist.Application.Cruises.RestoreCruise;
@@ -24,6 +25,7 @@ internal static class CruiseCriteriaTestFactory
     internal static EvaluateForSaved CreateEvaluator(
         FakeCruisePreferencesRepository preferences,
         FakeCruiseObservationRepository observations,
+        FakeCruiseCabinObservationRepository? cabins = null,
         TestAlertRepository? alerts = null) =>
         new(
             new KrytenApplication::KrytenAssist.Application.Cruises.CruiseCriteriaEvidenceSelector(),
@@ -33,28 +35,30 @@ internal static class CruiseCriteriaTestFactory
                 new TestCriteriaStateRepository(),
                 new Materialize(alerts ?? new TestAlertRepository())),
             new GetPreferences(preferences),
-            new ListHistories(observations, new CruisePriceHistoryAnalyzer()));
+            new ListHistories(observations, new CruisePriceHistoryAnalyzer()),
+            new ListCabinHistories(cabins ?? new FakeCruiseCabinObservationRepository(), new CruiseCabinHistoryAnalyzer()));
 
     internal static EvaluateForSailing CreateForSailing(
         FakeSavedCruiseRepository saved,
         FakeCruisePreferencesRepository preferences,
         FakeCruiseObservationRepository observations,
+        FakeCruiseCabinObservationRepository? cabins = null,
         TestAlertRepository? alerts = null) =>
-        new(new GetSaved(saved), CreateEvaluator(preferences, observations, alerts));
+        new(new GetSaved(saved), CreateEvaluator(preferences, observations, cabins, alerts));
 
     internal static SaveAndEvaluate CreateSave(
         FakeSavedCruiseRepository saved,
         FakeCruisePreferencesRepository preferences,
         FakeCruiseObservationRepository observations,
         TestAlertRepository? alerts = null) =>
-        new(new Save(saved), CreateEvaluator(preferences, observations, alerts));
+        new(new Save(saved), CreateEvaluator(preferences, observations, alerts: alerts));
 
     internal static RestoreAndEvaluate CreateRestore(
         FakeSavedCruiseRepository saved,
         FakeCruisePreferencesRepository preferences,
         FakeCruiseObservationRepository observations,
         TestAlertRepository? alerts = null) =>
-        new(new Restore(saved), CreateEvaluator(preferences, observations, alerts));
+        new(new Restore(saved), CreateEvaluator(preferences, observations, alerts: alerts));
 
     internal static SavePreferencesAndEvaluate CreateSavePreferences(
         FakeSavedCruiseRepository saved,
@@ -65,7 +69,8 @@ internal static class CruiseCriteriaTestFactory
             new SavePreferences(preferences),
             new ListSaved(saved),
             new ListHistories(observations, new CruisePriceHistoryAnalyzer()),
-            CreateEvaluator(preferences, observations, alerts));
+            new ListCabinHistories(new FakeCruiseCabinObservationRepository(), new CruiseCabinHistoryAnalyzer()),
+            CreateEvaluator(preferences, observations, alerts: alerts));
 }
 
 internal sealed class TestCriteriaStateRepository : CriteriaStateRepository

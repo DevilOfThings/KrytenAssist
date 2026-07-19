@@ -6,7 +6,9 @@ public sealed class CruiseCriteriaEvidenceSelector
 {
     public CruiseCriteriaEvidence Select(
         SavedCruise savedCruise,
-        IEnumerable<CruiseRecordedHistory> histories)
+        IEnumerable<CruiseRecordedHistory> histories,
+        IEnumerable<CruiseCabinRecordedHistory>? cabinHistories = null,
+        CruiseCabinObservation? explicitCabinObservation = null)
     {
         ArgumentNullException.ThrowIfNull(savedCruise);
         ArgumentNullException.ThrowIfNull(histories);
@@ -23,13 +25,15 @@ public sealed class CruiseCriteriaEvidenceSelector
             .ThenByDescending(item => item.Fingerprint.PersistenceKey, StringComparer.Ordinal)
             .FirstOrDefault();
 
+        var cabin = SelectCabin(savedCruise, cabinHistories ?? [], explicitCabinObservation);
         if (latest is not null)
         {
             return new CruiseCriteriaEvidence(
                 CruiseAlertEvidenceOrigin.RecordedObservation,
                 latest.Fingerprint.PersistenceKey,
                 latest.Observation.ObservedAt,
-                latest.Observation.Snapshot.Prices);
+                latest.Observation.Snapshot.Prices,
+                cabin);
         }
 
         var snapshot = savedCruise.Snapshot;
@@ -37,7 +41,32 @@ public sealed class CruiseCriteriaEvidenceSelector
             CruiseAlertEvidenceOrigin.SavedSnapshot,
             SavedSnapshotEvidenceKey(snapshot),
             snapshot.SavedAt,
-            [snapshot.DisplayedPrice]);
+            [snapshot.DisplayedPrice],
+            cabin);
+    }
+
+    private static CruiseCabinObservation? SelectCabin(
+        SavedCruise savedCruise,
+        IEnumerable<CruiseCabinRecordedHistory> histories,
+        CruiseCabinObservation? explicitObservation)
+    {
+        var sourceId = NormalizeOptional(savedCruise.Snapshot.RetailSource?.Id);
+        if (sourceId is null) return null;
+        if (explicitObservation is not null &&
+            explicitObservation.SailingKey == savedCruise.SailingKey &&
+            NormalizeOptional(explicitObservation.Source.Id) == sourceId)
+        {
+            return explicitObservation;
+        }
+
+        return histories
+            .SelectMany(history => history.Observations)
+            .Where(observation => observation.SailingKey == savedCruise.SailingKey &&
+                NormalizeOptional(observation.Source.Id) == sourceId)
+            .OrderByDescending(observation => observation.ObservedAt)
+            .ThenByDescending(observation => observation.StateFingerprint, StringComparer.Ordinal)
+            .ThenByDescending(observation => observation.SeriesKey, StringComparer.Ordinal)
+            .FirstOrDefault();
     }
 
     private static string SavedSnapshotEvidenceKey(SavedCruiseSnapshot snapshot)

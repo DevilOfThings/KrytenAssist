@@ -430,6 +430,53 @@
                                 </StackPanel>
                             </Border>
 
+                            <Border Classes="workspace-surface"
+                                    Padding="12"
+                                    IsVisible="{Binding HasCapturedCabinCandidates}">
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="Captured cabin evidence"
+                                               FontSize="16"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Text="Cabin evidence is separate from price observations and is recorded only when you choose it."
+                                               Classes="secondary-text"
+                                               TextWrapping="Wrap" />
+                                    <ItemsControl ItemsSource="{Binding CapturedCabinCandidates}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="viewModels:CruiseCabinCaptureReviewItemViewModel">
+                                                <Border Classes="status-surface" Padding="10" Margin="0,0,0,7">
+                                                    <StackPanel Spacing="3">
+                                                        <TextBlock Text="{Binding StatusText}" FontWeight="SemiBold" />
+                                                        <TextBlock Text="{Binding DisplayLabel}" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                                        <TextBlock Text="{Binding SourceText, StringFormat='Source: {0}'}" IsVisible="{Binding IsReady}" />
+                                                        <TextBlock Text="{Binding Ship, StringFormat='Ship: {0}'}" IsVisible="{Binding IsReady}" />
+                                                        <TextBlock Text="{Binding DepartureText, StringFormat='Departure: {0}'}" IsVisible="{Binding IsReady}" />
+                                                        <TextBlock Text="{Binding DurationText, StringFormat='Duration: {0}'}" IsVisible="{Binding IsReady}" />
+                                                        <TextBlock Text="{Binding ContextText, StringFormat='Search: {0}'}" TextWrapping="Wrap" IsVisible="{Binding IsReady}" />
+                                                        <TextBlock Text="{Binding StatesText}" TextWrapping="Wrap" IsVisible="{Binding IsReady}" />
+                                                        <TextBlock Text="{Binding CoverageText}" FontWeight="SemiBold" IsVisible="{Binding IsReady}" />
+                                                        <TextBlock Text="{Binding EvidenceTimeText, StringFormat='Evidence time: {0}'}" IsVisible="{Binding IsReady}" />
+                                                        <TextBlock Text="{Binding Message}" Classes="secondary-text" TextWrapping="Wrap" IsVisible="{Binding HasMessage}" />
+                                                        <TextBlock Text="{Binding SourceReference}" Classes="secondary-text"
+                                                                   TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                                                                   ToolTip.Tip="{Binding SourceReference}" />
+                                                        <Button Content="Record Cabin Observation" Classes="primary"
+                                                                HorizontalAlignment="Left" Command="{Binding RecordCommand}"
+                                                                IsVisible="{Binding IsReady}" />
+                                                        <TextBlock Text="{Binding RecordingMessage}" Classes="secondary-text"
+                                                                   TextWrapping="Wrap" IsVisible="{Binding HasRecordingMessage}" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+
+                            <TextBlock Text="{Binding CabinCaptureMessage}"
+                                       Classes="secondary-text"
+                                       TextWrapping="Wrap"
+                                       IsVisible="{Binding HasCabinCaptureMessage}" />
+
                             <views:CruiseEvaluationEditorView DataContext="{Binding Evaluation}" />
 
                             </StackPanel>

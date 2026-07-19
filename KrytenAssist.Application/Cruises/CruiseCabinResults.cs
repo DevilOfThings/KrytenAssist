@@ -27,10 +27,19 @@ public sealed record CruiseCabinAlertCandidateResult(CruiseCabinOperationStatus 
     public static CruiseCabinAlertCandidateResult Failed() => new(CruiseCabinOperationStatus.Failed, [], "Cabin alerts could not be evaluated locally.");
 }
 
-public sealed record CruiseCabinRecordAndAlertResult(CruiseCabinRecordResult Recording, CruiseCabinAlertCandidateResult? Alerts)
+public sealed record CruiseCabinRecordAndAlertResult(
+    CruiseCabinRecordResult Recording,
+    CruiseAlertEvaluationResult? CabinAvailabilityAlerts,
+    CruiseAlertEvaluationResult? SavedCriteriaAlerts)
 {
     public bool RecordingSucceeded => Recording.Status is CruiseCabinOperationStatus.FirstObservationRecorded or
         CruiseCabinOperationStatus.ChangedObservationRecorded or CruiseCabinOperationStatus.AlreadyCurrent;
-    public bool AlertEvaluationRetryable => Recording.Status == CruiseCabinOperationStatus.ChangedObservationRecorded &&
-        Alerts?.Status is CruiseCabinOperationStatus.Cancelled or CruiseCabinOperationStatus.Failed;
+    public int CreatedAlertCount => (CabinAvailabilityAlerts?.CreatedAlerts.Count ?? 0) +
+        (SavedCriteriaAlerts?.CreatedAlerts.Count ?? 0);
+    public bool AnyAlertEvaluationFailed => CabinAvailabilityAlerts?.Status == CruiseAlertOperationStatus.Failed ||
+        SavedCriteriaAlerts?.Status == CruiseAlertOperationStatus.Failed;
+    public bool AnyAlertEvaluationCancelled => CabinAvailabilityAlerts?.Status == CruiseAlertOperationStatus.Cancelled ||
+        SavedCriteriaAlerts?.Status == CruiseAlertOperationStatus.Cancelled;
+    public bool AlertEvaluationRetryable => RecordingSucceeded &&
+        (AnyAlertEvaluationFailed || AnyAlertEvaluationCancelled);
 }

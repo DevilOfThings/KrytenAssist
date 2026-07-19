@@ -58,7 +58,7 @@ public sealed class RecordCruiseObservationAndEvaluateAlerts(
         var savedCriteriaAlerts = await evaluateSavedCriteria.ExecuteAsync(
             CruiseSailingKey.From(observation),
             alertCreatedAt,
-            cancellationToken);
+            cancellationToken: cancellationToken);
         return new CruiseRecordAndAlertResult(
             recording,
             observationAlerts,

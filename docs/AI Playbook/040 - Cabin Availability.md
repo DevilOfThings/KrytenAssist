@@ -334,6 +334,19 @@ chooser, unavailable mapping, recording, evaluation or UI is included. See the
 - preserve recording success if alert/criteria evaluation fails
 - trigger supported saved-criteria reevaluation at explicit boundaries
 
+The agreed analysis uses one Application-owned post-commit coordinator. It
+reloads/verifies committed compatible history, materializes only explicit
+preferred-category transitions for Shortlisted cruises, and independently
+reevaluates Saved Criteria with the committed cabin snapshot. Saved Criteria
+selection now combines existing price evidence with the latest exact-sailing,
+same-retailer cabin series without merging search contexts. Cabin evidence is
+included at cabin record, price record, save, restore and preference-save
+boundaries. Cruise Discovery presents a separate bounded cabin review with an
+explicit per-candidate Record Cabin Observation action; price recording never
+records cabin evidence. Recording remains successful and retryable when later
+evaluation fails. See the 040e Codex prompt for the full orchestration, result,
+failure and test contract.
+
 ### 040f – Cabin Availability Presentation
 
 - add local latest/history presentation to the Cruise workspace
@@ -392,4 +405,8 @@ Prompt 040d – TUI Cabin Evidence Capture is complete. The fixed payload now
 provides bounded demonstrated Inside Cabin evidence, and the trusted TUI adapter
 maps explicit search context to provider-independent partial observations while
 preserving existing price capture. All 698 offline tests pass. Prompt 040e –
-Recording and Preference Evaluation is next.
+Recording and Preference Evaluation is complete. Cabin evidence now has an
+independent explicit recording action, verified post-commit transition alert
+materialization and Saved Criteria participation at all agreed explicit
+boundaries. Recording success survives later evaluation failures. All 706
+offline tests pass. Prompt 040f – Cabin Availability Presentation is next.

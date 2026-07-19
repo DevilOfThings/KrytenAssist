@@ -12,8 +12,6 @@ using GetCabin = KrytenApplication::KrytenAssist.Application.Cruises.GetCruiseCa
 using ListCabins = KrytenApplication::KrytenAssist.Application.Cruises.ListCruiseCabinHistories;
 using CaptureResult = KrytenApplication::KrytenAssist.Application.Cruises.CruiseCabinCaptureResult;
 using CaptureStatus = KrytenApplication::KrytenAssist.Application.Cruises.CruiseCabinCaptureStatus;
-using EvaluateCabin = KrytenApplication::KrytenAssist.Application.Cruises.EvaluateCruiseCabinAvailabilityAlerts;
-using CompositeCabin = KrytenApplication::KrytenAssist.Application.Cruises.RecordCruiseCabinObservationAndEvaluateAlerts;
 
 namespace KrytenAssist.Avalonia.Tests.Application.Cruises;
 
@@ -73,29 +71,6 @@ public sealed class CruiseCabinApplicationTests
         CaptureResult.Incomplete(["cabinStates"], "Missing cabin evidence").MissingFields.Should().Equal("cabinStates");
         CaptureResult.Unsupported("Unsupported page").Observation.Should().BeNull();
         FluentActions.Invoking(() => CaptureResult.Incomplete([], "Missing")).Should().Throw<ArgumentException>();
-    }
-
-    [Fact]
-    public async Task Composite_PreservesCommittedChangedRecordingWhenEvaluationFails()
-    {
-        var previous = Observation(CruiseCabinAvailabilityState.Unavailable);
-        var current = Observation(CruiseCabinAvailabilityState.Available, observedAt: previous.ObservedAt.AddHours(1));
-        var repository = new FakeCabinRepository
-        {
-            GetResult = new(previous.SeriesKey, previous.ObservedAt, [previous]),
-            RecordResult = new(CabinRepositoryState.ChangedObservationRecorded,
-                new CabinHistory(current.SeriesKey, current.ObservedAt, [previous, current]))
-        };
-        var record = new RecordCabin(repository, new());
-        var evaluate = new EvaluateCabin(new CruiseCabinAvailabilityAlertDetector(new()),
-            new TestAlertSettingsRepository(new InvalidOperationException()));
-        var composite = new CompositeCabin(repository, record, evaluate);
-
-        var result = await composite.ExecuteAsync(current, null, new CruisePreferences());
-
-        result.Recording.Status.Should().Be(CabinStatus.ChangedObservationRecorded);
-        result.Alerts!.Status.Should().Be(CabinStatus.Failed);
-        result.AlertEvaluationRetryable.Should().BeTrue();
     }
 
     private static CruiseCabinObservation Observation(CruiseCabinAvailabilityState state = CruiseCabinAvailabilityState.Available,

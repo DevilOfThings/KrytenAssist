@@ -15,6 +15,8 @@ using KrytenAssist.Core.Cruises;
 using ICruisePageCaptureService = KrytenApplication::KrytenAssist.Application.Cruises.ICruisePageCaptureService;
 using ICruisePageBatchCaptureService = KrytenApplication::KrytenAssist.Application.Cruises.ICruisePageBatchCaptureService;
 using RecordObservation = KrytenApplication::KrytenAssist.Application.Cruises.RecordCruiseObservationAndEvaluateAlerts;
+using ICabinPageCaptureService = KrytenApplication::KrytenAssist.Application.Cruises.ICruiseCabinPageCaptureService;
+using RecordCabinObservation = KrytenApplication::KrytenAssist.Application.Cruises.RecordCruiseCabinObservationAndEvaluateAlerts;
 
 namespace KrytenAssist.Avalonia.ViewModels;
 
@@ -48,7 +50,9 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
         CruiseSaveAndEvaluationViewModel? evaluation = null,
         SavedCruisesViewModel? savedCruises = null,
         CruiseAlertCentreViewModel? alertCentre = null,
-        CruiseAlertCoordinator? alertCoordinator = null)
+        CruiseAlertCoordinator? alertCoordinator = null,
+        ICabinPageCaptureService? cabinCaptureService = null,
+        RecordCabinObservation? recordCabinObservation = null)
     {
         ArgumentNullException.ThrowIfNull(skillRegistry);
         ArgumentNullException.ThrowIfNull(clock);
@@ -65,7 +69,9 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
             batchCaptureService,
             recordObservation,
             sharedEvaluation,
-            alertCoordinator);
+            alertCoordinator,
+            cabinCaptureService,
+            recordCabinObservation);
         SavedCruises = savedCruises;
         AlertCentre = alertCentre;
         AlertCoordinator = alertCoordinator;

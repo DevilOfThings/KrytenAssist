@@ -6,19 +6,23 @@ public sealed class EvaluateSavedCruiseCriteriaForSavedCruise(
     CruiseCriteriaEvidenceSelector evidenceSelector,
     EvaluateSavedCruiseCriteriaAlerts evaluate,
     GetCruisePreferences getPreferences,
-    ListCruiseHistories listHistories)
+    ListCruiseHistories listHistories,
+    ListCruiseCabinHistories listCabinHistories)
 {
     public Task<CruiseAlertEvaluationResult> ExecuteAsync(
         SavedCruise savedCruise,
         CruisePreferences preferences,
         IReadOnlyList<CruiseRecordedHistory> histories,
+        IReadOnlyList<CruiseCabinRecordedHistory> cabinHistories,
         DateTimeOffset alertCreatedAt,
+        CruiseCabinObservation? explicitCabinObservation = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(savedCruise);
         ArgumentNullException.ThrowIfNull(preferences);
         ArgumentNullException.ThrowIfNull(histories);
-        var evidence = evidenceSelector.Select(savedCruise, histories);
+        ArgumentNullException.ThrowIfNull(cabinHistories);
+        var evidence = evidenceSelector.Select(savedCruise, histories, cabinHistories, explicitCabinObservation);
         return evaluate.ExecuteAsync(
             savedCruise,
             preferences,
@@ -30,6 +34,7 @@ public sealed class EvaluateSavedCruiseCriteriaForSavedCruise(
     public async Task<CruiseAlertEvaluationResult> ExecuteAsync(
         SavedCruise savedCruise,
         DateTimeOffset alertCreatedAt,
+        CruiseCabinObservation? explicitCabinObservation = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(savedCruise);
@@ -56,11 +61,19 @@ public sealed class EvaluateSavedCruiseCriteriaForSavedCruise(
             return CruiseAlertEvaluationResult.Failed();
         }
 
+        var cabinHistories = await listCabinHistories.ExecuteAsync(cancellationToken);
+        if (cabinHistories.Status == CruiseCabinOperationStatus.Cancelled)
+            return CruiseAlertEvaluationResult.Cancelled();
+        if (cabinHistories.Status != CruiseCabinOperationStatus.Success)
+            return CruiseAlertEvaluationResult.Failed();
+
         return await ExecuteAsync(
             savedCruise,
             preferences.Preferences,
             histories.Histories.Select(item => item.History).ToArray(),
+            cabinHistories.Histories.Select(item => item.History).ToArray(),
             alertCreatedAt,
+            explicitCabinObservation,
             cancellationToken);
     }
 }
@@ -72,6 +85,7 @@ public sealed class EvaluateSavedCruiseCriteriaForSailing(
     public async Task<CruiseAlertEvaluationResult?> ExecuteAsync(
         CruiseSailingKey sailingKey,
         DateTimeOffset alertCreatedAt,
+        CruiseCabinObservation? explicitCabinObservation = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(sailingKey);
@@ -81,7 +95,7 @@ public sealed class EvaluateSavedCruiseCriteriaForSailing(
             SavedCruiseQueryStatus.NotFound => null,
             SavedCruiseQueryStatus.Cancelled => CruiseAlertEvaluationResult.Cancelled(),
             SavedCruiseQueryStatus.Found when saved.SavedCruise?.Status == SavedCruiseStatus.Shortlisted =>
-                await evaluate.ExecuteAsync(saved.SavedCruise, alertCreatedAt, cancellationToken),
+                await evaluate.ExecuteAsync(saved.SavedCruise, alertCreatedAt, explicitCabinObservation, cancellationToken),
             SavedCruiseQueryStatus.Found => null,
             _ => CruiseAlertEvaluationResult.Failed()
         };
@@ -108,7 +122,7 @@ public sealed class SaveCruiseAndEvaluateCriteria(
         var alerts = await evaluate.ExecuteAsync(
             mutation.SavedCruise,
             alertCreatedAt,
-            cancellationToken);
+            cancellationToken: cancellationToken);
         return new SavedCruiseMutationAndAlertResult(mutation, alerts);
     }
 }
@@ -133,7 +147,7 @@ public sealed class RestoreCruiseAndEvaluateCriteria(
         var alerts = await evaluate.ExecuteAsync(
             mutation.SavedCruise,
             alertCreatedAt,
-            cancellationToken);
+            cancellationToken: cancellationToken);
         return new SavedCruiseMutationAndAlertResult(mutation, alerts);
     }
 }
@@ -142,6 +156,7 @@ public sealed class SaveCruisePreferencesAndEvaluateCriteria(
     SaveCruisePreferences savePreferences,
     ListSavedCruises listSavedCruises,
     ListCruiseHistories listHistories,
+    ListCruiseCabinHistories listCabinHistories,
     EvaluateSavedCruiseCriteriaForSavedCruise evaluate)
 {
     public async Task<CruisePreferencesMutationAndAlertResult> ExecuteAsync(
@@ -196,6 +211,13 @@ public sealed class SaveCruisePreferencesAndEvaluateCriteria(
         }
 
         var histories = historyResult.Histories.Select(item => item.History).ToArray();
+        var cabinHistoryResult = await listCabinHistories.ExecuteAsync(cancellationToken);
+        if (cabinHistoryResult.Status == CruiseCabinOperationStatus.Cancelled)
+            return new CruisePreferencesMutationAndAlertResult(mutation,
+                CruiseCriteriaBulkEvaluationResult.Cancelled(eligible.Length, unprocessedCount: eligible.Length));
+        if (cabinHistoryResult.Status != CruiseCabinOperationStatus.Success)
+            return new CruisePreferencesMutationAndAlertResult(mutation, CruiseCriteriaBulkEvaluationResult.Failed());
+        var cabinHistories = cabinHistoryResult.Histories.Select(item => item.History).ToArray();
         var completed = new List<CruiseCriteriaSailingEvaluationResult>();
         foreach (var saved in eligible)
         {
@@ -213,8 +235,9 @@ public sealed class SaveCruisePreferencesAndEvaluateCriteria(
                 saved,
                 preferences,
                 histories,
+                cabinHistories,
                 alertCreatedAt,
-                cancellationToken);
+                cancellationToken: cancellationToken);
             completed.Add(new CruiseCriteriaSailingEvaluationResult(saved.SailingKey, result));
             if (result.Status == CruiseAlertOperationStatus.Cancelled)
             {

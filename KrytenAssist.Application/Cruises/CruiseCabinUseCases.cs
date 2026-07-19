@@ -83,27 +83,95 @@ public sealed class EvaluateCruiseCabinAvailabilityAlerts(
     }
 }
 
+public sealed class EvaluateRecordedCruiseCabinAlerts(
+    CruiseCabinAvailabilityAlertDetector detector,
+    ICruiseAlertSettingsRepository settingsRepository,
+    MaterializeCruiseAlertCandidates materialize)
+{
+    public async Task<CruiseAlertEvaluationResult> ExecuteAsync(
+        CruiseCabinObservation previous,
+        CruiseCabinObservation current,
+        SavedCruise? savedCruise,
+        CruisePreferences preferences,
+        DateTimeOffset alertCreatedAt,
+        CancellationToken token = default)
+    {
+        ArgumentNullException.ThrowIfNull(previous);
+        ArgumentNullException.ThrowIfNull(current);
+        ArgumentNullException.ThrowIfNull(preferences);
+        if (token.IsCancellationRequested) return CruiseAlertEvaluationResult.Cancelled();
+        try
+        {
+            var settings = await settingsRepository.GetAsync(token);
+            var candidates = detector.Detect(previous, current, savedCruise, preferences, settings);
+            return await materialize.ExecuteAsync(candidates, alertCreatedAt, token);
+        }
+        catch (OperationCanceledException) { return CruiseAlertEvaluationResult.Cancelled(); }
+        catch { return CruiseAlertEvaluationResult.Failed(); }
+    }
+}
+
 public sealed class RecordCruiseCabinObservationAndEvaluateAlerts(
     ICruiseCabinObservationRepository repository,
     RecordCruiseCabinObservation record,
-    EvaluateCruiseCabinAvailabilityAlerts evaluate)
+    GetSavedCruise getSavedCruise,
+    GetCruisePreferences getPreferences,
+    EvaluateRecordedCruiseCabinAlerts evaluateCabinAlerts,
+    EvaluateSavedCruiseCriteriaForSailing evaluateSavedCriteria)
 {
-    public async Task<CruiseCabinRecordAndAlertResult> ExecuteAsync(CruiseCabinObservation observation,
-        SavedCruise? savedCruise, CruisePreferences preferences,
+    public async Task<CruiseCabinRecordAndAlertResult> ExecuteAsync(
+        CruiseCabinObservation observation,
+        DateTimeOffset alertCreatedAt,
         CancellationToken token = default)
     {
-        ArgumentNullException.ThrowIfNull(observation); ArgumentNullException.ThrowIfNull(preferences);
-        CruiseCabinObservation? previous = null;
-        if (!token.IsCancellationRequested)
-        {
-            try { previous = (await repository.GetAsync(observation.SeriesKey, token))?.LatestObservation; }
-            catch (OperationCanceledException) { return new(CruiseCabinRecordResult.Cancelled(), null); }
-            catch { return new(CruiseCabinRecordResult.Failed(), null); }
-        }
+        ArgumentNullException.ThrowIfNull(observation);
         var recording = await record.ExecuteAsync(observation, token);
-        if (recording.Status != CruiseCabinOperationStatus.ChangedObservationRecorded || previous is null)
-            return new(recording, null);
-        var alerts = await evaluate.ExecuteAsync(previous, observation, savedCruise, preferences, token);
-        return new(recording, alerts);
+        if (!recording.Status.Equals(CruiseCabinOperationStatus.FirstObservationRecorded) &&
+            !recording.Status.Equals(CruiseCabinOperationStatus.ChangedObservationRecorded) &&
+            !recording.Status.Equals(CruiseCabinOperationStatus.AlreadyCurrent))
+            return new(recording, null, null);
+
+        CruiseCabinRecordedHistory? committedHistory;
+        try { committedHistory = await repository.GetAsync(observation.SeriesKey, token); }
+        catch (OperationCanceledException) { return new(recording, CruiseAlertEvaluationResult.Cancelled(), CruiseAlertEvaluationResult.Cancelled()); }
+        catch { return new(recording, CruiseAlertEvaluationResult.Failed(), CruiseAlertEvaluationResult.Failed()); }
+
+        if (committedHistory is null || committedHistory.Observations.Count == 0)
+            return new(recording, CruiseAlertEvaluationResult.Failed(), CruiseAlertEvaluationResult.Failed());
+        var committedCurrent = committedHistory.LatestObservation;
+        var incomingIsCurrent = committedCurrent.SeriesKey == observation.SeriesKey &&
+            committedCurrent.StateFingerprint == observation.StateFingerprint;
+
+        CruiseAlertEvaluationResult? cabinAlerts = null;
+        if (incomingIsCurrent && committedHistory.Observations.Count >= 2)
+        {
+            if (token.IsCancellationRequested)
+                cabinAlerts = CruiseAlertEvaluationResult.Cancelled();
+            else
+            {
+                var savedResult = await getSavedCruise.ExecuteAsync(committedCurrent.SailingKey, token);
+                var preferencesResult = await getPreferences.ExecuteAsync(token);
+                if (savedResult.Status == SavedCruiseQueryStatus.Cancelled ||
+                    preferencesResult.Status == PersonalCruisePreferenceQueryStatus.Cancelled)
+                    cabinAlerts = CruiseAlertEvaluationResult.Cancelled();
+                else if (savedResult.Status == SavedCruiseQueryStatus.Failed ||
+                    preferencesResult.Status != PersonalCruisePreferenceQueryStatus.Success ||
+                    preferencesResult.Preferences is null)
+                    cabinAlerts = CruiseAlertEvaluationResult.Failed();
+                else
+                    cabinAlerts = await evaluateCabinAlerts.ExecuteAsync(
+                        committedHistory.Observations[^2], committedCurrent,
+                        savedResult.SavedCruise, preferencesResult.Preferences,
+                        alertCreatedAt, token);
+            }
+        }
+
+        CruiseAlertEvaluationResult? savedCriteria;
+        if (token.IsCancellationRequested)
+            savedCriteria = CruiseAlertEvaluationResult.Cancelled();
+        else
+            savedCriteria = await evaluateSavedCriteria.ExecuteAsync(
+                committedCurrent.SailingKey, alertCreatedAt, committedCurrent, token);
+        return new(recording, cabinAlerts, savedCriteria);
     }
 }

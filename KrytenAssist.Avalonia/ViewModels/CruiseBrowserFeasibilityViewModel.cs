@@ -20,6 +20,10 @@ using ICruisePageCaptureService = KrytenApplication::KrytenAssist.Application.Cr
 using RecordObservation = KrytenApplication::KrytenAssist.Application.Cruises.RecordCruiseObservationAndEvaluateAlerts;
 using RecordStatus = KrytenApplication::KrytenAssist.Application.Cruises.CruiseObservationRecordStatus;
 using AlertStatus = KrytenApplication::KrytenAssist.Application.Cruises.CruiseAlertOperationStatus;
+using CabinPageCaptureRequest = KrytenApplication::KrytenAssist.Application.Cruises.CruiseCabinPageCaptureRequest;
+using CabinBatchResult = KrytenApplication::KrytenAssist.Application.Cruises.CruiseCabinCaptureBatchResult;
+using ICabinPageCaptureService = KrytenApplication::KrytenAssist.Application.Cruises.ICruiseCabinPageCaptureService;
+using RecordCabinObservation = KrytenApplication::KrytenAssist.Application.Cruises.RecordCruiseCabinObservationAndEvaluateAlerts;
 
 namespace KrytenAssist.Avalonia.ViewModels;
 
@@ -53,6 +57,8 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     private readonly ICruisePageBatchCaptureService? _batchCaptureService;
     private readonly IClock? _clock;
     private readonly RecordObservation? _recordObservation;
+    private readonly ICabinPageCaptureService? _cabinCaptureService;
+    private readonly RecordCabinObservation? _recordCabinObservation;
     private bool _hasStarted;
     private bool _isNavigating;
     private bool _isPageReady;
@@ -82,6 +88,9 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     private IReadOnlyList<CruiseCaptureCandidateReviewItemViewModel> _capturedCandidates =
         Array.Empty<CruiseCaptureCandidateReviewItemViewModel>();
     private bool _wasCaptureTruncated;
+    private IReadOnlyList<CruiseCabinCaptureReviewItemViewModel> _capturedCabinCandidates =
+        Array.Empty<CruiseCabinCaptureReviewItemViewModel>();
+    private string? _cabinCaptureMessage;
     private bool _isBatchRecording;
     private string? _batchRecordingProgressText;
     private string? _batchRecordingSummary;
@@ -104,7 +113,9 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         ICruisePageBatchCaptureService? batchCaptureService = null,
         RecordObservation? recordObservation = null,
         CruiseSaveAndEvaluationViewModel? evaluation = null,
-        CruiseAlertCoordinator? alertCoordinator = null)
+        CruiseAlertCoordinator? alertCoordinator = null,
+        ICabinPageCaptureService? cabinCaptureService = null,
+        RecordCabinObservation? recordCabinObservation = null)
     {
         ArgumentNullException.ThrowIfNull(sourceCatalog);
         ArgumentNullException.ThrowIfNull(trustedHostPolicy);
@@ -114,6 +125,8 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         _batchCaptureService = batchCaptureService;
         _clock = clock;
         _recordObservation = recordObservation;
+        _cabinCaptureService = cabinCaptureService;
+        _recordCabinObservation = recordCabinObservation;
         Evaluation = evaluation;
         _alertCoordinator = alertCoordinator;
         if (Evaluation is not null) Evaluation.PropertyChanged += OnEvaluationPropertyChanged;
@@ -312,7 +325,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         }
     }
 
-    public bool CanCapture => (_batchCaptureService is not null || _captureService is not null) &&
+    public bool CanCapture => (_batchCaptureService is not null || _captureService is not null || _cabinCaptureService is not null) &&
                               _clock is not null &&
                               IsPageReady &&
                               HasSelectedSource &&
@@ -330,6 +343,11 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         _capturedCandidates;
 
     public bool HasCapturedCandidates => CapturedCandidates.Count > 0;
+
+    public IReadOnlyList<CruiseCabinCaptureReviewItemViewModel> CapturedCabinCandidates => _capturedCabinCandidates;
+    public bool HasCapturedCabinCandidates => CapturedCabinCandidates.Count > 0;
+    public string? CabinCaptureMessage => _cabinCaptureMessage;
+    public bool HasCabinCaptureMessage => !string.IsNullOrWhiteSpace(CabinCaptureMessage);
 
     public int ReadyCandidateCount => CapturedCandidates.Count(candidate => candidate.IsReady);
 
@@ -948,6 +966,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         _captureCancellation?.Dispose();
         _captureCancellation = new CancellationTokenSource();
         _captureGeneration++;
+        ClearCabinCaptureState();
         SetCaptureResult(null, null, Array.Empty<string>());
         IsCapturing = true;
         CapturePayloadRequested?.Invoke(this, EventArgs.Empty);
@@ -960,7 +979,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     public async Task ProcessCapturePayloadAsync(string payload, Uri sourceReference)
     {
         if (!IsCapturing ||
-            (_batchCaptureService is null && _captureService is null) ||
+            (_batchCaptureService is null && _captureService is null && _cabinCaptureService is null) ||
             _clock is null ||
             SelectedSource is null)
         {
@@ -978,6 +997,26 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
 
         try
         {
+            if (_cabinCaptureService is not null)
+            {
+                try
+                {
+                    var cabinRequest = new CabinPageCaptureRequest(
+                        SelectedSource.Identifier, new CruiseSource("tui", "TUI"),
+                        sourceReference.AbsoluteUri, _clock.Now, payload);
+                    var cabinResult = await _cabinCaptureService.CaptureAsync(cabinRequest, cancellation.Token);
+                    if (generation != _captureGeneration || cancellation.IsCancellationRequested) return;
+                    SetCabinCaptureResult(cabinResult);
+                }
+                catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { return; }
+                catch
+                {
+                    SetCabinCaptureResult(CabinBatchResult.Failed(
+                        "Cabin evidence could not be captured. Price capture can still continue."));
+                }
+            }
+
+            if (_batchCaptureService is null && _captureService is null) return;
             var request = new CruisePageCaptureRequest(
                 SelectedSource.Identifier,
                 new CruiseSource("tui", "TUI"),
@@ -1354,7 +1393,39 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         }
 
         IsCapturing = false;
+        ClearCabinCaptureState();
         SetCaptureResult(null, null, Array.Empty<string>());
+    }
+
+    private void SetCabinCaptureResult(CabinBatchResult result)
+    {
+        _cabinCaptureMessage = result.Status == CruiseCaptureBatchStatus.Completed ? null : result.Message;
+        _capturedCabinCandidates = result.Status == CruiseCaptureBatchStatus.Completed
+            ? result.Candidates.Select(candidate => new CruiseCabinCaptureReviewItemViewModel(
+                candidate, _recordCabinObservation is null || _clock is null ? null : RecordCabinAsync)).ToArray()
+            : [];
+        OnPropertyChanged(nameof(CapturedCabinCandidates));
+        OnPropertyChanged(nameof(HasCapturedCabinCandidates));
+        OnPropertyChanged(nameof(CabinCaptureMessage));
+        OnPropertyChanged(nameof(HasCabinCaptureMessage));
+    }
+
+    private void ClearCabinCaptureState()
+    {
+        _capturedCabinCandidates = [];
+        _cabinCaptureMessage = null;
+        OnPropertyChanged(nameof(CapturedCabinCandidates));
+        OnPropertyChanged(nameof(HasCapturedCabinCandidates));
+        OnPropertyChanged(nameof(CabinCaptureMessage));
+        OnPropertyChanged(nameof(HasCabinCaptureMessage));
+    }
+
+    private async Task<KrytenApplication::KrytenAssist.Application.Cruises.CruiseCabinRecordAndAlertResult> RecordCabinAsync(CruiseCabinObservation observation)
+    {
+        var result = await _recordCabinObservation!.ExecuteAsync(observation, _clock!.Now);
+        if (result.CreatedAlertCount > 0 && _alertCoordinator is not null)
+            await _alertCoordinator.NotifyAlertsCreatedAsync(result.CreatedAlertCount);
+        return result;
     }
 
     private void SetCaptureResult(
