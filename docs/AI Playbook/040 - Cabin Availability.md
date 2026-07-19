@@ -315,6 +315,18 @@ contract.
 - preserve trusted source, read-only behavior and controlled incomplete results
 - add offline fixtures and safety tests
 
+The agreed analysis starts only with the demonstrated modern results-card phrase
+`1 x Inside Cabin (Cheapest available)`. It maps Inside to Available, leaves all
+other categories Unknown and marks coverage Partial for the exact explicit
+search context. The fixed script gains a bounded additive payload;
+Infrastructure alone validates TUI references, interprets query context and
+maps an Application-owned transport-neutral batch contract. The unused 040b
+single-capture seam may be replaced because it cannot carry page data or
+represent multiple cards. Existing price capture remains compatible. Missing
+text, unfamiliar labels and `All gone` create no cabin observation. No richer
+chooser, unavailable mapping, recording, evaluation or UI is included. See the
+040d Codex prompt for the complete contract.
+
 ### 040e – Recording and Preference Evaluation
 
 - add explicit Record Cabin Observation action
@@ -376,4 +388,8 @@ transactional deduplication/concurrency, restart-safe reconstruction, Cabin
 Availability alert details, Saved Criteria v2 cabin details and the complete
 settings value are persisted through migration
 `20260719174221_AddCruiseCabinPersistence`. All 685 offline tests pass. Prompt
-040d – TUI Cabin Evidence Capture is next.
+Prompt 040d – TUI Cabin Evidence Capture is complete. The fixed payload now
+provides bounded demonstrated Inside Cabin evidence, and the trusted TUI adapter
+maps explicit search context to provider-independent partial observations while
+preserving existing price capture. All 698 offline tests pass. Prompt 040e –
+Recording and Preference Evaluation is next.

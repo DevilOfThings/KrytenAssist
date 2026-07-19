@@ -77,6 +77,7 @@ public static class TuiCruiseCaptureScript
               text.match(/£\s*([\d,]+(?:\.\d{1,2})?)\s*Total\s+Price\b/i);
             const discount = text.match(/Includes\s+£\s*[\d,]+(?:\.\d{1,2})?\s*pp(?:\s+online)?\s+discount\b/i) ||
               text.match(/£\s*[\d,]+(?:\.\d{1,2})?\s*pp(?:\s+online)?\s+discount\b/i);
+            const insideCabin = text.match(/\b1\s*x\s*Inside\s+Cabin\b[\s\S]{0,100}?\bCheapest\s+available\b/i);
             return {
               sourceReference: boundedReference(url.href),
               providerOfferId: bounded(url.searchParams.get('packageId') || code || pathName),
@@ -92,10 +93,13 @@ public static class TuiCruiseCaptureScript
                 : [],
               promotionSummary: discount
                 ? bounded(discount[0])
+                : null,
+              cabinEvidence: insideCabin
+                ? {retailerLabel: 'Inside Cabin', quantity: 1, qualifier: 'Cheapest available'}
                 : null
             };
           });
-          return JSON.stringify({version: 1, wasTruncated, candidates});
+          return JSON.stringify({version: 2, wasTruncated, candidates});
         })()
         """;
 }

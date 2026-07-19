@@ -53,7 +53,7 @@ public sealed class TuiCruisePageCaptureService :
             return Task.FromResult(CruiseCaptureResult.Failed(InvalidPayloadMessage));
         }
 
-        if (read.Payload?.Version != SupportedPayloadVersion)
+        if (read.Payload?.Version is not (SupportedPayloadVersion or 2))
         {
             return Task.FromResult(CruiseCaptureResult.Unsupported(UnsupportedPayloadMessage));
         }
@@ -130,7 +130,7 @@ public sealed class TuiCruisePageCaptureService :
             return Task.FromResult(CruiseCaptureBatchResult.Failed(InvalidPayloadMessage));
         }
 
-        if (read.Payload?.Version != SupportedPayloadVersion)
+        if (read.Payload?.Version is not (SupportedPayloadVersion or 2))
         {
             return Task.FromResult(CruiseCaptureBatchResult.Unsupported(UnsupportedPayloadMessage));
         }

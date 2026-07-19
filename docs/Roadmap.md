@@ -10,7 +10,7 @@ Phase 7 – Cruise Assistant
 
 Current Prompt
 --------------
-Prompt 040d – TUI Cabin Evidence Capture (next)
+Prompt 040e – Recording and Preference Evaluation (next)
 
 Prompt 037 – Cruise History and Price Tracking, including its 037h Multiple
 Cruise Deals extension, is complete. Kryten can explicitly capture currently
@@ -677,7 +677,12 @@ the Cabin Availability alert, Saved Criteria v2 and settings persistence
 migration, and registers the repository-dependent Application services. It is
 complete with migration/restart, recurrence, concurrency and independence
 coverage. All 685 offline tests pass. Prompt 040d – TUI Cabin Evidence Capture
-is next.
+is complete. The fixed version-2 payload captures only demonstrated modern-card
+Inside Cabin positive evidence. A trusted provider adapter maps explicit search
+context into bounded provider-independent batch candidates without guessing
+chooser selectors or category unavailability. Existing price capture accepts
+both payload versions. All 698 offline tests pass. Prompt 040e – Recording and
+Preference Evaluation is next.
 
 See `docs/AI Playbook/040 - Cabin Availability.md` and the 040a Codex prompt for
 the proposed evidence, preference, alert and implementation sequence.

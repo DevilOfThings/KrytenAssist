@@ -75,6 +75,18 @@ public sealed class TuiCruisePageBatchCaptureServiceTests
         Assert.Equal("Includes £38pp online discount", observation.Snapshot.PromotionSummary);
     }
 
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    public async Task CaptureAsync_PreservesPriceMappingAcrossSupportedPayloadVersions(int version)
+    {
+        var result = await _service.CaptureAsync(CreateRequest(
+            CreatePayload([CompleteCandidate(1, "Compatible Result", 1439m)], version: version)));
+
+        Assert.Equal(CruiseCaptureBatchStatus.Completed, result.Status);
+        Assert.Equal(1439m, Assert.Single(result.Candidates).Observation!.Snapshot.Prices[0].Amount);
+    }
+
     [Fact]
     public async Task CaptureAsync_RetainsReadyCandidateBesideIndependentIncompleteCandidate()
     {
@@ -196,7 +208,7 @@ public sealed class TuiCruisePageBatchCaptureServiceTests
 
     [Theory]
     [InlineData("{}", CruiseCaptureBatchStatus.Unsupported)]
-    [InlineData("{\"version\":2,\"candidates\":[]}", CruiseCaptureBatchStatus.Unsupported)]
+    [InlineData("{\"version\":3,\"candidates\":[]}", CruiseCaptureBatchStatus.Unsupported)]
     [InlineData("{not-json", CruiseCaptureBatchStatus.Failed)]
     [InlineData("{\"version\":1,\"candidates\":[]}", CruiseCaptureBatchStatus.Incomplete)]
     [InlineData("{\"version\":1,\"candidates\":[null]}", CruiseCaptureBatchStatus.Failed)]
@@ -269,8 +281,9 @@ public sealed class TuiCruisePageBatchCaptureServiceTests
 
     private static string CreatePayload(
         IReadOnlyList<Candidate> candidates,
-        bool wasTruncated = false) =>
-        JsonSerializer.Serialize(new Payload(1, wasTruncated, candidates));
+        bool wasTruncated = false,
+        int version = 1) =>
+        JsonSerializer.Serialize(new Payload(version, wasTruncated, candidates));
 
     private static Candidate CompleteCandidate(
         int index,

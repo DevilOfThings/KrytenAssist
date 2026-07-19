@@ -6,6 +6,8 @@ using ICruisePageBatchCaptureService =
     KrytenApplication::KrytenAssist.Application.Cruises.ICruisePageBatchCaptureService;
 using ICruisePageCaptureService =
     KrytenApplication::KrytenAssist.Application.Cruises.ICruisePageCaptureService;
+using ICruiseCabinPageCaptureService =
+    KrytenApplication::KrytenAssist.Application.Cruises.ICruiseCabinPageCaptureService;
 using TuiCruiseCaptureServiceCollectionExtensions =
     KrytenInfrastructure::KrytenAssist.Infrastructure.Cruises.Tui.TuiCruiseCaptureServiceCollectionExtensions;
 using TuiCruisePageCaptureService =
@@ -27,12 +29,14 @@ public sealed class TuiCruiseCaptureDependencyInjectionTests
         var second = provider.GetRequiredService<ICruisePageCaptureService>();
         var batch = provider.GetRequiredService<ICruisePageBatchCaptureService>();
         var implementation = provider.GetRequiredService<TuiCruisePageCaptureService>();
+        var cabin = provider.GetRequiredService<ICruiseCabinPageCaptureService>();
 
         Assert.Same(services, returned);
         Assert.IsType<TuiCruisePageCaptureService>(first);
         Assert.Same(first, second);
         Assert.Same(first, batch);
         Assert.Same(first, implementation);
+        Assert.IsType<KrytenInfrastructure::KrytenAssist.Infrastructure.Cruises.Tui.TuiCruiseCabinPageCaptureService>(cabin);
     }
 
     [Fact]
