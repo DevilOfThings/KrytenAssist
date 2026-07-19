@@ -64,10 +64,12 @@ public sealed class CruiseHistoryDesktopCompositionTests
             var alertCoordinator = scope.ServiceProvider.GetRequiredService<CruiseAlertCoordinator>();
             var alertSettings = scope.ServiceProvider.GetRequiredService<CruiseAlertSettingsViewModel>();
             var alertCentre = scope.ServiceProvider.GetRequiredService<CruiseAlertCentreViewModel>();
+            var cabinAvailability = scope.ServiceProvider.GetRequiredService<CruiseCabinAvailabilityViewModel>();
             Assert.Same(editor, organiser.Evaluation);
             Assert.Same(preferences, organiser.Preferences);
             Assert.Same(alertSettings, alertCentre.Settings);
             Assert.Same(alertCoordinator, scope.ServiceProvider.GetRequiredService<CruiseAlertCoordinator>());
+            Assert.NotNull(cabinAvailability);
             Assert.True(File.Exists(databasePath));
         }
         finally

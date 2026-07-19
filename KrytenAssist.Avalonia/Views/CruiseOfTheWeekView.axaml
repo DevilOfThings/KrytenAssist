@@ -24,6 +24,9 @@
                 <RadioButton Content="{Binding AlertsModeText}"
                              GroupName="CruiseWorkspaceMode"
                              IsChecked="{Binding IsAlertsMode}" />
+                <RadioButton Content="Cabin Availability"
+                             GroupName="CruiseWorkspaceMode"
+                             IsChecked="{Binding IsCabinAvailabilityMode}" />
             </StackPanel>
         </Border>
         <ScrollViewer Grid.Row="0"
@@ -199,6 +202,12 @@
             <views:CruiseAlertCentreView VerticalAlignment="Stretch"
                                          HorizontalAlignment="Stretch"
                                          DataContext="{Binding AlertCentre}" />
+        </Grid>
+        <Grid Grid.Row="1"
+              IsVisible="{Binding IsCabinAvailabilityMode}">
+            <views:CruiseCabinAvailabilityView VerticalAlignment="Stretch"
+                                                HorizontalAlignment="Stretch"
+                                                DataContext="{Binding CabinAvailability}" />
         </Grid>
     </Grid>
 </UserControl>

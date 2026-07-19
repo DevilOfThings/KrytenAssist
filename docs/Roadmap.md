@@ -10,7 +10,7 @@ Phase 7 – Cruise Assistant
 
 Current Prompt
 --------------
-Prompt 040f – Cabin Availability Presentation (next)
+Prompt 040 – Cabin Availability (implementation complete; manual acceptance next)
 
 Prompt 037 – Cruise History and Price Tracking, including its 037h Multiple
 Cruise Deals extension, is complete. Kryten can explicitly capture currently
@@ -687,7 +687,13 @@ cabin-recording action; Application verifies committed history before
 materializing preferred-category transitions and supplies compatible intact
 cabin series to Saved Criteria at every agreed explicit boundary. Recording
 success survives later evaluation failure. All 706 offline tests pass. Prompt
-040f – Cabin Availability Presentation is next.
+040f – Cabin Availability Presentation is complete. A fourth Cruise workspace
+mode presents each intact retailer/search-context series with honest context,
+all five category states, coverage, preferred-cabin annotations,
+latest/previous differences and a newest-first timeline. Its controlled local
+loading, cancellation, stale-result, empty, retry and degraded-preference states
+preserve prior successful history. All 712 offline tests pass. Prompt 040 is
+implementation-complete and awaits Robin's manual acceptance.
 
 See `docs/AI Playbook/040 - Cabin Availability.md` and the 040a Codex prompt for
 the proposed evidence, preference, alert and implementation sequence.

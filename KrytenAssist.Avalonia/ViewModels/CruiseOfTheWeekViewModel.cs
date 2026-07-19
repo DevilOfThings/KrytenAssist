@@ -52,7 +52,8 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
         CruiseAlertCentreViewModel? alertCentre = null,
         CruiseAlertCoordinator? alertCoordinator = null,
         ICabinPageCaptureService? cabinCaptureService = null,
-        RecordCabinObservation? recordCabinObservation = null)
+        RecordCabinObservation? recordCabinObservation = null,
+        CruiseCabinAvailabilityViewModel? cabinAvailability = null)
     {
         ArgumentNullException.ThrowIfNull(skillRegistry);
         ArgumentNullException.ThrowIfNull(clock);
@@ -74,6 +75,7 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
             recordCabinObservation);
         SavedCruises = savedCruises;
         AlertCentre = alertCentre;
+        CabinAvailability = cabinAvailability;
         AlertCoordinator = alertCoordinator;
         _retrieveCommand = new AsyncCommand(RetrieveAsync, () => CanRetrieve);
         _cancelCommand = new DelegateCommand(Cancel, () => IsBusy);
@@ -100,6 +102,7 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
     public SavedCruisesViewModel? SavedCruises { get; }
     public CruiseAlertCentreViewModel? AlertCentre { get; }
     public CruiseAlertCoordinator? AlertCoordinator { get; }
+    public CruiseCabinAvailabilityViewModel? CabinAvailability { get; }
     public string AlertsModeText => AlertCoordinator?.BadgeText ?? "Alerts";
 
     public CruiseWorkspaceMode WorkspaceMode
@@ -112,14 +115,17 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
             BrowserFeasibility.Evaluation?.ClearTarget();
             SavedCruises?.Deactivate();
             AlertCentre?.Deactivate();
+            CabinAvailability?.Deactivate();
             OnPropertyChanged();
             OnPropertyChanged(nameof(IsDiscoveryMode));
             OnPropertyChanged(nameof(IsSavedCruisesMode));
             OnPropertyChanged(nameof(IsAlertsMode));
+            OnPropertyChanged(nameof(IsCabinAvailabilityMode));
             if (value == CruiseWorkspaceMode.Discovery) History?.Activate();
             else History?.Deactivate();
             if (value == CruiseWorkspaceMode.SavedCruises) _ = ActivateSavedCruisesAsync();
             if (value == CruiseWorkspaceMode.Alerts) _ = ActivateAlertsAsync();
+            if (value == CruiseWorkspaceMode.CabinAvailability) _ = ActivateCabinAvailabilityAsync();
         }
     }
 
@@ -150,6 +156,12 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
         set { if (value && AlertCentre is not null) WorkspaceMode = CruiseWorkspaceMode.Alerts; }
     }
 
+    public bool IsCabinAvailabilityMode
+    {
+        get => WorkspaceMode == CruiseWorkspaceMode.CabinAvailability;
+        set { if (value && CabinAvailability is not null) WorkspaceMode = CruiseWorkspaceMode.CabinAvailability; }
+    }
+
     public void Activate()
     {
         _ = AlertCoordinator?.RefreshCountAsync();
@@ -160,6 +172,10 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
         else if (IsAlertsMode)
         {
             _ = ActivateAlertsAsync();
+        }
+        else if (IsCabinAvailabilityMode)
+        {
+            _ = ActivateCabinAvailabilityAsync();
         }
         else
         {
@@ -173,6 +189,7 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
         SavedCruises?.Deactivate();
         BrowserFeasibility.Evaluation?.Deactivate();
         AlertCentre?.Deactivate();
+        CabinAvailability?.Deactivate();
         AlertCoordinator?.Cancel();
     }
 
@@ -197,6 +214,18 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
         try
         {
             if (AlertCentre is not null) await AlertCentre.ActivateAsync();
+        }
+        catch
+        {
+            // The child exposes controlled local failures.
+        }
+    }
+
+    private async Task ActivateCabinAvailabilityAsync()
+    {
+        try
+        {
+            if (CabinAvailability is not null) await CabinAvailability.ActivateAsync();
         }
         catch
         {

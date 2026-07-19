@@ -354,6 +354,19 @@ failure and test contract.
 - show preferred-cabin matches without overstating inventory
 - add controlled loading/empty/retry/stale-result states
 
+The agreed analysis adds a fourth top-level Cruise workspace mode backed only by
+the existing cabin list and preference use cases. Each retail-source/search-
+context series remains a separate master-list row. Selected detail shows all
+five category states, explicit known/Unknown context, Partial/Complete meaning,
+latest versus previous evidence differences, Last checked versus latest
+meaningful evidence, and a newest-first read-only timeline. Preferred-cabin OR
+annotations describe only that series and remain usable independently from
+month/budget criteria. Activation refresh, cancellation generations, atomic
+replacement, retained prior data after refresh failure, empty/retry states and
+mode deactivation prevent stale presentation. No capture, recording,
+evaluation, persistence or schema change is included. See the 040f Codex prompt
+for the full projection, wording, lifecycle and test contract.
+
 ### 040g – Tests and Verification
 
 - audit architecture, schema ownership and independence
@@ -409,4 +422,11 @@ Recording and Preference Evaluation is complete. Cabin evidence now has an
 independent explicit recording action, verified post-commit transition alert
 materialization and Saved Criteria participation at all agreed explicit
 boundaries. Recording success survives later evaluation failures. All 706
-offline tests pass. Prompt 040f – Cabin Availability Presentation is next.
+offline tests pass. Prompt 040f – Cabin Availability Presentation is complete.
+A fourth Cruise workspace mode now presents each persisted retailer/search-
+context cabin series independently with explicit context, all five category
+states, coverage, preferred-cabin annotations, meaningful latest/previous
+differences and a newest-first evidence timeline. Controlled activation,
+refresh, cancellation, stale-result, empty, retry and degraded-preference
+states preserve local history honestly. All 712 offline tests pass. Prompt 040
+is complete, subject to Robin's manual acceptance of the desktop presentation.

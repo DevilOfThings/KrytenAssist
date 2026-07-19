@@ -1,0 +1,147 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="clr-namespace:KrytenAssist.Avalonia.ViewModels"
+             x:Class="KrytenAssist.Avalonia.Views.CruiseCabinAvailabilityView"
+             x:DataType="viewModels:CruiseCabinAvailabilityViewModel">
+  <Grid RowDefinitions="Auto,*" Margin="20,8,20,20">
+    <StackPanel Grid.Row="0" Spacing="9">
+      <TextBlock Text="Cabin Availability" Classes="section-heading" />
+      <TextBlock Text="Recorded cabin evidence is local and specific to the retailer and search context shown. Kryten does not monitor cabin availability in the background."
+                 Classes="secondary-text" TextWrapping="Wrap" />
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <Button Content="Refresh" Classes="secondary" Command="{Binding RefreshCommand}" />
+        <Button Content="Cancel Loading" Classes="secondary" Command="{Binding CancelLoadingCommand}" IsVisible="{Binding IsLoading}" />
+        <TextBlock Text="Loading cabin availability…" Classes="busy-text" VerticalAlignment="Center" IsVisible="{Binding IsLoading}" />
+        <TextBlock Text="{Binding Message}" Classes="secondary-text" VerticalAlignment="Center" TextWrapping="Wrap" />
+      </StackPanel>
+      <Border Classes="status-surface" Padding="10" IsVisible="{Binding HasError}">
+        <StackPanel Spacing="8">
+          <TextBlock Text="{Binding ErrorMessage}" Classes="error-text" TextWrapping="Wrap" />
+          <Button Content="Try Again" Classes="secondary" HorizontalAlignment="Left" Command="{Binding RefreshCommand}" />
+        </StackPanel>
+      </Border>
+      <TextBlock Text="{Binding PreferenceMessage}" Classes="secondary-text" TextWrapping="Wrap" IsVisible="{Binding HasPreferenceMessage}" />
+    </StackPanel>
+
+    <Grid Grid.Row="1" ColumnDefinitions="2*,3*" ColumnSpacing="12" Margin="0,12,0,0">
+      <Border Grid.Column="0" Classes="workspace-surface" Padding="8">
+        <Grid>
+          <ListBox ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem, Mode=TwoWay}" IsVisible="{Binding HasItems}">
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="viewModels:CruiseCabinAvailabilityItemViewModel">
+                <StackPanel Margin="5,8" Spacing="4">
+                  <TextBlock Text="{Binding SailingText}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                  <TextBlock Text="{Binding RetailSourceName}" />
+                  <TextBlock Text="{Binding ContextSummary}" Classes="secondary-text" TextWrapping="Wrap" MaxLines="3" />
+                  <TextBlock Text="{Binding LatestCategorySummary}" TextWrapping="Wrap" MaxLines="3" />
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="{Binding CoverageText}" Classes="secondary-text" />
+                    <TextBlock Text="{Binding ObservationCountText}" Classes="secondary-text" />
+                  </StackPanel>
+                  <TextBlock Text="{Binding PreferenceStatus}" Classes="secondary-text" TextWrapping="Wrap" />
+                  <TextBlock Text="{Binding LatestEvidenceTimeText, StringFormat='Latest evidence: {0}'}" Classes="secondary-text" />
+                  <TextBlock Text="{Binding LastCheckedTimeText, StringFormat='Last checked: {0}'}" Classes="secondary-text" />
+                </StackPanel>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+          <TextBlock Text="{Binding EmptyMessage}" TextWrapping="Wrap" Classes="secondary-text" Margin="12" IsVisible="{Binding !HasItems}" />
+        </Grid>
+      </Border>
+
+      <Border Grid.Column="1" Classes="workspace-surface" Padding="14">
+        <Grid>
+          <ScrollViewer IsVisible="{Binding HasSelection}" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Spacing="15" DataContext="{Binding SelectedItem}">
+              <StackPanel Spacing="3">
+                <TextBlock Text="{Binding SailingText}" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding RetailSourceName, StringFormat='Retail source: {0}'}" />
+                <TextBlock Text="{Binding RetailSourceId, StringFormat='Source id: {0}'}" Classes="secondary-text" />
+              </StackPanel>
+
+              <StackPanel Spacing="6">
+                <TextBlock Text="Search context" FontWeight="SemiBold" />
+                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="14" RowSpacing="5">
+                  <TextBlock Grid.Row="0" Text="Adults" FontWeight="SemiBold"/><TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding AdultCountText}"/>
+                  <TextBlock Grid.Row="1" Text="Children" FontWeight="SemiBold"/><TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding ChildCountText}"/>
+                  <TextBlock Grid.Row="2" Text="Child ages" FontWeight="SemiBold"/><TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding ChildAgesText}"/>
+                  <TextBlock Grid.Row="3" Text="Package mode" FontWeight="SemiBold"/><TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding PackageModeText}"/>
+                  <TextBlock Grid.Row="4" Text="Departure airport" FontWeight="SemiBold"/><TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding DepartureAirportText}"/>
+                  <TextBlock Grid.Row="5" Text="Cabin quantity" FontWeight="SemiBold"/><TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding CabinQuantityText}"/>
+                </Grid>
+              </StackPanel>
+
+              <StackPanel Spacing="6">
+                <TextBlock Text="Latest category states" FontWeight="SemiBold" />
+                <ItemsControl ItemsSource="{Binding CategoryStates}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="viewModels:CruiseCabinCategoryStateViewModel">
+                      <Grid ColumnDefinitions="90,*" ColumnSpacing="10" Margin="0,2">
+                        <TextBlock Text="{Binding CabinType}" FontWeight="SemiBold" />
+                        <TextBlock Grid.Column="1" Text="{Binding StateText}" TextWrapping="Wrap" />
+                      </Grid>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Text="{Binding CoverageText}" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding CoverageExplanation}" Classes="secondary-text" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding PreferenceStatus}" TextWrapping="Wrap" />
+              </StackPanel>
+
+              <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="14" RowSpacing="5">
+                <TextBlock Grid.Row="0" Text="Latest meaningful evidence" FontWeight="SemiBold"/><TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding LatestEvidenceTimeText}"/>
+                <TextBlock Grid.Row="1" Text="Last checked" FontWeight="SemiBold"/><TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding LastCheckedTimeText}"/>
+                <TextBlock Grid.Row="2" Text="First observed" FontWeight="SemiBold"/><TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding FirstObservedTimeText}"/>
+                <TextBlock Grid.Row="3" Text="Observations" FontWeight="SemiBold"/><TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding ObservationCountText}"/>
+              </Grid>
+
+              <StackPanel Spacing="4">
+                <TextBlock Text="Latest evidence source" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding SourceReference}" Classes="secondary-text" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding SourceReference}" />
+                <TextBlock Text="{Binding EvidenceKey, StringFormat='Evidence key: {0}'}" Classes="secondary-text" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding EvidenceKey}" />
+              </StackPanel>
+
+              <StackPanel Spacing="6">
+                <TextBlock Text="Latest versus previous" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding ChangeSummary}" Classes="secondary-text" TextWrapping="Wrap" />
+                <ItemsControl ItemsSource="{Binding LatestChanges}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="viewModels:CruiseCabinChangeViewModel">
+                      <StackPanel Margin="0,3" Spacing="2">
+                        <TextBlock Text="{Binding CabinType}" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding PreviousState, StringFormat='Previous: {0}'}" Classes="secondary-text" />
+                        <TextBlock Text="{Binding CurrentState, StringFormat='Latest: {0}'}" Classes="secondary-text" />
+                        <TextBlock Text="{Binding ChangeText}" TextWrapping="Wrap" />
+                      </StackPanel>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+
+              <StackPanel Spacing="6">
+                <TextBlock Text="Recorded timeline" FontWeight="SemiBold" />
+                <ItemsControl ItemsSource="{Binding Timeline}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="viewModels:CruiseCabinTimelineItemViewModel">
+                      <Border Classes="status-surface" Padding="9" Margin="0,3">
+                        <StackPanel Spacing="3">
+                          <TextBlock Text="{Binding LatestLabel}" FontWeight="SemiBold" />
+                          <TextBlock Text="{Binding EvidenceTimeText}" />
+                          <TextBlock Text="{Binding CoverageText}" Classes="secondary-text" />
+                          <TextBlock Text="{Binding CategorySummary}" TextWrapping="Wrap" />
+                          <TextBlock Text="{Binding EvidenceKey, StringFormat='Evidence key: {0}'}" Classes="secondary-text" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding EvidenceKey}" />
+                          <TextBlock Text="{Binding SourceReference}" Classes="secondary-text" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding SourceReference}" IsVisible="{Binding HasSourceReference}" />
+                        </StackPanel>
+                      </Border>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </StackPanel>
+          </ScrollViewer>
+          <TextBlock Text="Select a cabin evidence series to review its recorded history." Classes="secondary-text" IsVisible="{Binding !HasSelection}" TextWrapping="Wrap" />
+        </Grid>
+      </Border>
+    </Grid>
+  </Grid>
+</UserControl>
