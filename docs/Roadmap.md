@@ -10,7 +10,7 @@ Phase 7 – Cruise Assistant
 
 Current Prompt
 --------------
-Prompt 040 – Cabin Availability (implementation complete; manual acceptance next)
+Prompt 041a – New Itinerary Experience and Evidence Contract (awaiting agreement)
 
 Prompt 037 – Cruise History and Price Tracking, including its 037h Multiple
 Cruise Deals extension, is complete. Kryten can explicitly capture currently
@@ -658,7 +658,7 @@ for the accepted contract and implementation sequence.
 
 ## Prompt 040 – Cabin Availability
 
-Current status: In progress. Step 040a is complete. Cabin availability is
+Current status: Complete. Cabin availability is
 explicit source evidence tied to sailing, retailer, compatible
 search/occupancy context and observation time. Missing categories remain
 Unknown; partial search-card evidence must not be presented as a complete cabin
@@ -692,8 +692,13 @@ mode presents each intact retailer/search-context series with honest context,
 all five category states, coverage, preferred-cabin annotations,
 latest/previous differences and a newest-first timeline. Its controlled local
 loading, cancellation, stale-result, empty, retry and degraded-preference states
-preserve prior successful history. All 712 offline tests pass. Prompt 040 is
-implementation-complete and awaits Robin's manual acceptance.
+preserve prior successful history. Prompt 040g's architecture, capture-safety,
+SQLite-boundary, composition and regression audit passes with all 713 offline
+tests and no production defect. Robin confirmed the complete manual desktop
+acceptance checklist on 19 July 2026, including live package loading, capture,
+recording, history, context separation, preferences, restart persistence and
+mode/lifecycle safety. Prompt 040 is complete; Prompt 041 is next and remains
+unstarted.
 
 See `docs/AI Playbook/040 - Cabin Availability.md` and the 040a Codex prompt for
 the proposed evidence, preference, alert and implementation sequence.
@@ -715,6 +720,18 @@ Detect newly published itineraries.
 Initially support Marella and the trusted sources proven by Prompt 036.
 
 Architecture should support future providers.
+
+Current status: Analysis in progress. The existing trusted TUI capture proves
+bounded itinerary identities observed on an explicitly loaded page, but it does
+not prove retailer publication time or complete catalogue absence. The proposed
+041a contract therefore detects an itinerary first observed by Kryten in a
+later comparable explicit discovery capture. The first accepted capture seeds
+the scope baseline without alerts; stable identity uses operator plus trusted
+provider itinerary code, while package, sailing, price and display text remain
+occurrence evidence. Missing identities and incompatible scopes are not guessed,
+and truncation makes absence non-evidence. Prompt 041 adds no scheduled browsing
+or automatic navigation. See `docs/AI Playbook/041 - New Itinerary Detection.md`
+and the 041a Codex prompt. Prompt 042 remains unstarted.
 
 ---
 

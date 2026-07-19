@@ -428,5 +428,25 @@ context cabin series independently with explicit context, all five category
 states, coverage, preferred-cabin annotations, meaningful latest/previous
 differences and a newest-first evidence timeline. Controlled activation,
 refresh, cancellation, stale-result, empty, retry and degraded-preference
-states preserve local history honestly. All 712 offline tests pass. Prompt 040
-is complete, subject to Robin's manual acceptance of the desktop presentation.
+states preserve local history honestly. Prompt 040g's automated architecture,
+capture-safety, SQLite-boundary, composition and regression audit passes with
+all 713 offline tests. No production defect or schema change was required.
+Robin confirmed the complete manual desktop acceptance checklist on 19 July
+2026, including live package loading, capture, recording, history, preferences,
+restart persistence and mode/lifecycle safety. Prompt 040 is complete and
+Prompt 041 is next but remains unstarted.
+
+### Lessons Learned
+
+- Cabin evidence needs search-context identity because occupancy, package,
+  airport and cabin quantity materially change what a result proves.
+- Partial positive evidence is useful only when Unknown remains distinct from
+  Unavailable.
+- Separating state fingerprints from evidence time/reference supports honest
+  equivalent rechecks while retaining genuine recurring transitions.
+- Record-before-evaluate orchestration preserves factual cabin history when
+  derived alerts or criteria evaluation fail.
+- Physical deletion-boundary tests prove price evidence, personal state, cabin
+  evidence and alerts remain independent beyond their contracts.
+- A fixed bounded read-only script is safer than automating progression through
+  a booking flow.

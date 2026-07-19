@@ -36,4 +36,51 @@ public sealed class Prompt040BoundaryTests
         context.CruiseCabinObservations.AsNoTracking().Should().ContainSingle();
         context.CruiseCabinObservationStates.AsNoTracking().Should().HaveCount(5);
     }
+
+    [Fact]
+    public async Task Removing_cabin_history_leaves_price_personal_and_alert_state_intact()
+    {
+        await using var database = new CruisePersistenceTestDatabase();
+        await database.OpenAndMigrateAsync();
+        var priceObservation = CruisePersistenceTestData.Observation();
+        var cabinObservation = CruiseCabinPersistenceTestData.Observation();
+        var key = CruiseSailingKey.From(priceObservation);
+        CruiseAlert alert;
+
+        await using (var context = database.CreateContext())
+        {
+            await new HistoryRepository(context).RecordAsync(
+                key,
+                CruiseObservationFingerprint.From(priceObservation),
+                priceObservation);
+            var saved = new SavedCruise(
+                new SavedCruiseSnapshot(key, "Retained sailing", "Marella", new CruisePrice(900m, "GBP", "per person"), priceObservation.ObservedAt),
+                evaluation: new CruiseEvaluation(CruiseInterestLevel.StrongCandidate, notes: "Keep personal state"));
+            await new SavedRepository(context).UpsertAsync(saved);
+            await new CabinRepository(context).RecordAsync(cabinObservation);
+
+            alert = new CruiseAlert(
+                Guid.NewGuid(),
+                new CruiseAlertCandidate(
+                    CruiseAlertType.Promotion,
+                    key,
+                    priceObservation.Source,
+                    new CruisePromotionAlertDetails(null, "Retained promotion", "retained-alert-evidence"),
+                    priceObservation.ObservedAt,
+                    "retained-alert-evidence"),
+                priceObservation.ObservedAt.AddMinutes(1));
+            await new AlertRepository(context).AddIfAbsentAsync(alert);
+
+            context.CruiseCabinSeries.Remove(await context.CruiseCabinSeries.SingleAsync());
+            await context.SaveChangesAsync();
+        }
+
+        await using var reopened = database.CreateContext();
+        reopened.CruiseCabinSeries.Should().BeEmpty();
+        reopened.CruiseCabinObservations.Should().BeEmpty();
+        reopened.CruiseHistories.Should().ContainSingle();
+        reopened.CruiseObservations.Should().ContainSingle();
+        (await new SavedRepository(reopened).GetAsync(key))!.Evaluation.Notes.Should().Be("Keep personal state");
+        (await new AlertRepository(reopened).GetAsync(alert.Id)).Should().Be(alert);
+    }
 }
