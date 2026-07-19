@@ -10,7 +10,7 @@ Phase 7 – Cruise Assistant
 
 Current Prompt
 --------------
-Prompt 041b – Itinerary Domain and Application Contracts (next; unstarted)
+Prompt 041c – SQLite Discovery Persistence (next; unstarted)
 
 Prompt 037 – Cruise History and Price Tracking, including its 037h Multiple
 Cruise Deals extension, is complete. Kryten can explicitly capture currently
@@ -733,8 +733,16 @@ and truncation makes absence non-evidence. Prompt 041 adds no scheduled browsing
 or automatic navigation. See `docs/AI Playbook/041 - New Itinerary Detection.md`
 and the 041a Codex prompt. An itinerary is the operator's stable route
 definition; new dated sailings and changed packages, prices, promotions or
-links for that itinerary are not new itineraries. Prompt 041b – Itinerary Domain
-and Application Contracts is next and remains unstarted. Prompt 042 remains
+links for that itinerary are not new itineraries. Prompt 041b is now defined:
+it introduces stable route and source-catalogue identities, normalized semantic
+discovery scopes, positive occurrence/check evidence, pure first-observed
+detection and Application-owned atomic recording/query/capture contracts. The
+typed itinerary alert remains deferred to 041e because existing alerts are
+sailing-based. Prompt 041b is complete with stable versioned identities,
+immutable positive evidence, pure baseline/first-observed policy, controlled
+capture/results, an atomic repository contract and recording/query use cases.
+The solution builds and all 729 offline tests pass. Prompt 041c – SQLite
+Discovery Persistence is next and remains unstarted; Prompt 042 remains
 unstarted.
 
 ---

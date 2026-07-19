@@ -56,6 +56,7 @@ public static class DependencyInjection
         services.AddScoped<EvaluateCruiseCabinAvailabilityAlerts>();
         services.AddScoped<EvaluateRecordedCruiseCabinAlerts>();
         services.AddScoped<RecordCruiseCabinObservationAndEvaluateAlerts>();
+        services.AddSingleton<CruiseNewItineraryDetector>();
 
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
 

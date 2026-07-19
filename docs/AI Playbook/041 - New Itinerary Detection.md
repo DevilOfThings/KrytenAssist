@@ -311,7 +311,11 @@ Prompt 041a is complete. The accepted contract treats an itinerary as the
 operator's stable route definition and distinguishes it from dated sailings and
 mutable retail offers. Detection means first observed by Kryten after a
 compatible explicit baseline, not proven retailer publication. Prompt 041b is
-next; no production code, schema, migration or UI was changed.
+complete: provider-independent stable route/catalogue identities, semantic
+discovery scopes, positive occurrence/check evidence, pure first-observed
+detection and Application capture/repository/query/use-case contracts are
+implemented. All 729 offline tests pass. Prompt 041c is next; no schema,
+migration, provider mapping, alert change or UI was added.
 
 ### Existing-System Findings
 
@@ -325,6 +329,39 @@ next; no production code, schema, migration or UI was changed.
 - Existing alerts provide the correct durable in-app lifecycle and independent
   post-recording materialization pattern for a new typed alert.
 - No demonstrated source field currently proves retailer publication time.
+
+### 041b Analysis
+
+- Stable itinerary identity remains smaller than sailing/offer identity:
+  normalized operator id plus opaque trusted provider itinerary id.
+- A separate catalogue partition combines that key with retail source id, so
+  future retailers do not collide while mutable source display names remain
+  outside identity.
+- Discovery scope needs provider-independent semantic known/unknown criteria;
+  raw TUI query names and addresses remain adapter concerns.
+- Accepted checks contain positive occurrence evidence only. The repository
+  contract must atomically seed baselines, update first/last seen catalogue
+  state and confirm first-observed events so concurrency cannot double-detect.
+- Pure detection produces a route-based first-observed domain event. The current
+  alert aggregate is sailing-based, so 041b must not invent a representative
+  sailing or prematurely change persistence. Prompt 041e owns the typed alert
+  subject/materialization extension.
+- Application capture and repository contracts can be implemented and tested
+  offline before SQLite and TUI adapters exist.
+
+### 041b Results
+
+- Stable route identity and mutable occurrence/check identity are separate,
+  versioned and culture-independent.
+- Discovery criteria preserve known/unknown values and normalize input ordering
+  without exposing provider query names.
+- Baseline seeding, known-route offer changes, source partitioning, truncation
+  and deterministic new-event ordering are covered by pure tests.
+- Application owns the future atomic record contract and controlled recording,
+  list, detail and recent-check results.
+- The pure detector is registered immediately. Repository-dependent use cases
+  wait for Prompt 041c's adapter so generic API composition remains valid.
+- The solution builds with zero errors and all 729 offline tests pass.
 
 ### Agreed 041a Decisions
 
