@@ -10,7 +10,7 @@ Phase 7 – Cruise Assistant
 
 Current Prompt
 --------------
-Prompt 041a – New Itinerary Experience and Evidence Contract (awaiting agreement)
+Prompt 041b – Itinerary Domain and Application Contracts (next; unstarted)
 
 Prompt 037 – Cruise History and Price Tracking, including its 037h Multiple
 Cruise Deals extension, is complete. Kryten can explicitly capture currently
@@ -721,7 +721,7 @@ Initially support Marella and the trusted sources proven by Prompt 036.
 
 Architecture should support future providers.
 
-Current status: Analysis in progress. The existing trusted TUI capture proves
+Current status: In progress. Prompt 041a is complete. The existing trusted TUI capture proves
 bounded itinerary identities observed on an explicitly loaded page, but it does
 not prove retailer publication time or complete catalogue absence. The proposed
 041a contract therefore detects an itinerary first observed by Kryten in a
@@ -731,7 +731,11 @@ provider itinerary code, while package, sailing, price and display text remain
 occurrence evidence. Missing identities and incompatible scopes are not guessed,
 and truncation makes absence non-evidence. Prompt 041 adds no scheduled browsing
 or automatic navigation. See `docs/AI Playbook/041 - New Itinerary Detection.md`
-and the 041a Codex prompt. Prompt 042 remains unstarted.
+and the 041a Codex prompt. An itinerary is the operator's stable route
+definition; new dated sailings and changed packages, prices, promotions or
+links for that itinerary are not new itineraries. Prompt 041b – Itinerary Domain
+and Application Contracts is next and remains unstarted. Prompt 042 remains
+unstarted.
 
 ---
 

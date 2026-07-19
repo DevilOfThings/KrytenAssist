@@ -1,0 +1,352 @@
+# Prompt 041 – New Itinerary Detection
+
+## Goal
+
+Allow Robin to compare deliberately captured Marella discovery evidence and
+identify itineraries that Kryten has not observed in an earlier comparable
+capture.
+
+Prompt 041 must not claim that TUI has just published an itinerary unless the
+trusted source explicitly supplies publication evidence. With the evidence
+currently demonstrated by Prompt 036, the honest product meaning is:
+
+> First observed by Kryten in a later explicit capture of the same discovery
+> scope.
+
+The architecture must remain provider-independent and support future cruise
+operators and trusted retail sources.
+
+---
+
+## Why This Prompt Exists
+
+Prompts 036 and 037 established deliberate browser-assisted discovery,
+provider-independent cruise observations and durable price History. Prompt 039
+added durable in-app alerts. Prompt 040 added contextual cabin evidence.
+
+Those features preserve individual sailings and changes to them, but they do
+not preserve a comparable catalogue view or distinguish a newly encountered
+itinerary from a changed offer for an itinerary already known to Kryten.
+
+Prompt 041 adds that missing positive-evidence boundary. It does not add a
+scheduler, crawler, background browser or claim of complete retailer inventory.
+
+---
+
+## Evidence Contract
+
+### Detection Meaning
+
+Initial detection is `FirstObserved`, not proven publication.
+
+An itinerary is FirstObserved only when:
+
+1. Robin explicitly captures a supported discovery page;
+2. a prior accepted baseline exists for the same compatible discovery scope;
+3. the current candidate has a stable provider itinerary identity; and
+4. that identity has never previously been accepted in that provider/source
+   catalogue.
+
+The first accepted capture seeds the baseline and creates no New Itinerary
+event. This avoids presenting every existing itinerary as newly published.
+
+If a future provider supplies trustworthy publication time or an explicit
+published-since feed, the provider adapter may map that separate evidence
+without changing the application contract. It must not be inferred from first
+observation time.
+
+### Itinerary Versus Sailing
+
+An itinerary is the operator's stable voyage/route definition. A sailing is a
+dated departure of that itinerary.
+
+Initial identity is:
+
+```text
+CruiseItineraryKey
+  operator id
+  provider itinerary id
+```
+
+For the demonstrated TUI source, the provider itinerary id comes from the
+trusted `itineraryCodeOne` or `itineraryCode` URL parameter. `packageId`, price,
+promotion, departure date and retailer URL are occurrence evidence, not
+itinerary identity.
+
+Do not synthesize identity from title, ship, ports or itinerary-summary text.
+A candidate without a trusted stable itinerary id may remain usable by existing
+price capture, but is ineligible for New Itinerary detection and must say why.
+
+Different dated sailings with the same provider itinerary id describe one
+itinerary. A reused provider id with contradictory operator evidence is rejected
+rather than silently merged.
+
+### Discovery Scope
+
+Captures compare only inside a normalized provider-independent discovery scope.
+The scope contains:
+
+- trusted retail source
+- cruise operator/provider
+- source surface or adapter kind
+- every material search filter explicitly evidenced by the page/address
+- explicit unknown markers for material filters that cannot be recovered
+- capture contract/version where compatibility requires it
+
+Adapters own provider URL parsing. Raw URLs and provider query names must not
+leak into Core/Application identity types.
+
+Different known filters, or known versus unknown material filters, form
+different scopes. Cosmetic, tracking and ordering query values do not.
+
+### Bounded and Partial Evidence
+
+The TUI capture script is currently bounded to ten candidates and can report
+truncation. Therefore a capture is positive evidence only:
+
+- a present, valid candidate may be recorded as observed;
+- absence never proves withdrawal, cancellation or unpublication;
+- disappearance creates no event and deletes nothing;
+- a truncated capture may discover a genuinely unseen identity, but the UI
+  must say `first observed by Kryten`, never `newly published by TUI`;
+- malformed, unsupported or wholly failed capture does not advance a baseline;
+- mixed captures accept valid candidates and report rejected candidates
+  explicitly.
+
+Changing sort order can expose an older itinerary that was outside a previous
+bounded result. This is still first observed by Kryten, not publication
+evidence.
+
+### Time
+
+`ObservedAt` comes from the application clock/runtime context at explicit
+capture time. It is not retailer publication time and must not be presented as
+such.
+
+---
+
+## Workflow
+
+```text
+Open trusted discovery page manually
+        ↓
+Capture supported itinerary candidates
+        ↓
+Review scope, bounds and eligible/rejected candidates
+        ↓
+Record Discovery Check explicitly
+        ↓
+Seed baseline or identify first-observed itineraries
+        ↓
+Review local New Itineraries history / in-app alerts
+```
+
+Capture and review never mutate the itinerary catalogue. Only `Record Discovery
+Check` may persist the accepted check and materialize detections.
+
+Recording the factual discovery check commits independently before derived
+alerts. Alert failure must not roll back or falsely fail the recorded check.
+
+---
+
+## Retention and Deduplication
+
+- Discovery checks and accepted itinerary identities are durable local factual
+  evidence.
+- First-seen and last-seen times are application observation times.
+- Repeated captures update last-seen evidence without creating another event.
+- An itinerary disappearing and later reappearing does not create another
+  FirstObserved event in Prompt 041.
+- A stable deterministic event key prevents retry and concurrency duplicates.
+- No permanent-delete UI or automatic expiry is introduced.
+- Discovery evidence is physically independent from price History, Saved
+  Cruises, cabin evidence and alerts.
+- Removing or changing personal state never removes discovery evidence.
+
+---
+
+## Alerts and Presentation
+
+Prompt 041 extends the provider-independent in-app alert model with a distinct
+`NewItinerary` type. It is enabled through the existing Alert Settings pattern
+and uses typed details containing the itinerary key, first-observed evidence,
+scope identity and trusted source reference.
+
+The user-facing title should prefer `New itinerary observed`. Supporting text
+must explain `First observed by Kryten on …` and identify the captured source
+and scope. Do not say `published`, `released today`, `live`, or `currently
+available` without explicit evidence for that statement.
+
+A local New Itineraries presentation should provide:
+
+- newest-first first-observed entries
+- operator itinerary id and bounded display details
+- first-seen and last-seen times
+- source/scope explanation
+- trusted revisit action
+- clear seeded-baseline, empty, partial, truncated and failure states
+
+Prompt 042 owns the combined Cruise Dashboard. Prompt 041 must not implement
+that dashboard.
+
+---
+
+## Provider Boundary
+
+Core owns itinerary identity, discovery-scope value models, accepted-check
+semantics and pure first-observed detection.
+
+Application owns capture/check/repository contracts, controlled results,
+record-then-alert orchestration and queries.
+
+Infrastructure owns SQLite persistence and TUI/provider-specific mapping.
+
+Avalonia owns the existing fixed read-only browser script and MVVM workflow.
+The script may read the currently displayed trusted page only. It must not
+navigate automatically, click, paginate, scroll, submit, call private
+endpoints, inspect cookies/storage or run in the background.
+
+Future providers add adapters behind application-owned contracts. Provider SDK,
+DOM and URL types never cross into Core/Application.
+
+---
+
+## Implementation Plan
+
+### 041a – Experience and Evidence Contract
+
+- agree FirstObserved versus published language
+- agree stable itinerary identity and discovery-scope compatibility
+- agree baseline, truncation, partial-failure and reappearance behaviour
+- agree alert, retention and presentation boundaries
+- make documentation changes only
+
+### 041b – Itinerary Domain and Application Contracts
+
+- add provider-independent itinerary/scope/check/evidence models
+- add pure first-observed detector and deterministic identities
+- add Application-owned repositories, queries and controlled results
+- add comprehensive deterministic Core/Application tests
+
+### 041c – SQLite Discovery Persistence
+
+- add normalized independent catalogue, check and occurrence persistence
+- add transactional first/last-seen and idempotent/concurrent recording
+- add migration, restart and deletion-boundary coverage
+- register adapters through Infrastructure dependency injection
+
+### 041d – Trusted TUI Itinerary Capture
+
+- extend the existing fixed payload with demonstrated itinerary-code and scope
+  evidence without breaking price/cabin capture
+- map TUI-specific evidence behind the application capture contract
+- preserve strict trust, bounds and read-only behaviour
+- test only offline fixtures
+
+### 041e – Recording and Alert Integration
+
+- add explicit Record Discovery Check orchestration
+- seed the first scope baseline without events
+- detect and materialize later first-observed events after commit
+- add typed New Itinerary alerts, settings and retry-safe deduplication
+- preserve successful factual recording if alert evaluation fails
+
+### 041f – New Itineraries Presentation
+
+- add the local MVVM review/history experience
+- present honest scope, evidence time, baseline and truncation language
+- add trusted revisit and alert presentation/settings
+- preserve existing Cruise modes and defer the combined dashboard
+
+### 041g – Tests and Verification
+
+- audit architecture, script safety, schema independence and composition
+- run the full offline solution suite
+- complete manual desktop verification
+- update this playbook, Roadmap and session handover
+
+---
+
+## Required Acceptance Scenarios
+
+1. First accepted complete capture seeds a baseline and creates no event.
+2. First accepted truncated capture seeds a bounded baseline and says so.
+3. A later comparable capture contains one never-seen stable itinerary id.
+4. A later capture contains a new dated sailing for an already-known itinerary.
+5. Price, promotion or source-reference changes for a known itinerary.
+6. Same itinerary appears twice in one capture.
+7. Same itinerary appears in two compatible discovery scopes.
+8. Different known filters or known-versus-unknown filters are captured.
+9. Candidate has no trusted itinerary code.
+10. Capture contains valid and invalid candidates.
+11. Capture is unsupported, cancelled or wholly failed.
+12. Previously seen itinerary disappears, then later reappears.
+13. Retry and concurrent recording see the same new identity.
+14. Discovery check commits but alert persistence fails.
+15. Saved Cruise, price History or cabin history is removed.
+16. Application restarts before the next comparable capture.
+
+---
+
+## Exclusions
+
+- unattended, scheduled or background browsing
+- retailer/API polling, feeds or private endpoint inspection
+- claims of publication time without explicit source evidence
+- withdrawal, cancellation or sold-out detection from absence
+- automatic pagination, scrolling or booking navigation
+- fuzzy identity derived from titles, ports or route text
+- itinerary recommendations, ranking or AI inference
+- email, SMS, push or OS notifications
+- cloud sync
+- the combined Prompt 042 Cruise Dashboard
+
+---
+
+## Results
+
+### Status
+
+Prompt 041a is complete. The accepted contract treats an itinerary as the
+operator's stable route definition and distinguishes it from dated sailings and
+mutable retail offers. Detection means first observed by Kryten after a
+compatible explicit baseline, not proven retailer publication. Prompt 041b is
+next; no production code, schema, migration or UI was changed.
+
+### Existing-System Findings
+
+- The current trusted TUI capture already extracts `itineraryCodeOne` or
+  `itineraryCode` from bounded itinerary URLs, but folds it into the more
+  general offer id and does not preserve discovery checks.
+- Existing Cruise History is keyed by dated sailing plus retail source. It is
+  suitable price evidence but cannot prove an itinerary was newly published.
+- Current capture is explicitly invoked, bounded to ten candidates and reports
+  truncation. This supports positive first-observed evidence only.
+- Existing alerts provide the correct durable in-app lifecycle and independent
+  post-recording materialization pattern for a new typed alert.
+- No demonstrated source field currently proves retailer publication time.
+
+### Agreed 041a Decisions
+
+- Stable identity is operator id plus trusted provider itinerary id. For TUI,
+  this is `itineraryCodeOne`/`itineraryCode` from the validated source URL.
+- Package id, sailing date, ship, price, promotion and source-reference changes
+  never create a new itinerary identity.
+- First accepted capture seeds a scope baseline without alerts. Later accepted
+  comparable captures may detect only identities never accepted previously in
+  that provider/source catalogue.
+- Scope contains source, operator, surface and explicitly known material search
+  filters. Different or unknown material filters remain separate.
+- Bounded/truncated capture is positive evidence only. Absence, disappearance
+  and reappearance never imply publication, withdrawal or another first-seen
+  event.
+- Explicit Record Discovery Check commits factual evidence before a separate
+  typed in-app New Itinerary alert is evaluated.
+- Discovery evidence remains durable and independent from price History, Saved
+  Cruises, cabin evidence and alerts.
+- Presentation uses `New itinerary observed` and `First observed by Kryten`,
+  with explicit baseline, partial and truncation states.
+
+### Build and Tests
+
+Not run. This analysis changed documentation only.
