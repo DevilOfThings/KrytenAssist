@@ -50,6 +50,11 @@ public static class DependencyInjection
         services.AddScoped<SaveCruiseAndEvaluateCriteria>();
         services.AddScoped<RestoreCruiseAndEvaluateCriteria>();
         services.AddScoped<SaveCruisePreferencesAndEvaluateCriteria>();
+        services.AddScoped<RecordCruiseCabinObservation>();
+        services.AddScoped<GetCruiseCabinHistory>();
+        services.AddScoped<ListCruiseCabinHistories>();
+        services.AddScoped<EvaluateCruiseCabinAvailabilityAlerts>();
+        services.AddScoped<RecordCruiseCabinObservationAndEvaluateAlerts>();
 
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
 

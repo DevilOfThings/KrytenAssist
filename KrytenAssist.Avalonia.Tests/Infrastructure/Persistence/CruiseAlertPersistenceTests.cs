@@ -22,7 +22,12 @@ public sealed class CruiseAlertPersistenceTests
         {
             Alert(CruiseAlertType.PriceDrop, "price", time, new CruisePriceDropAlertDetails(new(1000.123456m, "GBP", "per person"), new(900.123456m, "GBP", "per person"), "price")),
             Alert(CruiseAlertType.Promotion, "promotion", time.AddMinutes(1), new CruisePromotionAlertDetails("Old", "New", "promotion")),
-            Alert(CruiseAlertType.SavedCriteria, "criteria", time.AddMinutes(2), new CruiseSavedCriteriaAlertDetails(true, new(2000.123456m, "GBP", CruiseBudgetBasis.TotalBooking), new(1900.123456m, "GBP", "total booking"), "criteria-fingerprint", CruiseAlertEvidenceOrigin.SavedSnapshot, "criteria", time, true))
+            Alert(CruiseAlertType.SavedCriteria, "criteria", time.AddMinutes(2), new CruiseSavedCriteriaAlertDetails(true, new(2000.123456m, "GBP", CruiseBudgetBasis.TotalBooking), new(1900.123456m, "GBP", "total booking"), "criteria-fingerprint", CruiseAlertEvidenceOrigin.SavedSnapshot, "criteria", time, false,
+                [CruiseCabinType.Balcony, CruiseCabinType.Suite], [CruiseCabinType.Balcony], SavedCruiseCriteriaResult.Met,
+                new string('a', 64), "cabin-evidence", time.AddMinutes(2))),
+            Alert(CruiseAlertType.CabinAvailability, "ignored", time.AddMinutes(3), new CruiseCabinAvailabilityAlertDetails(
+                CruiseCabinType.Balcony, CruiseCabinAvailabilityState.Unavailable, CruiseCabinAvailabilityState.Available,
+                new string('b', 64), CruiseCabinEvidenceCoverage.Partial, new string('c', 64), "retailer-cabin", time.AddMinutes(3)))
         };
         await using (var context = database.CreateContext())
         {
@@ -33,9 +38,9 @@ public sealed class CruiseAlertPersistenceTests
         {
             var repository = new AlertRepository(reopened);
             var listed = await repository.ListAsync(new AlertQuery());
-            listed.Should().ContainInOrder(values.Reverse());
+            listed.Should().BeEquivalentTo(values.Reverse(), options => options.WithStrictOrdering());
             (await repository.ListAsync(new AlertQuery(CruiseAlertType.Promotion))).Should().Equal(values[1]);
-            (await repository.GetAsync(values[0].Id)).Should().Be(values[0]);
+            (await repository.GetAsync(values[0].Id)).Should().BeEquivalentTo(values[0]);
             (await repository.GetAsync(Guid.NewGuid())).Should().BeNull();
         }
     }
@@ -79,10 +84,10 @@ public sealed class CruiseAlertPersistenceTests
         {
             var repository = new SettingsRepository(context);
             (await repository.GetAsync()).Should().Be(new CruiseAlertSettings());
-            await repository.SaveAsync(new(false, true, false, 12.3456m));
+            await repository.SaveAsync(new(false, true, false, 12.3456m, false));
         }
         await using (var reopened = database.CreateContext())
-            (await new SettingsRepository(reopened).GetAsync()).Should().Be(new CruiseAlertSettings(false, true, false, 12.3456m));
+            (await new SettingsRepository(reopened).GetAsync()).Should().Be(new CruiseAlertSettings(false, true, false, 12.3456m, false));
     }
 
     [Fact]
@@ -117,7 +122,10 @@ public sealed class CruiseAlertPersistenceTests
     {
         var source = type == CruiseAlertType.SavedCriteria ? null : new CruiseSource("retailer", "Retailer");
         var fingerprint = (details as CruiseSavedCriteriaAlertDetails)?.CriteriaFingerprint;
-        return new(Guid.NewGuid(), new(type, Key(), source, details, time, evidence, fingerprint), time.AddSeconds(1));
+        var triggeringEvidence = details is CruiseCabinAvailabilityAlertDetails cabin
+            ? $"{cabin.StateFingerprint}:{(int)cabin.CabinType}"
+            : evidence;
+        return new(Guid.NewGuid(), new(type, Key(), source, details, time, triggeringEvidence, fingerprint), time.AddSeconds(1));
     }
     private static CruiseSailingKey Key() => new("operator", "ship", new DateOnly(2027, 1, 2), 7);
 }

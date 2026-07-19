@@ -2,6 +2,7 @@ extern alias KrytenInfrastructure;
 
 using KrytenAssist.Core.Entities;
 using KrytenAssist.Core.Cruises;
+using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -14,6 +15,7 @@ namespace KrytenAssist.Avalonia.Tests.Infrastructure.Persistence;
 public sealed class CruisePersistenceSchemaAndMigrationTests
 {
     private const string InitialMigration = "20260703152527_InitialCreate";
+    private const string PreviousMigration = "20260718205146_AddCruiseAlertPersistence";
 
     [Fact]
     public async Task LatestMigration_CreatesNormalizedTablesIndexesAndConstraints()
@@ -38,6 +40,12 @@ public sealed class CruisePersistenceSchemaAndMigrationTests
         Assert.Contains("CruiseSavedCriteriaAlertDetails", schema.Keys);
         Assert.Contains("CruiseAlertSettings", schema.Keys);
         Assert.Contains("SavedCruiseCriteriaEvaluationStates", schema.Keys);
+        Assert.Contains("CruiseCabinSeries", schema.Keys);
+        Assert.Contains("CruiseCabinContextChildAges", schema.Keys);
+        Assert.Contains("CruiseCabinObservations", schema.Keys);
+        Assert.Contains("CruiseCabinObservationStates", schema.Keys);
+        Assert.Contains("CruiseCabinAvailabilityAlertDetails", schema.Keys);
+        Assert.Contains("CruiseSavedCriteriaAlertCabins", schema.Keys);
         Assert.Contains("CK_CruiseHistories_DurationNights", schema["CruiseHistories"]);
         Assert.Contains("CK_CruiseObservations_Fingerprint_Length", schema["CruiseObservations"]);
         Assert.Contains("CK_CruiseObservationPrices_Amount", schema["CruiseObservationPrices"]);
@@ -52,6 +60,13 @@ public sealed class CruisePersistenceSchemaAndMigrationTests
         Assert.Contains("UX_CruisePreferenceCabins_Profile_Cabin", indexes.Keys);
         Assert.Contains("UX_CruiseAlerts_EventKey", indexes.Keys);
         Assert.Contains("UX_SavedCriteriaStates_Sailing_Fingerprint", indexes.Keys);
+        Assert.Contains("UX_CruiseCabinSeries_SeriesKey", indexes.Keys);
+        Assert.Contains("UX_CruiseCabinObservations_Series_Sequence", indexes.Keys);
+        Assert.Contains("IX_CruiseCabinObservations_Series_State", indexes.Keys);
+        Assert.DoesNotContain("UX_CruiseCabinObservations_Series_State", indexes.Keys);
+        Assert.Contains("UX_CruiseCabinObservationStates_Observation_Cabin", indexes.Keys);
+        Assert.Contains("UX_CruiseCabinContextChildAges_Series_Order", indexes.Keys);
+        Assert.Contains("UX_CruiseSavedCriteriaAlertCabins_Alert_Cabin", indexes.Keys);
     }
 
     [Fact]
@@ -97,12 +112,57 @@ public sealed class CruisePersistenceSchemaAndMigrationTests
         await context.Database.MigrateAsync();
         var applied = await context.Database.GetAppliedMigrationsAsync();
 
-        Assert.Equal(5, applied.Count());
+        Assert.Equal(6, applied.Count());
         Assert.Contains(InitialMigration, applied);
         Assert.Contains(applied, migration => migration.EndsWith("_AddCruiseHistoryPersistence", StringComparison.Ordinal));
         Assert.Contains(applied, migration => migration.EndsWith("_HardenCruiseHistoryRecording", StringComparison.Ordinal));
         Assert.Contains(applied, migration => migration.EndsWith("_AddPersonalCruiseState", StringComparison.Ordinal));
         Assert.Contains(applied, migration => migration.EndsWith("_AddCruiseAlertPersistence", StringComparison.Ordinal));
+        Assert.Contains(applied, migration => migration.EndsWith("_AddCruiseCabinPersistence", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task MigrationFromPreviousAlertSchema_PreservesSettingsAndDefaultsCabinAlertsEnabled()
+    {
+        await using var database = new CruisePersistenceTestDatabase(); await database.OpenAsync();
+        var time = new DateTimeOffset(2026, 7, 18, 20, 0, 0, TimeSpan.FromHours(1));
+        var key = new CruiseSailingKey("operator", "ship", new DateOnly(2027, 1, 2), 7);
+        var legacyDetails = new CruiseSavedCriteriaAlertDetails(true, null, null, "legacy-criteria",
+            CruiseAlertEvidenceOrigin.SavedSnapshot, "legacy-evidence", time, true);
+        var legacyAlert = new CruiseAlert(Guid.NewGuid(), new CruiseAlertCandidate(CruiseAlertType.SavedCriteria,
+            key, null, legacyDetails, time, "legacy-evidence", "legacy-criteria"), time.AddMinutes(1));
+        await using (var oldContext = database.CreateContext())
+        {
+            await oldContext.Database.GetService<IMigrator>().MigrateAsync(PreviousMigration);
+            await oldContext.Database.ExecuteSqlRawAsync("""
+                INSERT INTO CruiseAlertSettings (Id, PriceDropEnabled, PromotionEnabled, SavedCriteriaEnabled, MinimumPriceDropPercentage)
+                VALUES (1, 0, 1, 0, '12.5')
+                """);
+            await oldContext.Database.ExecuteSqlInterpolatedAsync($"""
+                INSERT INTO CruiseAlerts (Id, EventKey, Type, Status, OperatorId, ShipName, DepartureDate,
+                    DurationNights, RetailSourceId, RetailSourceName, EventTime, EventTimeUtcTicks, CreatedAt, CreatedAtUtcTicks)
+                VALUES ({legacyAlert.Id}, {legacyAlert.EventKey}, 2, 0, {key.OperatorId}, {key.ShipName},
+                    {key.DepartureDate.ToString("yyyy-MM-dd")}, {key.DurationNights}, NULL, NULL,
+                    {time.ToString("O")}, {time.UtcTicks}, {legacyAlert.CreatedAt.ToString("O")}, {legacyAlert.CreatedAt.UtcTicks})
+                """);
+            await oldContext.Database.ExecuteSqlInterpolatedAsync($"""
+                INSERT INTO CruiseSavedCriteriaAlertDetails (CruiseAlertId, MonthConfiguredAndMatched,
+                    ConfiguredBudgetAmount, ConfiguredBudgetCurrency, ConfiguredBudgetBasis, MatchedPriceAmount,
+                    MatchedPriceCurrency, MatchedPriceBasis, CriteriaFingerprint, EvidenceOrigin, EvidenceKey,
+                    EvidenceTime, CabinPreferencesUnavailable)
+                VALUES ({legacyAlert.Id}, 1, NULL, NULL, NULL, NULL, NULL, NULL, 'legacy-criteria', 1,
+                    'legacy-evidence', {time.ToString("O")}, 1)
+                """);
+            await oldContext.Database.MigrateAsync();
+        }
+        await using var reopened = database.CreateContext();
+        var settings = await new KrytenInfrastructure::KrytenAssist.Infrastructure.Persistence.SqliteCruiseAlertSettingsRepository(reopened).GetAsync();
+        settings.Should().Be(new CruiseAlertSettings(false, true, false, 12.5m, true));
+        var reconstructed = await new KrytenInfrastructure::KrytenAssist.Infrastructure.Persistence.SqliteCruiseAlertRepository(reopened).GetAsync(legacyAlert.Id);
+        reconstructed.Should().BeEquivalentTo(legacyAlert);
+        var reconstructedDetails = (CruiseSavedCriteriaAlertDetails)reconstructed!.Details;
+        reconstructedDetails.ConfiguredCabins.Should().BeEmpty();
+        reconstructedDetails.CabinCriterionResult.Should().Be(SavedCruiseCriteriaResult.Unknown);
     }
 
     [Fact]
@@ -178,6 +238,26 @@ public sealed class CruisePersistenceSchemaAndMigrationTests
             Assert.Equal("CruiseAlerts", reader.GetString(reader.GetOrdinal("table")));
             Assert.False(await reader.ReadAsync());
         }
+    }
+
+    [Fact]
+    public async Task CabinAggregate_HasOnlyInternalCascadingRelationships()
+    {
+        await using var database = new CruisePersistenceTestDatabase(); await database.OpenAndMigrateAsync();
+        foreach (var table in new[] { "CruiseCabinSeries" })
+        {
+            await using var command = database.Connection.CreateCommand(); command.CommandText = $"PRAGMA foreign_key_list(\"{table}\")";
+            await using var reader = await command.ExecuteReaderAsync(); Assert.False(await reader.ReadAsync());
+        }
+
+        var observation = CruiseCabinPersistenceTestData.Observation();
+        await using var context = database.CreateContext();
+        await new KrytenInfrastructure::KrytenAssist.Infrastructure.Persistence.SqliteCruiseCabinObservationRepository(context).RecordAsync(observation);
+        context.CruiseCabinSeries.Remove(await context.CruiseCabinSeries.SingleAsync());
+        await context.SaveChangesAsync();
+        (await context.CruiseCabinContextChildAges.CountAsync()).Should().Be(0);
+        (await context.CruiseCabinObservations.CountAsync()).Should().Be(0);
+        (await context.CruiseCabinObservationStates.CountAsync()).Should().Be(0);
     }
 
     [Fact]

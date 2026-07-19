@@ -25,6 +25,7 @@ public static class DependencyInjection
         services.AddScoped<ICruiseAlertRepository, SqliteCruiseAlertRepository>();
         services.AddScoped<ICruiseAlertSettingsRepository, SqliteCruiseAlertSettingsRepository>();
         services.AddScoped<ISavedCruiseCriteriaStateRepository, SqliteSavedCruiseCriteriaStateRepository>();
+        services.AddScoped<ICruiseCabinObservationRepository, SqliteCruiseCabinObservationRepository>();
         return services;
     }
 }

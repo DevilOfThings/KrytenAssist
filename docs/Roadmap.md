@@ -10,7 +10,7 @@ Phase 7 – Cruise Assistant
 
 Current Prompt
 --------------
-Prompt 040c – SQLite Cabin Persistence (next)
+Prompt 040d – TUI Cabin Evidence Capture (next)
 
 Prompt 037 – Cruise History and Price Tracking, including its 037h Multiple
 Cruise Deals extension, is complete. Kryten can explicitly capture currently
@@ -671,9 +671,13 @@ Availability alert; first-seen and Unknown-to-Available evidence remain history
 only. Prompt 040b is complete: separate series/state identities, immutable
 contextual observations, pure transition rules, Saved Criteria version 2 and
 Application-owned capture/history/orchestration contracts are implemented.
-All 672 offline tests pass. Cabin alert materialization remains unwired until
-Prompt 040c adds the compatible SQLite schema and repository. Prompt 040c –
-SQLite Cabin Persistence is next.
+All 672 offline tests pass. Prompt 040c adds independent normalized cabin
+series/history storage, completes
+the Cabin Availability alert, Saved Criteria v2 and settings persistence
+migration, and registers the repository-dependent Application services. It is
+complete with migration/restart, recurrence, concurrency and independence
+coverage. All 685 offline tests pass. Prompt 040d – TUI Cabin Evidence Capture
+is next.
 
 See `docs/AI Playbook/040 - Cabin Availability.md` and the 040a Codex prompt for
 the proposed evidence, preference, alert and implementation sequence.

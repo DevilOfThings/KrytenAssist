@@ -19,6 +19,7 @@ public sealed class CruiseAlertEntity
     public CruisePriceDropAlertDetailEntity? PriceDropDetails { get; set; }
     public CruisePromotionAlertDetailEntity? PromotionDetails { get; set; }
     public CruiseSavedCriteriaAlertDetailEntity? SavedCriteriaDetails { get; set; }
+    public CruiseCabinAvailabilityAlertDetailEntity? CabinAvailabilityDetails { get; set; }
 }
 
 public sealed class CruisePriceDropAlertDetailEntity
@@ -61,6 +62,35 @@ public sealed class CruiseSavedCriteriaAlertDetailEntity
     public string EvidenceKey { get; set; } = string.Empty;
     public DateTimeOffset EvidenceTime { get; set; }
     public bool CabinPreferencesUnavailable { get; set; }
+    public int CabinCriterionResult { get; set; }
+    public string? CabinContextFingerprint { get; set; }
+    public string? CabinEvidenceKey { get; set; }
+    public DateTimeOffset? CabinEvidenceTime { get; set; }
+    public List<CruiseSavedCriteriaAlertCabinEntity> Cabins { get; set; } = [];
+}
+
+public sealed class CruiseSavedCriteriaAlertCabinEntity
+{
+    public long Id { get; set; }
+    public Guid CruiseAlertId { get; set; }
+    public CruiseSavedCriteriaAlertDetailEntity Details { get; set; } = null!;
+    public int CabinType { get; set; }
+    public bool IsMatched { get; set; }
+}
+
+public sealed class CruiseCabinAvailabilityAlertDetailEntity
+{
+    public Guid CruiseAlertId { get; set; }
+    public CruiseAlertEntity Alert { get; set; } = null!;
+    public int CabinType { get; set; }
+    public int PreviousState { get; set; }
+    public int CurrentState { get; set; }
+    public int Direction { get; set; }
+    public string ContextFingerprint { get; set; } = string.Empty;
+    public int Coverage { get; set; }
+    public string StateFingerprint { get; set; } = string.Empty;
+    public string EvidenceKey { get; set; } = string.Empty;
+    public DateTimeOffset EvidenceTime { get; set; }
 }
 
 public sealed class CruiseAlertSettingsEntity
@@ -70,6 +100,7 @@ public sealed class CruiseAlertSettingsEntity
     public bool PromotionEnabled { get; set; }
     public bool SavedCriteriaEnabled { get; set; }
     public decimal MinimumPriceDropPercentage { get; set; }
+    public bool CabinAvailabilityEnabled { get; set; }
 }
 
 public sealed class SavedCruiseCriteriaEvaluationStateEntity

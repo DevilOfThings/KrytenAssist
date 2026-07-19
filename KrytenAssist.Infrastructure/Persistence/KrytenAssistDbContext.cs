@@ -23,8 +23,14 @@ public sealed class KrytenAssistDbContext : DbContext
     public DbSet<CruisePriceDropAlertDetailEntity> CruisePriceDropAlertDetails => Set<CruisePriceDropAlertDetailEntity>();
     public DbSet<CruisePromotionAlertDetailEntity> CruisePromotionAlertDetails => Set<CruisePromotionAlertDetailEntity>();
     public DbSet<CruiseSavedCriteriaAlertDetailEntity> CruiseSavedCriteriaAlertDetails => Set<CruiseSavedCriteriaAlertDetailEntity>();
+    public DbSet<CruiseSavedCriteriaAlertCabinEntity> CruiseSavedCriteriaAlertCabins => Set<CruiseSavedCriteriaAlertCabinEntity>();
+    public DbSet<CruiseCabinAvailabilityAlertDetailEntity> CruiseCabinAvailabilityAlertDetails => Set<CruiseCabinAvailabilityAlertDetailEntity>();
     public DbSet<CruiseAlertSettingsEntity> CruiseAlertSettings => Set<CruiseAlertSettingsEntity>();
     public DbSet<SavedCruiseCriteriaEvaluationStateEntity> SavedCruiseCriteriaEvaluationStates => Set<SavedCruiseCriteriaEvaluationStateEntity>();
+    public DbSet<CruiseCabinSeriesEntity> CruiseCabinSeries => Set<CruiseCabinSeriesEntity>();
+    public DbSet<CruiseCabinContextChildAgeEntity> CruiseCabinContextChildAges => Set<CruiseCabinContextChildAgeEntity>();
+    public DbSet<CruiseCabinObservationEntity> CruiseCabinObservations => Set<CruiseCabinObservationEntity>();
+    public DbSet<CruiseCabinObservationStateEntity> CruiseCabinObservationStates => Set<CruiseCabinObservationStateEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

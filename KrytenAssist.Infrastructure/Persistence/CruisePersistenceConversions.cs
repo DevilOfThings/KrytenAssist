@@ -13,6 +13,10 @@ internal static class CruisePersistenceConversions
         value => value.ToString("O", CultureInfo.InvariantCulture),
         value => System.DateTimeOffset.ParseExact(value, "O", CultureInfo.InvariantCulture));
 
+    public static readonly ValueConverter<DateTimeOffset?, string?> NullableDateTimeOffset = new(
+        value => value.HasValue ? value.Value.ToString("O", CultureInfo.InvariantCulture) : null,
+        value => value == null ? null : System.DateTimeOffset.ParseExact(value, "O", CultureInfo.InvariantCulture));
+
     public static readonly ValueConverter<decimal, string> Decimal = new(
         value => value.ToString("G29", CultureInfo.InvariantCulture),
         value => decimal.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture));

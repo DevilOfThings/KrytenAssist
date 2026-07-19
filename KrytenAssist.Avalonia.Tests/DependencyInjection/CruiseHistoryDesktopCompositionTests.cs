@@ -16,6 +16,11 @@ using SaveCruise = KrytenApplication::KrytenAssist.Application.Cruises.SaveCruis
 using SavePreferences = KrytenApplication::KrytenAssist.Application.Cruises.SaveCruisePreferences;
 using ListSaved = KrytenApplication::KrytenAssist.Application.Cruises.ListSavedCruises;
 using ListSavedDetails = KrytenApplication::KrytenAssist.Application.Cruises.ListSavedCruiseDetails;
+using RecordCabin = KrytenApplication::KrytenAssist.Application.Cruises.RecordCruiseCabinObservation;
+using GetCabin = KrytenApplication::KrytenAssist.Application.Cruises.GetCruiseCabinHistory;
+using ListCabins = KrytenApplication::KrytenAssist.Application.Cruises.ListCruiseCabinHistories;
+using EvaluateCabin = KrytenApplication::KrytenAssist.Application.Cruises.EvaluateCruiseCabinAvailabilityAlerts;
+using RecordCabinAndEvaluate = KrytenApplication::KrytenAssist.Application.Cruises.RecordCruiseCabinObservationAndEvaluateAlerts;
 
 namespace KrytenAssist.Avalonia.Tests.DependencyInjection;
 
@@ -48,6 +53,11 @@ public sealed class CruiseHistoryDesktopCompositionTests
             Assert.NotNull(scope.ServiceProvider.GetRequiredService<ListSaved>());
             Assert.NotNull(scope.ServiceProvider.GetRequiredService<ListSavedDetails>());
             Assert.NotNull(scope.ServiceProvider.GetRequiredService<SavePreferences>());
+            Assert.NotNull(scope.ServiceProvider.GetRequiredService<RecordCabin>());
+            Assert.NotNull(scope.ServiceProvider.GetRequiredService<GetCabin>());
+            Assert.NotNull(scope.ServiceProvider.GetRequiredService<ListCabins>());
+            Assert.NotNull(scope.ServiceProvider.GetRequiredService<EvaluateCabin>());
+            Assert.NotNull(scope.ServiceProvider.GetRequiredService<RecordCabinAndEvaluate>());
             var editor = scope.ServiceProvider.GetRequiredService<CruiseSaveAndEvaluationViewModel>();
             var preferences = scope.ServiceProvider.GetRequiredService<CruisePreferencesViewModel>();
             var organiser = scope.ServiceProvider.GetRequiredService<SavedCruisesViewModel>();

@@ -248,8 +248,11 @@ Use normalized local SQLite storage for:
 - ordered category-state children
 - latest evidence/last-seen metadata
 
-Enforce uniqueness for series identity, sequence and observation fingerprint.
-Preserve exact timestamp offsets and deterministic UTC ordering. Use
+Enforce uniqueness for series identity and per-series sequence, plus ordered
+child/category identity. Index the observation fingerprint but do not make it
+unique within a series: a genuine Available → Unavailable → Available recurrence
+must remain visible. Equivalent-current deduplication is transactional repository
+logic. Preserve exact timestamp offsets and deterministic UTC ordering. Use
 transactions, cancellation and bounded retry for demonstrated SQLite
 busy/unique conflicts. No production or test access to Robin's database.
 
@@ -294,6 +297,16 @@ Codex prompt for the complete model, identity, policy and test contract.
 - add normalized series/observation/category tables and migration
 - implement repository, ordering, deduplication and concurrency
 - verify restart and independence from History/Saved Cruises/alerts
+
+The agreed analysis uses independent normalized series, ordered child-age,
+meaningful observation and per-category state tables. Series and sequence are
+unique; state fingerprints are indexed but may recur after an intervening state.
+Equivalent-current evidence advances monotonic last-seen/latest metadata without
+adding a snapshot. The same migration completes storage for the typed Cabin
+Availability alert, Saved Criteria v2 cabin details and the default-enabled
+cabin alert setting while preserving all Prompt 039 rows. See the 040c Codex
+prompt for the complete schema, migration, repository, concurrency and test
+contract.
 
 ### 040d – TUI Cabin Evidence Capture
 
@@ -356,6 +369,11 @@ alerts, retention and initial TUI boundary were agreed on 19 July 2026. Prompt
 contextual observations, deterministic history/transition policies, typed Cabin
 Availability alert candidates, Saved Criteria v2 and Application-owned
 capture/persistence/use-case contracts are implemented with 672 offline tests
-passing. Cabin alert materialization remains intentionally unwired because the
-current SQLite schema supports only the Prompt 039 alert types. Prompt 040c –
-SQLite Cabin Persistence is next.
+passing. Production cabin alert materialization remains intentionally unwired
+until Prompt 040e. Prompt 040c – SQLite Cabin Persistence is complete.
+Independent normalized cabin storage,
+transactional deduplication/concurrency, restart-safe reconstruction, Cabin
+Availability alert details, Saved Criteria v2 cabin details and the complete
+settings value are persisted through migration
+`20260719174221_AddCruiseCabinPersistence`. All 685 offline tests pass. Prompt
+040d – TUI Cabin Evidence Capture is next.

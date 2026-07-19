@@ -67,7 +67,9 @@ public sealed class SqliteCruiseAlertRepository(KrytenAssistDbContext dbContext)
     }
 
     private IQueryable<CruiseAlertEntity> CompleteQuery() => dbContext.CruiseAlerts.AsNoTracking()
-        .Include(x => x.PriceDropDetails).Include(x => x.PromotionDetails).Include(x => x.SavedCriteriaDetails);
+        .Include(x => x.PriceDropDetails).Include(x => x.PromotionDetails)
+        .Include(x => x.SavedCriteriaDetails).ThenInclude(x => x!.Cabins)
+        .Include(x => x.CabinAvailabilityDetails);
 
     private async Task<CruiseAlert?> FindByEventKeyAsync(string eventKey, CancellationToken token)
     {
@@ -106,7 +108,26 @@ public sealed class SqliteCruiseAlertRepository(KrytenAssistDbContext dbContext)
                     ConfiguredBudgetAmount = detail.ConfiguredBudget?.Amount, ConfiguredBudgetCurrency = detail.ConfiguredBudget?.Currency, ConfiguredBudgetBasis = (int?)detail.ConfiguredBudget?.Basis,
                     MatchedPriceAmount = detail.MatchedPrice?.Amount, MatchedPriceCurrency = detail.MatchedPrice?.Currency, MatchedPriceBasis = detail.MatchedPrice?.Basis,
                     CriteriaFingerprint = detail.CriteriaFingerprint, EvidenceOrigin = (int)detail.EvidenceOrigin, EvidenceKey = detail.EvidenceKey,
-                    EvidenceTime = detail.EvidenceTime, CabinPreferencesUnavailable = detail.CabinPreferencesUnavailable
+                    EvidenceTime = detail.EvidenceTime, CabinPreferencesUnavailable = detail.CabinPreferencesUnavailable,
+                    CabinCriterionResult = (int)detail.CabinCriterionResult,
+                    CabinContextFingerprint = detail.CabinContextFingerprint,
+                    CabinEvidenceKey = detail.CabinEvidenceKey,
+                    CabinEvidenceTime = detail.CabinEvidenceTime,
+                    Cabins = detail.ConfiguredCabins.Select(cabin => new CruiseSavedCriteriaAlertCabinEntity
+                    {
+                        CabinType = (int)cabin,
+                        IsMatched = detail.MatchedCabins.Contains(cabin)
+                    }).ToList()
+                };
+                break;
+            case CruiseCabinAvailabilityAlertDetails detail:
+                entity.CabinAvailabilityDetails = new CruiseCabinAvailabilityAlertDetailEntity
+                {
+                    CabinType = (int)detail.CabinType, PreviousState = (int)detail.PreviousState,
+                    CurrentState = (int)detail.CurrentState, Direction = (int)detail.Direction,
+                    ContextFingerprint = detail.ContextFingerprint, Coverage = (int)detail.Coverage,
+                    StateFingerprint = detail.StateFingerprint, EvidenceKey = detail.EvidenceKey,
+                    EvidenceTime = detail.EvidenceTime
                 };
                 break;
             default: throw new InvalidOperationException("Unsupported alert details.");
@@ -120,12 +141,13 @@ public sealed class SqliteCruiseAlertRepository(KrytenAssistDbContext dbContext)
         var source = entity.RetailSourceId is null ? null : new CruiseSource(entity.RetailSourceId, entity.RetailSourceName!);
         CruiseAlertDetails details = (CruiseAlertType)entity.Type switch
         {
-            CruiseAlertType.PriceDrop when entity.PriceDropDetails is not null && entity.PromotionDetails is null && entity.SavedCriteriaDetails is null => MapPriceDrop(entity.PriceDropDetails),
-            CruiseAlertType.Promotion when entity.PromotionDetails is not null && entity.PriceDropDetails is null && entity.SavedCriteriaDetails is null => MapPromotion(entity.PromotionDetails),
-            CruiseAlertType.SavedCriteria when entity.SavedCriteriaDetails is not null && entity.PriceDropDetails is null && entity.PromotionDetails is null => MapCriteria(entity.SavedCriteriaDetails),
+            CruiseAlertType.PriceDrop when entity.PriceDropDetails is not null && entity.PromotionDetails is null && entity.SavedCriteriaDetails is null && entity.CabinAvailabilityDetails is null => MapPriceDrop(entity.PriceDropDetails),
+            CruiseAlertType.Promotion when entity.PromotionDetails is not null && entity.PriceDropDetails is null && entity.SavedCriteriaDetails is null && entity.CabinAvailabilityDetails is null => MapPromotion(entity.PromotionDetails),
+            CruiseAlertType.SavedCriteria when entity.SavedCriteriaDetails is not null && entity.PriceDropDetails is null && entity.PromotionDetails is null && entity.CabinAvailabilityDetails is null => MapCriteria(entity.SavedCriteriaDetails),
+            CruiseAlertType.CabinAvailability when entity.CabinAvailabilityDetails is not null && entity.PriceDropDetails is null && entity.PromotionDetails is null && entity.SavedCriteriaDetails is null => MapCabinAvailability(entity.CabinAvailabilityDetails),
             _ => throw new InvalidDataException("Persisted alert has an invalid typed detail payload.")
         };
-        var evidenceKey = details switch { CruisePriceDropAlertDetails x => x.EvidenceKey, CruisePromotionAlertDetails x => x.EvidenceKey, CruiseSavedCriteriaAlertDetails x => x.EvidenceKey, _ => throw new InvalidOperationException() };
+        var evidenceKey = details switch { CruisePriceDropAlertDetails x => x.EvidenceKey, CruisePromotionAlertDetails x => x.EvidenceKey, CruiseSavedCriteriaAlertDetails x => x.EvidenceKey, CruiseCabinAvailabilityAlertDetails x => $"{x.StateFingerprint}:{(int)x.CabinType}", _ => throw new InvalidOperationException() };
         var criteria = (details as CruiseSavedCriteriaAlertDetails)?.CriteriaFingerprint;
         var candidate = new CruiseAlertCandidate((CruiseAlertType)entity.Type, key, source, details, entity.EventTime, evidenceKey, criteria);
         if (!string.Equals(candidate.EventKey, entity.EventKey, StringComparison.Ordinal)) throw new InvalidDataException("Persisted alert event identity is inconsistent.");
@@ -143,7 +165,23 @@ public sealed class SqliteCruiseAlertRepository(KrytenAssistDbContext dbContext)
     {
         CruiseBudget? budget = entity.ConfiguredBudgetAmount is null ? null : new(entity.ConfiguredBudgetAmount.Value, entity.ConfiguredBudgetCurrency!, (CruiseBudgetBasis)entity.ConfiguredBudgetBasis!.Value);
         CruisePrice? price = entity.MatchedPriceAmount is null ? null : new(entity.MatchedPriceAmount.Value, entity.MatchedPriceCurrency!, entity.MatchedPriceBasis);
-        return new(entity.MonthConfiguredAndMatched, budget, price, entity.CriteriaFingerprint, (CruiseAlertEvidenceOrigin)entity.EvidenceOrigin, entity.EvidenceKey, entity.EvidenceTime, entity.CabinPreferencesUnavailable);
+        var configured = entity.Cabins.OrderBy(x => x.CabinType).Select(x => (CruiseCabinType)x.CabinType).ToArray();
+        var matched = entity.Cabins.Where(x => x.IsMatched).OrderBy(x => x.CabinType).Select(x => (CruiseCabinType)x.CabinType).ToArray();
+        return new(entity.MonthConfiguredAndMatched, budget, price, entity.CriteriaFingerprint,
+            (CruiseAlertEvidenceOrigin)entity.EvidenceOrigin, entity.EvidenceKey, entity.EvidenceTime,
+            entity.CabinPreferencesUnavailable, configured, matched,
+            (SavedCruiseCriteriaResult)entity.CabinCriterionResult, entity.CabinContextFingerprint,
+            entity.CabinEvidenceKey, entity.CabinEvidenceTime);
+    }
+    private static CruiseCabinAvailabilityAlertDetails MapCabinAvailability(CruiseCabinAvailabilityAlertDetailEntity entity)
+    {
+        var details = new CruiseCabinAvailabilityAlertDetails((CruiseCabinType)entity.CabinType,
+            (CruiseCabinAvailabilityState)entity.PreviousState, (CruiseCabinAvailabilityState)entity.CurrentState,
+            entity.ContextFingerprint, (CruiseCabinEvidenceCoverage)entity.Coverage,
+            entity.StateFingerprint, entity.EvidenceKey, entity.EvidenceTime);
+        if ((int)details.Direction != entity.Direction)
+            throw new InvalidDataException("Persisted Cabin Availability direction is inconsistent.");
+        return details;
     }
     private static bool IsUniqueConstraint(DbUpdateException exception) => exception.InnerException is SqliteException { SqliteErrorCode: 19 };
 }

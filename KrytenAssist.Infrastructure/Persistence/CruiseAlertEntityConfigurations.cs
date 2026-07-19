@@ -11,11 +11,11 @@ public sealed class CruiseAlertEntityConfiguration : IEntityTypeConfiguration<Cr
         builder.ToTable("CruiseAlerts", table =>
         {
             table.HasCheckConstraint("CK_CruiseAlerts_EventKey", "length(\"EventKey\") = 64 AND \"EventKey\" NOT GLOB '*[^0-9a-f]*'");
-            table.HasCheckConstraint("CK_CruiseAlerts_Type", "\"Type\" BETWEEN 0 AND 2");
+            table.HasCheckConstraint("CK_CruiseAlerts_Type", "\"Type\" BETWEEN 0 AND 3");
             table.HasCheckConstraint("CK_CruiseAlerts_Status", "\"Status\" BETWEEN 0 AND 2");
             table.HasCheckConstraint("CK_CruiseAlerts_Duration", "\"DurationNights\" > 0");
             table.HasCheckConstraint("CK_CruiseAlerts_SourcePair", "(\"RetailSourceId\" IS NULL AND \"RetailSourceName\" IS NULL) OR (\"RetailSourceId\" IS NOT NULL AND \"RetailSourceName\" IS NOT NULL)");
-            table.HasCheckConstraint("CK_CruiseAlerts_TypeSource", "(\"Type\" IN (0, 1) AND \"RetailSourceId\" IS NOT NULL) OR (\"Type\" = 2 AND \"RetailSourceId\" IS NULL)");
+            table.HasCheckConstraint("CK_CruiseAlerts_TypeSource", "(\"Type\" IN (0, 1, 3) AND \"RetailSourceId\" IS NOT NULL) OR (\"Type\" = 2 AND \"RetailSourceId\" IS NULL)");
             Length(table, "OperatorId", 200, false); Length(table, "ShipName", 500, false);
             Length(table, "RetailSourceId", SavedCruiseSnapshot.MaximumRetailSourceIdLength, true);
             Length(table, "RetailSourceName", SavedCruiseSnapshot.MaximumRetailSourceNameLength, true);
@@ -91,6 +91,10 @@ public sealed class CruiseSavedCriteriaAlertDetailEntityConfiguration : IEntityT
             table.HasCheckConstraint("CK_CruiseSavedCriteriaDetails_BudgetBasis", "\"ConfiguredBudgetBasis\" IS NULL OR \"ConfiguredBudgetBasis\" BETWEEN 0 AND 1");
             table.HasCheckConstraint("CK_CruiseSavedCriteriaDetails_Currencies", "(\"ConfiguredBudgetCurrency\" IS NULL OR (length(\"ConfiguredBudgetCurrency\") = 3 AND \"ConfiguredBudgetCurrency\" GLOB '[A-Z][A-Z][A-Z]')) AND (\"MatchedPriceCurrency\" IS NULL OR (length(\"MatchedPriceCurrency\") = 3 AND \"MatchedPriceCurrency\" GLOB '[A-Z][A-Z][A-Z]'))");
             table.HasCheckConstraint("CK_CruiseSavedCriteriaDetails_Required", "length(\"CriteriaFingerprint\") BETWEEN 1 AND 128 AND length(\"EvidenceKey\") BETWEEN 1 AND 4000");
+            table.HasCheckConstraint("CK_CruiseSavedCriteriaDetails_CabinResult", "\"CabinCriterionResult\" BETWEEN 0 AND 2");
+            table.HasCheckConstraint("CK_CruiseSavedCriteriaDetails_CabinContext", "\"CabinContextFingerprint\" IS NULL OR (length(\"CabinContextFingerprint\") = 64 AND \"CabinContextFingerprint\" NOT GLOB '*[^0-9a-f]*')");
+            table.HasCheckConstraint("CK_CruiseSavedCriteriaDetails_CabinEvidence", "(\"CabinEvidenceKey\" IS NULL AND \"CabinEvidenceTime\" IS NULL) OR (\"CabinEvidenceKey\" IS NOT NULL AND \"CabinEvidenceTime\" IS NOT NULL)");
+            table.HasCheckConstraint("CK_CruiseSavedCriteriaDetails_CabinEvidenceKey", $"\"CabinEvidenceKey\" IS NULL OR length(\"CabinEvidenceKey\") BETWEEN 1 AND {CruiseCabinObservation.MaximumEvidenceKeyLength}");
         });
         builder.HasKey(x => x.CruiseAlertId);
         builder.Property(x => x.ConfiguredBudgetAmount).HasConversion(CruisePersistenceConversions.NullableDecimal).HasMaxLength(64);
@@ -98,7 +102,47 @@ public sealed class CruiseSavedCriteriaAlertDetailEntityConfiguration : IEntityT
         builder.Property(x => x.ConfiguredBudgetCurrency).HasMaxLength(3); builder.Property(x => x.MatchedPriceCurrency).HasMaxLength(3);
         builder.Property(x => x.MatchedPriceBasis).HasMaxLength(500); builder.Property(x => x.CriteriaFingerprint).HasMaxLength(128).IsRequired(); builder.Property(x => x.EvidenceKey).HasMaxLength(4000).IsRequired();
         builder.Property(x => x.EvidenceTime).HasConversion(CruisePersistenceConversions.DateTimeOffset).HasMaxLength(35).IsRequired();
+        builder.Property(x => x.CabinContextFingerprint).HasMaxLength(64);
+        builder.Property(x => x.CabinEvidenceKey).HasMaxLength(CruiseCabinObservation.MaximumEvidenceKeyLength);
+        builder.Property(x => x.CabinEvidenceTime).HasConversion(CruisePersistenceConversions.NullableDateTimeOffset).HasMaxLength(35);
         builder.HasOne(x => x.Alert).WithOne(x => x.SavedCriteriaDetails).HasForeignKey<CruiseSavedCriteriaAlertDetailEntity>(x => x.CruiseAlertId).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public sealed class CruiseSavedCriteriaAlertCabinEntityConfiguration : IEntityTypeConfiguration<CruiseSavedCriteriaAlertCabinEntity>
+{
+    public void Configure(EntityTypeBuilder<CruiseSavedCriteriaAlertCabinEntity> builder)
+    {
+        builder.ToTable("CruiseSavedCriteriaAlertCabins", table =>
+        {
+            table.HasCheckConstraint("CK_CruiseSavedCriteriaAlertCabins_CabinType", "\"CabinType\" BETWEEN 0 AND 4");
+            table.HasCheckConstraint("CK_CruiseSavedCriteriaAlertCabins_IsMatched", "\"IsMatched\" IN (0,1)");
+        });
+        builder.HasKey(x => x.Id);
+        builder.HasOne(x => x.Details).WithMany(x => x.Cabins).HasForeignKey(x => x.CruiseAlertId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasIndex(x => new { x.CruiseAlertId, x.CabinType }).IsUnique().HasDatabaseName("UX_CruiseSavedCriteriaAlertCabins_Alert_Cabin");
+    }
+}
+
+public sealed class CruiseCabinAvailabilityAlertDetailEntityConfiguration : IEntityTypeConfiguration<CruiseCabinAvailabilityAlertDetailEntity>
+{
+    public void Configure(EntityTypeBuilder<CruiseCabinAvailabilityAlertDetailEntity> builder)
+    {
+        builder.ToTable("CruiseCabinAvailabilityAlertDetails", table =>
+        {
+            table.HasCheckConstraint("CK_CruiseCabinAvailabilityDetails_CabinType", "\"CabinType\" BETWEEN 0 AND 4");
+            table.HasCheckConstraint("CK_CruiseCabinAvailabilityDetails_Coverage", "\"Coverage\" BETWEEN 0 AND 1");
+            table.HasCheckConstraint("CK_CruiseCabinAvailabilityDetails_Transition", "(\"PreviousState\" = 2 AND \"CurrentState\" = 1 AND \"Direction\" = 0) OR (\"PreviousState\" = 1 AND \"CurrentState\" = 2 AND \"Direction\" = 1)");
+            table.HasCheckConstraint("CK_CruiseCabinAvailabilityDetails_ContextFingerprint", "length(\"ContextFingerprint\") = 64 AND \"ContextFingerprint\" NOT GLOB '*[^0-9a-f]*'");
+            table.HasCheckConstraint("CK_CruiseCabinAvailabilityDetails_StateFingerprint", "length(\"StateFingerprint\") = 64 AND \"StateFingerprint\" NOT GLOB '*[^0-9a-f]*'");
+            table.HasCheckConstraint("CK_CruiseCabinAvailabilityDetails_EvidenceKey", $"length(\"EvidenceKey\") BETWEEN 1 AND {CruiseCabinObservation.MaximumEvidenceKeyLength}");
+        });
+        builder.HasKey(x => x.CruiseAlertId);
+        builder.Property(x => x.ContextFingerprint).HasMaxLength(64).IsRequired();
+        builder.Property(x => x.StateFingerprint).HasMaxLength(64).IsRequired();
+        builder.Property(x => x.EvidenceKey).HasMaxLength(CruiseCabinObservation.MaximumEvidenceKeyLength).IsRequired();
+        builder.Property(x => x.EvidenceTime).HasConversion(CruisePersistenceConversions.DateTimeOffset).HasMaxLength(35).IsRequired();
+        builder.HasOne(x => x.Alert).WithOne(x => x.CabinAvailabilityDetails).HasForeignKey<CruiseCabinAvailabilityAlertDetailEntity>(x => x.CruiseAlertId).OnDelete(DeleteBehavior.Cascade);
     }
 }
 
@@ -109,10 +153,12 @@ public sealed class CruiseAlertSettingsEntityConfiguration : IEntityTypeConfigur
         builder.ToTable("CruiseAlertSettings", table =>
         {
             table.HasCheckConstraint("CK_CruiseAlertSettings_Singleton", "\"Id\" = 1");
-            table.HasCheckConstraint("CK_CruiseAlertSettings_Booleans", "\"PriceDropEnabled\" IN (0,1) AND \"PromotionEnabled\" IN (0,1) AND \"SavedCriteriaEnabled\" IN (0,1)");
+            table.HasCheckConstraint("CK_CruiseAlertSettings_Booleans", "\"PriceDropEnabled\" IN (0,1) AND \"PromotionEnabled\" IN (0,1) AND \"SavedCriteriaEnabled\" IN (0,1) AND \"CabinAvailabilityEnabled\" IN (0,1)");
             table.HasCheckConstraint("CK_CruiseAlertSettings_Percentage", "CAST(\"MinimumPriceDropPercentage\" AS REAL) BETWEEN 0 AND 100");
         });
-        builder.HasKey(x => x.Id); builder.Property(x => x.MinimumPriceDropPercentage).HasConversion(CruisePersistenceConversions.Decimal).HasMaxLength(64).IsRequired();
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.CabinAvailabilityEnabled).HasDefaultValue(true);
+        builder.Property(x => x.MinimumPriceDropPercentage).HasConversion(CruisePersistenceConversions.Decimal).HasMaxLength(64).IsRequired();
     }
 }
 
