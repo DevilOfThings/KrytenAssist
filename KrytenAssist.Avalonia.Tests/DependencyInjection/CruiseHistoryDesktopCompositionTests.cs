@@ -21,6 +21,9 @@ using GetCabin = KrytenApplication::KrytenAssist.Application.Cruises.GetCruiseCa
 using ListCabins = KrytenApplication::KrytenAssist.Application.Cruises.ListCruiseCabinHistories;
 using EvaluateCabin = KrytenApplication::KrytenAssist.Application.Cruises.EvaluateCruiseCabinAvailabilityAlerts;
 using RecordCabinAndEvaluate = KrytenApplication::KrytenAssist.Application.Cruises.RecordCruiseCabinObservationAndEvaluateAlerts;
+using CaptureItineraries = KrytenApplication::KrytenAssist.Application.Cruises.ICruiseItineraryPageCaptureService;
+using RecordDiscoveryAndEvaluate = KrytenApplication::KrytenAssist.Application.Cruises.RecordCruiseDiscoveryCheckAndEvaluateAlerts;
+using ListFirstObservedDetails = KrytenApplication::KrytenAssist.Application.Cruises.ListFirstObservedCruiseItineraryDetails;
 
 namespace KrytenAssist.Avalonia.Tests.DependencyInjection;
 
@@ -59,6 +62,9 @@ public sealed class CruiseHistoryDesktopCompositionTests
             Assert.NotNull(scope.ServiceProvider.GetRequiredService<ListCabins>());
             Assert.NotNull(scope.ServiceProvider.GetRequiredService<EvaluateCabin>());
             Assert.NotNull(scope.ServiceProvider.GetRequiredService<RecordCabinAndEvaluate>());
+            Assert.NotNull(scope.ServiceProvider.GetRequiredService<CaptureItineraries>());
+            Assert.NotNull(scope.ServiceProvider.GetRequiredService<RecordDiscoveryAndEvaluate>());
+            Assert.NotNull(scope.ServiceProvider.GetRequiredService<ListFirstObservedDetails>());
             var editor = scope.ServiceProvider.GetRequiredService<CruiseSaveAndEvaluationViewModel>();
             var preferences = scope.ServiceProvider.GetRequiredService<CruisePreferencesViewModel>();
             var organiser = scope.ServiceProvider.GetRequiredService<SavedCruisesViewModel>();

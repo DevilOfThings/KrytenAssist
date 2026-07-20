@@ -338,7 +338,8 @@ time, and the explicit whole-check action records every Ready route plus every
 controlled rejection. A fifth local New Itineraries workspace resolves
 retained scope/check evidence, supports policy-checked revisit and remains
 available after restart. Alert Centre filtering and settings now cover every
-typed alert. All 751 offline tests pass; Prompt 041g is next.
+typed alert. Prompt 041g automated verification is complete: all 753 offline
+tests pass and manual desktop acceptance remains pending.
 
 ### Existing-System Findings
 
@@ -543,6 +544,58 @@ typed alert. All 751 offline tests pass; Prompt 041g is next.
   for discovery capture. The configured embedded-browser starting address now
   uses the previously verified `/cruise/packages` query while the legacy
   Cruise-of-the-Week skill configuration remains separate.
+
+### 041g Analysis
+
+- The detailed 041b–041f suites already cover identity, comparable scope,
+  baseline, positive-only detection, retry/concurrency, fixed-script safety,
+  trusted TUI mapping, post-commit alert behavior, presentation wording and
+  cancellation/generation guards. Repeating them would add noise rather than a
+  stronger boundary.
+- The missing executable boundary was cross-feature persistence independence in
+  both directions. Discovery's catalogue deliberately references its own
+  first/latest occurrences, so aggregate removal deletes catalogue headers
+  before the scope cascade; this is internal ownership, not a cross-feature
+  dependency.
+- Desktop composition already resolved both 041f view models but did not
+  explicitly assert the itinerary capture contract, record-and-alert
+  orchestration and first-observed details projection together.
+- The current source route is trusted HTTPS `/cruise/packages`. The generic
+  `/cruise/deals` editorial surface is not part of the demonstrated capture
+  contract.
+- A live empty New Itineraries workspace is a valid outcome: the first check is
+  only a baseline and later checks create entries only for never-seen stable
+  route ids in the same semantic scope.
+
+### 041g Results
+
+- Added an isolated SQLite boundary fixture proving removal of History, Saved
+  Cruises, cabin evidence and alerts cannot remove discovery scope/check/
+  occurrence/catalogue evidence, and valid removal of the discovery aggregate
+  cannot change those other features.
+- Strengthened persistence-enabled desktop composition verification for
+  `ICruiseItineraryPageCaptureService`, explicit discovery recording/alert
+  orchestration and the first-observed details query alongside both itinerary
+  view models.
+- Audited dependency direction and provider isolation: Application references
+  Core only; Core/Application contain no Avalonia, EF, SQLite, browser, TUI or
+  provider SDK dependency. Provider query/payload interpretation remains in the
+  TUI adapter boundary.
+- Existing offline safety tests continue to prove payload v3 is bounded and
+  read-only, stable identity requires a trusted itinerary URL/code, older price
+  and cabin payload versions remain accepted, and no automatic capture,
+  navigation, scrolling, network or booking behavior was introduced.
+- EF reports no pending model changes. No production code, fixed script,
+  provider mapping or migration changed; eight migrations remain.
+- The solution builds with zero errors. Core 157, Avalonia/Application/
+  Infrastructure 587 and API 9 tests pass: 753 total, zero failed and zero
+  skipped. `git diff --check` passes.
+- The existing five `NU1903` SQLite native-package advisory warnings remain.
+  No new compiler warning was introduced by 041g.
+- Robin's earlier live check confirms the corrected package-results source
+  loads and the explained baseline/no-unseen-route empty state is understood.
+  The complete manual desktop checklist in the 041g prompt remains pending and
+  Prompt 041/Prompt 042 are not marked complete/started.
 
 ### Agreed 041a Decisions
 

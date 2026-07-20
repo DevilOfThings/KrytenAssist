@@ -10,7 +10,7 @@ Phase 7 – Cruise Assistant
 
 Current Prompt
 --------------
-Prompt 041g – Tests and Verification (next; unstarted)
+Prompt 041g – Tests and Verification (automated verification complete; manual desktop acceptance pending)
 
 Prompt 037 – Cruise History and Price Tracking, including its 037h Multiple
 Cruise Deals extension, is complete. Kryten can explicitly capture currently
@@ -57,6 +57,15 @@ inside the three-mode Cruise workspace. Prompt 039g's architecture, SQLite
 boundary, composition and regression audit passes with all 656 offline tests.
 No production defect was found. Robin manually confirmed the complete desktop
 workflow on 19 July 2026. Prompt 039 is complete and Prompt 040 is next.
+
+Prompts 041a–041f are implemented. Prompt 041g's architecture, capture-safety,
+SQLite-independence, composition and regression audit passes with all 753
+offline tests. The EF model matches the eight retained migrations and no
+production defect or new migration was required. Robin has confirmed that the
+supported package-results page loads and that an empty New Itineraries view is
+legitimate after baseline seeding when no unseen stable route is captured. The
+complete manual desktop acceptance checklist remains pending; Prompt 042 is not
+started.
 
 ### Phase 1 – API Foundation
 
@@ -721,7 +730,8 @@ Initially support Marella and the trusted sources proven by Prompt 036.
 
 Architecture should support future providers.
 
-Current status: In progress. Prompt 041a is complete. The existing trusted TUI capture proves
+Current status: In progress; Prompt 041g automated verification is complete and
+manual desktop acceptance remains pending. Prompt 041a is complete. The existing trusted TUI capture proves
 bounded itinerary identities observed on an explicitly loaded page, but it does
 not prove retailer publication time or complete catalogue absence. The proposed
 041a contract therefore detects an itinerary first observed by Kryten in a
@@ -759,9 +769,13 @@ treats unknown query keys as incomplete and deduplicates several offers for one
 stable route without changing price capture. Prompt 041d is complete. The fixed
 script emits bounded payload v3 itinerary identity, and the stateless trusted
 adapter maps 16 demonstrated semantic criteria, rejects unknown material query
-keys and preserves price v1–v3/cabin v2–v3 compatibility. The solution builds
-and all 743 offline tests pass. Prompt 041e – Recording and Alert Integration is
-next and remains unstarted; Prompt 042 remains unstarted.
+keys and preserves price v1–v3/cabin v2–v3 compatibility. Prompts 041e and 041f
+are complete: explicit post-commit typed alerts and the fifth local New
+Itineraries workspace preserve honest first-observed evidence and trusted
+revisit. Prompt 041g adds cross-feature independence and complete desktop
+composition checks; all 753 offline tests pass, the EF model has no pending
+changes and the eight existing migrations remain sufficient. Manual desktop
+acceptance is pending; Prompt 042 remains unstarted.
 
 ---
 
