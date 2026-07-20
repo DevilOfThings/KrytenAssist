@@ -457,6 +457,10 @@ revisit and complete typed alert filters/settings.
 - Trusted revisit is policy-checked twice: before presentation command
   enablement and again at the existing browser navigation boundary.
 - Manual desktop verification is documented but not marked complete.
+- Manual checking found that the generic TUI deals surface could report no
+  available cruises and is not accepted by itinerary/cabin capture. Cruise
+  Discovery now starts at the previously verified `/cruise/packages` search
+  URL; the separate legacy Cruise-of-the-Week skill remains unchanged.
 
 ### Next
 

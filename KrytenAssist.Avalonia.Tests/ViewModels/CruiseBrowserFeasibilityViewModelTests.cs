@@ -51,7 +51,7 @@ public sealed class CruiseBrowserFeasibilityViewModelTests
         Assert.Equal(Uri.UriSchemeHttps, requestedAddress!.Scheme);
         Assert.Equal("www.tui.co.uk", requestedAddress.Host);
         Assert.Equal(
-            "/cruise/deals/marella-cruise-of-the-week",
+            "/cruise/packages",
             requestedAddress.AbsolutePath);
         Assert.True(viewModel.HasStarted);
         Assert.True(viewModel.IsNavigating);

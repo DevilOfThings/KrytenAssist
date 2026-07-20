@@ -11,7 +11,7 @@ public sealed class CruiseDiscoverySourceCatalog
         "Browse TUI's current featured Marella cruise offer.",
         "www.tui.co.uk",
         new Uri(
-            "https://www.tui.co.uk/cruise/deals/marella-cruise-of-the-week",
+            "https://www.tui.co.uk/cruise/packages?from%5B%5D=STN%3AAirport&to%5B%5D=&when=01-10-2026&flexibility=false&flexibleDays=1&duration=1-7&addAStay=0&until=&choiceSearch=true&noOfAdults=2&noOfChildren=0&childrenAge=&searchRequestType=ins&searchType=search&sp=true&room=",
             UriKind.Absolute),
         supportsLinkDiagnostics: true);
 

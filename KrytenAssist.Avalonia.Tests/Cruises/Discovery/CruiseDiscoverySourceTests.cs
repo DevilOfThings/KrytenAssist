@@ -13,6 +13,7 @@ public sealed class CruiseDiscoverySourceTests
         Assert.Equal("Marella Cruise of the Week", source.DisplayName);
         Assert.Equal("www.tui.co.uk", source.TrustedHost);
         Assert.Equal(Uri.UriSchemeHttps, source.StartingAddress.Scheme);
+        Assert.Equal("/cruise/packages", source.StartingAddress.AbsolutePath);
         Assert.True(source.SupportsLinkDiagnostics);
     }
 

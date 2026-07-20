@@ -539,6 +539,10 @@ typed alert. All 751 offline tests pass; Prompt 041g is next.
 - No script, payload, schema or provider mapping changed. The solution builds
   with zero errors; 157 Core, 585 Avalonia/Application/Infrastructure and 9 API
   tests pass. Manual desktop verification remains for 041g/Robin.
+- Manual verification identified the generic TUI deals surface as unsuitable
+  for discovery capture. The configured embedded-browser starting address now
+  uses the previously verified `/cruise/packages` query while the legacy
+  Cruise-of-the-Week skill configuration remains separate.
 
 ### Agreed 041a Decisions
 
