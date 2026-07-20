@@ -10,7 +10,7 @@ Phase 7 – Cruise Assistant
 
 Current Prompt
 --------------
-Prompt 041g – Tests and Verification (automated verification complete; manual desktop acceptance pending)
+Prompt 042 – Cruise Dashboard (next; unstarted)
 
 Prompt 037 – Cruise History and Price Tracking, including its 037h Multiple
 Cruise Deals extension, is complete. Kryten can explicitly capture currently
@@ -63,9 +63,11 @@ SQLite-independence, composition and regression audit passes with all 753
 offline tests. The EF model matches the eight retained migrations and no
 production defect or new migration was required. Robin has confirmed that the
 supported package-results page loads and that an empty New Itineraries view is
-legitimate after baseline seeding when no unseen stable route is captured. The
-complete manual desktop acceptance checklist remains pending; Prompt 042 is not
-started.
+legitimate after baseline seeding when no unseen stable route is captured.
+Robin accepted the desktop verification on 20 July 2026 with the explicit
+limitation that live first-observed creation could not be exercised because no
+unseen itinerary appeared. Prompt 041 is complete; Prompt 042 is next and
+unstarted.
 
 ### Phase 1 – API Foundation
 
@@ -730,8 +732,10 @@ Initially support Marella and the trusted sources proven by Prompt 036.
 
 Architecture should support future providers.
 
-Current status: In progress; Prompt 041g automated verification is complete and
-manual desktop acceptance remains pending. Prompt 041a is complete. The existing trusted TUI capture proves
+Current status: Complete. Robin accepted Prompt 041g on 20 July 2026 with the
+explicit limitation that no unseen live itinerary was available to exercise a
+first-observed entry/alert manually; deterministic automated coverage verifies
+that scenario. Prompt 041a is complete. The existing trusted TUI capture proves
 bounded itinerary identities observed on an explicitly loaded page, but it does
 not prove retailer publication time or complete catalogue absence. The proposed
 041a contract therefore detects an itinerary first observed by Kryten in a
@@ -774,8 +778,9 @@ are complete: explicit post-commit typed alerts and the fifth local New
 Itineraries workspace preserve honest first-observed evidence and trusted
 revisit. Prompt 041g adds cross-feature independence and complete desktop
 composition checks; all 753 offline tests pass, the EF model has no pending
-changes and the eight existing migrations remain sufficient. Manual desktop
-acceptance is pending; Prompt 042 remains unstarted.
+changes and the eight existing migrations remain sufficient. Robin accepted
+the manual desktop outcome with the stated live-data limitation. Prompt 041 is
+complete; Prompt 042 remains unstarted.
 
 ---
 

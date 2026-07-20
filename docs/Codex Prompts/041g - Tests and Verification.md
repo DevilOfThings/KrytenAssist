@@ -151,9 +151,8 @@ Prompt 042.
 
 ### Status
 
-Automated verification is complete. The complete manual desktop acceptance
-checklist remains pending Robin's explicit confirmation, so Prompt 041 remains
-open and Prompt 042 has not started.
+Complete. Automated verification passes and Robin accepted the desktop outcome
+on 20 July 2026. Prompt 041 is complete; Prompt 042 is next and has not started.
 
 ### Audit Findings
 
@@ -191,8 +190,9 @@ open and Prompt 042 has not started.
 
 ### Manual Verification
 
-Partial only. Robin confirmed the supported package page loads and understands
-that New Itineraries can legitimately remain empty after baseline seeding when
-no later comparable capture contains an unseen stable route. The controlled
-first-observed/alert, restart, lifecycle and cross-feature desktop checks listed
-above have not yet been claimed complete.
+Accepted by Robin on 20 July 2026. The supported package page loaded and the
+remaining exercised workflow behaved as expected. No unseen stable itinerary
+appeared, so live first-observed entry and alert creation could not be exercised
+manually. This is recorded as an accepted live-data limitation rather than a
+failure: deterministic automated tests cover the baseline, later unseen route,
+typed alert, retry, restart and independence contracts.

@@ -338,8 +338,9 @@ time, and the explicit whole-check action records every Ready route plus every
 controlled rejection. A fifth local New Itineraries workspace resolves
 retained scope/check evidence, supports policy-checked revisit and remains
 available after restart. Alert Centre filtering and settings now cover every
-typed alert. Prompt 041g automated verification is complete: all 753 offline
-tests pass and manual desktop acceptance remains pending.
+typed alert. Prompt 041g is complete: all 753 offline tests pass and Robin
+accepted the desktop verification on 20 July 2026 with the explicit limitation
+that no unseen live itinerary was available for manual first-observed creation.
 
 ### Existing-System Findings
 
@@ -592,10 +593,12 @@ tests pass and manual desktop acceptance remains pending.
   skipped. `git diff --check` passes.
 - The existing five `NU1903` SQLite native-package advisory warnings remain.
   No new compiler warning was introduced by 041g.
-- Robin's earlier live check confirms the corrected package-results source
-  loads and the explained baseline/no-unseen-route empty state is understood.
-  The complete manual desktop checklist in the 041g prompt remains pending and
-  Prompt 041/Prompt 042 are not marked complete/started.
+- Robin's live check confirms the corrected package-results source loads and
+  the explained baseline/no-unseen-route empty state is understood. Robin
+  accepted Prompt 041 on 20 July 2026 with the explicit limitation that no
+  unseen live itinerary was available to exercise first-observed entry/alert
+  creation manually; deterministic automated coverage verifies that scenario.
+  Prompt 041 is complete and Prompt 042 is next but unstarted.
 
 ### Agreed 041a Decisions
 
