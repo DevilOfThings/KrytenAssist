@@ -53,7 +53,9 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
         CruiseAlertCoordinator? alertCoordinator = null,
         ICabinPageCaptureService? cabinCaptureService = null,
         RecordCabinObservation? recordCabinObservation = null,
-        CruiseCabinAvailabilityViewModel? cabinAvailability = null)
+        CruiseCabinAvailabilityViewModel? cabinAvailability = null,
+        CruiseNewItinerariesViewModel? newItineraries = null,
+        CruiseItineraryCaptureReviewViewModel? itineraryReview = null)
     {
         ArgumentNullException.ThrowIfNull(skillRegistry);
         ArgumentNullException.ThrowIfNull(clock);
@@ -72,10 +74,12 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
             sharedEvaluation,
             alertCoordinator,
             cabinCaptureService,
-            recordCabinObservation);
+            recordCabinObservation,
+            itineraryReview);
         SavedCruises = savedCruises;
         AlertCentre = alertCentre;
         CabinAvailability = cabinAvailability;
+        NewItineraries = newItineraries;
         AlertCoordinator = alertCoordinator;
         _retrieveCommand = new AsyncCommand(RetrieveAsync, () => CanRetrieve);
         _cancelCommand = new DelegateCommand(Cancel, () => IsBusy);
@@ -87,6 +91,12 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
                     OnPropertyChanged(nameof(AlertsModeText));
             };
         }
+        if (NewItineraries is not null)
+            NewItineraries.OpenInDiscoveryRequested += (_, address) =>
+            {
+                WorkspaceMode = CruiseWorkspaceMode.Discovery;
+                BrowserFeasibility.OpenTrustedDiscoveryAddress(address);
+            };
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -103,6 +113,7 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
     public CruiseAlertCentreViewModel? AlertCentre { get; }
     public CruiseAlertCoordinator? AlertCoordinator { get; }
     public CruiseCabinAvailabilityViewModel? CabinAvailability { get; }
+    public CruiseNewItinerariesViewModel? NewItineraries { get; }
     public string AlertsModeText => AlertCoordinator?.BadgeText ?? "Alerts";
 
     public CruiseWorkspaceMode WorkspaceMode
@@ -116,16 +127,19 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
             SavedCruises?.Deactivate();
             AlertCentre?.Deactivate();
             CabinAvailability?.Deactivate();
+            NewItineraries?.Deactivate();
             OnPropertyChanged();
             OnPropertyChanged(nameof(IsDiscoveryMode));
             OnPropertyChanged(nameof(IsSavedCruisesMode));
             OnPropertyChanged(nameof(IsAlertsMode));
             OnPropertyChanged(nameof(IsCabinAvailabilityMode));
+            OnPropertyChanged(nameof(IsNewItinerariesMode));
             if (value == CruiseWorkspaceMode.Discovery) History?.Activate();
             else History?.Deactivate();
             if (value == CruiseWorkspaceMode.SavedCruises) _ = ActivateSavedCruisesAsync();
             if (value == CruiseWorkspaceMode.Alerts) _ = ActivateAlertsAsync();
             if (value == CruiseWorkspaceMode.CabinAvailability) _ = ActivateCabinAvailabilityAsync();
+            if (value == CruiseWorkspaceMode.NewItineraries) _ = ActivateNewItinerariesAsync();
         }
     }
 
@@ -162,6 +176,12 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
         set { if (value && CabinAvailability is not null) WorkspaceMode = CruiseWorkspaceMode.CabinAvailability; }
     }
 
+    public bool IsNewItinerariesMode
+    {
+        get => WorkspaceMode == CruiseWorkspaceMode.NewItineraries;
+        set { if (value && NewItineraries is not null) WorkspaceMode = CruiseWorkspaceMode.NewItineraries; }
+    }
+
     public void Activate()
     {
         _ = AlertCoordinator?.RefreshCountAsync();
@@ -177,6 +197,10 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
         {
             _ = ActivateCabinAvailabilityAsync();
         }
+        else if (IsNewItinerariesMode)
+        {
+            _ = ActivateNewItinerariesAsync();
+        }
         else
         {
             History?.Activate();
@@ -190,6 +214,7 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
         BrowserFeasibility.Evaluation?.Deactivate();
         AlertCentre?.Deactivate();
         CabinAvailability?.Deactivate();
+        NewItineraries?.Deactivate();
         AlertCoordinator?.Cancel();
     }
 
@@ -231,6 +256,12 @@ public sealed class CruiseOfTheWeekViewModel : INotifyPropertyChanged
         {
             // The child exposes controlled local failures.
         }
+    }
+
+    private async Task ActivateNewItinerariesAsync()
+    {
+        try { if (NewItineraries is not null) await NewItineraries.ActivateAsync(); }
+        catch { /* Child exposes controlled local failures. */ }
     }
 
     public CruiseObservation? Observation

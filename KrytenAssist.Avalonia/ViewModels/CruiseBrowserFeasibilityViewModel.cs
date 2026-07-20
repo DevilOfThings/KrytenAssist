@@ -24,6 +24,7 @@ using CabinPageCaptureRequest = KrytenApplication::KrytenAssist.Application.Crui
 using CabinBatchResult = KrytenApplication::KrytenAssist.Application.Cruises.CruiseCabinCaptureBatchResult;
 using ICabinPageCaptureService = KrytenApplication::KrytenAssist.Application.Cruises.ICruiseCabinPageCaptureService;
 using RecordCabinObservation = KrytenApplication::KrytenAssist.Application.Cruises.RecordCruiseCabinObservationAndEvaluateAlerts;
+using ItineraryPageCaptureRequest = KrytenApplication::KrytenAssist.Application.Cruises.CruiseItineraryPageCaptureRequest;
 
 namespace KrytenAssist.Avalonia.ViewModels;
 
@@ -115,7 +116,8 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         CruiseSaveAndEvaluationViewModel? evaluation = null,
         CruiseAlertCoordinator? alertCoordinator = null,
         ICabinPageCaptureService? cabinCaptureService = null,
-        RecordCabinObservation? recordCabinObservation = null)
+        RecordCabinObservation? recordCabinObservation = null,
+        CruiseItineraryCaptureReviewViewModel? itineraryReview = null)
     {
         ArgumentNullException.ThrowIfNull(sourceCatalog);
         ArgumentNullException.ThrowIfNull(trustedHostPolicy);
@@ -126,6 +128,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         _clock = clock;
         _recordObservation = recordObservation;
         _cabinCaptureService = cabinCaptureService;
+        ItineraryReview = itineraryReview;
         _recordCabinObservation = recordCabinObservation;
         Evaluation = evaluation;
         _alertCoordinator = alertCoordinator;
@@ -213,6 +216,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     public IReadOnlyList<CruiseDiscoverySource> AvailableSources { get; }
 
     public CruiseHistoryViewModel? History { get; }
+    public CruiseItineraryCaptureReviewViewModel? ItineraryReview { get; }
     public CruiseSaveAndEvaluationViewModel? Evaluation { get; }
 
     public IReadOnlyList<CruiseDiscoverySourceOptionViewModel> SourceOptions { get; }
@@ -325,7 +329,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         }
     }
 
-    public bool CanCapture => (_batchCaptureService is not null || _captureService is not null || _cabinCaptureService is not null) &&
+    public bool CanCapture => (_batchCaptureService is not null || _captureService is not null || _cabinCaptureService is not null || ItineraryReview is not null) &&
                               _clock is not null &&
                               IsPageReady &&
                               HasSelectedSource &&
@@ -520,6 +524,18 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     }
 
     public bool IsBrowserVisible => HasStarted && !HasUnsupportedHost;
+
+    public bool OpenTrustedDiscoveryAddress(Uri address)
+    {
+        ArgumentNullException.ThrowIfNull(address);
+        var source = AvailableSources.FirstOrDefault(value =>
+            _trustedHostPolicy.Classify(address, value) == CruiseAddressTrust.Trusted);
+        if (source is null) return false;
+        if (!HasStarted || !ReferenceEquals(SelectedSource, source)) OpenSource(source);
+        AddressDraft = address.AbsoluteUri;
+        RequestGo();
+        return true;
+    }
 
     public bool IsNavigating
     {
@@ -967,6 +983,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
         _captureCancellation = new CancellationTokenSource();
         _captureGeneration++;
         ClearCabinCaptureState();
+        ItineraryReview?.Clear();
         SetCaptureResult(null, null, Array.Empty<string>());
         IsCapturing = true;
         CapturePayloadRequested?.Invoke(this, EventArgs.Empty);
@@ -979,7 +996,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
     public async Task ProcessCapturePayloadAsync(string payload, Uri sourceReference)
     {
         if (!IsCapturing ||
-            (_batchCaptureService is null && _captureService is null && _cabinCaptureService is null) ||
+            (_batchCaptureService is null && _captureService is null && _cabinCaptureService is null && ItineraryReview is null) ||
             _clock is null ||
             SelectedSource is null)
         {
@@ -997,13 +1014,21 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
 
         try
         {
+            var captureTime = _clock.Now;
+            if (ItineraryReview is not null)
+            {
+                await ItineraryReview.CaptureAsync(new ItineraryPageCaptureRequest(
+                    SelectedSource.Identifier, new CruiseSource("tui", "TUI"), sourceReference.AbsoluteUri,
+                    captureTime, payload), cancellation.Token);
+                if (generation != _captureGeneration || cancellation.IsCancellationRequested) return;
+            }
             if (_cabinCaptureService is not null)
             {
                 try
                 {
                     var cabinRequest = new CabinPageCaptureRequest(
                         SelectedSource.Identifier, new CruiseSource("tui", "TUI"),
-                        sourceReference.AbsoluteUri, _clock.Now, payload);
+                        sourceReference.AbsoluteUri, captureTime, payload);
                     var cabinResult = await _cabinCaptureService.CaptureAsync(cabinRequest, cancellation.Token);
                     if (generation != _captureGeneration || cancellation.IsCancellationRequested) return;
                     SetCabinCaptureResult(cabinResult);
@@ -1021,7 +1046,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
                 SelectedSource.Identifier,
                 new CruiseSource("tui", "TUI"),
                 sourceReference.AbsoluteUri,
-                _clock.Now,
+                captureTime,
                 payload);
             if (_batchCaptureService is not null)
             {
@@ -1394,6 +1419,7 @@ public sealed class CruiseBrowserFeasibilityViewModel : INotifyPropertyChanged
 
         IsCapturing = false;
         ClearCabinCaptureState();
+        ItineraryReview?.Clear();
         SetCaptureResult(null, null, Array.Empty<string>());
     }
 

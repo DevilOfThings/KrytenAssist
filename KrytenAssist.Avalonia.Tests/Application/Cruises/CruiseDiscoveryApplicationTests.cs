@@ -2,6 +2,8 @@ extern alias KrytenApplication;
 
 using FluentAssertions;
 using KrytenAssist.Core.Cruises;
+using KrytenAssist.Avalonia.Cruises.Discovery;
+using KrytenAssist.Avalonia.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using ApplicationDependencyInjection = KrytenApplication::KrytenAssist.Application.DependencyInjection;
 using DiscoveryRepository = KrytenApplication::KrytenAssist.Application.Abstractions.Persistence.ICruiseDiscoveryRepository;
@@ -14,6 +16,7 @@ using ListItineraries = KrytenApplication::KrytenAssist.Application.Cruises.List
 using GetItinerary = KrytenApplication::KrytenAssist.Application.Cruises.GetCruiseItineraryDiscovery;
 using ListChecks = KrytenApplication::KrytenAssist.Application.Cruises.ListCruiseDiscoveryChecks;
 using CaptureCandidate = KrytenApplication::KrytenAssist.Application.Cruises.CruiseItineraryCaptureCandidateResult;
+using ListItineraryDetails = KrytenApplication::KrytenAssist.Application.Cruises.ListFirstObservedCruiseItineraryDetails;
 using AlertRepository = KrytenApplication::KrytenAssist.Application.Abstractions.Persistence.ICruiseAlertRepository;
 using AlertSettingsRepository = KrytenApplication::KrytenAssist.Application.Abstractions.Persistence.ICruiseAlertSettingsRepository;
 using RecordAndAlert = KrytenApplication::KrytenAssist.Application.Cruises.RecordCruiseDiscoveryCheckAndEvaluateAlerts;
@@ -58,6 +61,42 @@ public sealed class CruiseDiscoveryApplicationTests
     }
 
     [Fact]
+    public async Task PresentationQuery_ResolvesExactConfirmingScopeAndRejectsContradictoryEvidence()
+    {
+        var check = Check("new", ObservedAt);
+        var occurrence = check.Occurrences.Single();
+        var observedEvent = new CruiseItineraryFirstObservedEvent(occurrence, check.Scope.Fingerprint, check.EvidenceKey);
+        var entry = new CatalogueEntry(occurrence.CatalogueKey, occurrence, occurrence, ObservedAt, ObservedAt, observedEvent.EventKey);
+        var repository = new FakeRepository { Entries = [entry], Checks = [check] };
+
+        var result = await new ListItineraryDetails(repository).ExecuteAsync();
+
+        result.Status.Should().Be(OperationStatus.Success);
+        result.Items.Should().ContainSingle().Which.ConfirmingCheck.Should().Be(check);
+
+        var contradictory = new FakeRepository { Entries = [entry], Checks = [Check("other", ObservedAt)] };
+        (await new ListItineraryDetails(contradictory).ExecuteAsync()).Status.Should().Be(OperationStatus.Failed);
+    }
+
+    [Fact]
+    public async Task NewItinerariesPresentation_LoadsHonestLocalEvidence()
+    {
+        var check = Check("new", ObservedAt);
+        var occurrence = check.Occurrences.Single();
+        var observedEvent = new CruiseItineraryFirstObservedEvent(occurrence, check.Scope.Fingerprint, check.EvidenceKey);
+        var entry = new CatalogueEntry(occurrence.CatalogueKey, occurrence, occurrence, ObservedAt, ObservedAt, observedEvent.EventKey);
+        var viewModel = new CruiseNewItinerariesViewModel(new ListItineraryDetails(new FakeRepository { Entries = [entry], Checks = [check] }),
+            new CruiseDiscoverySourceCatalog(), new CruiseTrustedHostPolicy());
+
+        await viewModel.ActivateAsync();
+
+        viewModel.Items.Should().ContainSingle();
+        viewModel.SelectedItem!.FirstObservedHeading.Should().Contain("First observed by Kryten");
+        viewModel.SelectedItem.Disclaimer.Should().Contain("does not prove when TUI published");
+        viewModel.CanOpenSelectedInDiscovery.Should().BeFalse();
+    }
+
+    [Fact]
     public async Task Use_cases_contain_cancellation_and_repository_failure()
     {
         var repository = new FakeRepository { Exception = new InvalidOperationException() };
@@ -90,6 +129,7 @@ public sealed class CruiseDiscoveryApplicationTests
         services.Should().Contain(x => x.ServiceType == typeof(ListItineraries));
         services.Should().Contain(x => x.ServiceType == typeof(GetItinerary));
         services.Should().Contain(x => x.ServiceType == typeof(ListChecks));
+        services.Should().Contain(x => x.ServiceType == typeof(ListItineraryDetails));
         services.Should().Contain(x => x.ServiceType == typeof(CruiseNewItineraryAlertDetector));
         services.Should().Contain(x => x.ServiceType == typeof(RecordAndAlert));
     }

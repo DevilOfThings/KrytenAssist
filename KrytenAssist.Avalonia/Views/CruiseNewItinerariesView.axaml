@@ -1,0 +1,47 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="clr-namespace:KrytenAssist.Avalonia.ViewModels"
+             x:Class="KrytenAssist.Avalonia.Views.CruiseNewItinerariesView"
+             x:DataType="viewModels:CruiseNewItinerariesViewModel">
+  <Grid RowDefinitions="Auto,*" Margin="20,8,20,20">
+    <StackPanel Grid.Row="0" Spacing="8">
+      <TextBlock Text="New Itineraries" Classes="section-heading" />
+      <TextBlock Text="Routes first observed by Kryten in a later explicit comparable capture. This is local evidence, not a claim that TUI just published them." Classes="secondary-text" TextWrapping="Wrap" />
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <Button Content="Refresh" Classes="secondary" Command="{Binding RefreshCommand}" />
+        <Button Content="Cancel Loading" Classes="secondary" Command="{Binding CancelLoadingCommand}" IsVisible="{Binding IsLoading}" />
+        <TextBlock Text="{Binding Message}" Classes="secondary-text" VerticalAlignment="Center" />
+      </StackPanel>
+      <TextBlock Text="{Binding ErrorMessage}" Classes="error-text" IsVisible="{Binding HasError}" />
+    </StackPanel>
+    <Grid Grid.Row="1" ColumnDefinitions="2*,3*" ColumnSpacing="12" Margin="0,10,0,0">
+      <Border Grid.Column="0" Classes="workspace-surface" Padding="8">
+        <Grid>
+          <ListBox ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem, Mode=TwoWay}" IsVisible="{Binding HasItems}">
+            <ListBox.ItemTemplate><DataTemplate x:DataType="viewModels:CruiseNewItineraryItemViewModel">
+              <StackPanel Margin="4,7" Spacing="3"><TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" /><TextBlock Text="{Binding ProviderItineraryId}" /><TextBlock Text="{Binding SourceName}" Classes="secondary-text" /><TextBlock Text="{Binding FirstObservedHeading}" Classes="secondary-text" TextWrapping="Wrap" /></StackPanel>
+            </DataTemplate></ListBox.ItemTemplate>
+          </ListBox>
+          <TextBlock Text="{Binding EmptyMessage}" Classes="secondary-text" TextWrapping="Wrap" Margin="12" IsVisible="{Binding IsEmpty}" />
+        </Grid>
+      </Border>
+      <Border Grid.Column="1" Classes="workspace-surface" Padding="14">
+        <Grid>
+          <ScrollViewer IsVisible="{Binding HasSelection}" VerticalScrollBarVisibility="Auto"><StackPanel Spacing="8">
+            <TextBlock Text="New itinerary observed" FontSize="18" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding SelectedItem.Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding SelectedItem.FirstObservedHeading}" />
+            <TextBlock Text="{Binding SelectedItem.ProviderItineraryId, StringFormat='Provider itinerary id: {0}'}" />
+            <TextBlock Text="{Binding SelectedItem.SourceName, StringFormat='Source: {0}'}" />
+            <TextBlock Text="{Binding SelectedItem.LastSeenText, StringFormat='Last seen by Kryten: {0}'}" />
+            <TextBlock Text="{Binding SelectedItem.CapturedEvidenceText}" IsVisible="{Binding SelectedItem.HasCapturedEvidence}" TextWrapping="Wrap" />
+            <TextBlock Text="Discovery scope" FontWeight="SemiBold" /><TextBlock Text="{Binding SelectedItem.ScopeText}" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding SelectedItem.EvidenceContext}" Classes="secondary-text" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding SelectedItem.Disclaimer}" Classes="secondary-text" TextWrapping="Wrap" />
+            <Button Content="Open in Discovery" Classes="primary" Command="{Binding OpenInDiscoveryCommand}" IsVisible="{Binding CanOpenSelectedInDiscovery}" HorizontalAlignment="Left" />
+          </StackPanel></ScrollViewer>
+          <TextBlock Text="Select an itinerary to review its retained evidence." Classes="secondary-text" IsVisible="{Binding !HasSelection}" />
+        </Grid>
+      </Border>
+    </Grid>
+  </Grid>
+</UserControl>

@@ -23,13 +23,15 @@
           <TextBlock Text="{Binding Message}" Classes="secondary-text" VerticalAlignment="Center" />
         </StackPanel>
         <TextBlock Text="{Binding ErrorMessage}" Classes="error-text" IsVisible="{Binding HasError}" />
-        <StackPanel Orientation="Horizontal" Spacing="14">
+        <WrapPanel Orientation="Horizontal" ItemSpacing="14" LineSpacing="6">
           <TextBlock Text="Type" FontWeight="SemiBold" VerticalAlignment="Center" />
           <RadioButton Content="All" GroupName="AlertType" IsChecked="{Binding IsAllTypes}" />
           <RadioButton Content="Price drops" GroupName="AlertType" IsChecked="{Binding IsPriceDrops}" />
           <RadioButton Content="Promotions" GroupName="AlertType" IsChecked="{Binding IsPromotions}" />
           <RadioButton Content="Saved criteria" GroupName="AlertType" IsChecked="{Binding IsSavedCriteria}" />
-        </StackPanel>
+          <RadioButton Content="Cabin availability" GroupName="AlertType" IsChecked="{Binding IsCabinAvailability}" />
+          <RadioButton Content="New itineraries" GroupName="AlertType" IsChecked="{Binding IsNewItineraries}" />
+        </WrapPanel>
         <StackPanel Orientation="Horizontal" Spacing="14">
           <TextBlock Text="Status" FontWeight="SemiBold" VerticalAlignment="Center" />
           <RadioButton Content="Active" GroupName="AlertLifecycle" IsChecked="{Binding IsActiveLifecycle}" />
@@ -91,6 +93,8 @@
           <CheckBox Content="Price Drop alerts" IsChecked="{Binding PriceDropEnabled}" IsEnabled="{Binding !IsBusy}" />
           <CheckBox Content="Promotion alerts" IsChecked="{Binding PromotionEnabled}" IsEnabled="{Binding !IsBusy}" />
           <CheckBox Content="Saved Criteria alerts" IsChecked="{Binding SavedCriteriaEnabled}" IsEnabled="{Binding !IsBusy}" />
+          <CheckBox Content="Cabin Availability alerts" IsChecked="{Binding CabinAvailabilityEnabled}" IsEnabled="{Binding !IsBusy}" />
+          <CheckBox Content="New Itinerary alerts" IsChecked="{Binding NewItineraryEnabled}" IsEnabled="{Binding !IsBusy}" />
           <StackPanel Orientation="Horizontal" Spacing="8">
             <TextBlock Text="Minimum Price Drop" VerticalAlignment="Center" />
             <TextBox Text="{Binding MinimumPriceDropPercentage}" Width="120" IsEnabled="{Binding !IsBusy}" />

@@ -49,6 +49,8 @@ public static class DesktopPersistenceServiceCollectionExtensions
         services.AddScoped<CruiseAlertSettingsViewModel>();
         services.AddScoped<CruiseAlertCentreViewModel>();
         services.AddScoped<CruiseCabinAvailabilityViewModel>();
+        services.AddScoped<CruiseNewItinerariesViewModel>();
+        services.AddScoped<CruiseItineraryCaptureReviewViewModel>();
         return services;
     }
 

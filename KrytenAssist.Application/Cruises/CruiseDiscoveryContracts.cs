@@ -38,6 +38,15 @@ public sealed record CruiseItineraryListResult(CruiseDiscoveryOperationStatus St
 public sealed record CruiseItineraryQueryResult(CruiseDiscoveryOperationStatus Status, CruiseItineraryCatalogueEntry? Entry, string? Message);
 public sealed record CruiseDiscoveryCheckListResult(CruiseDiscoveryOperationStatus Status, IReadOnlyList<CruiseDiscoveryCheck> Checks, string? Message);
 
+public sealed record CruiseFirstObservedItineraryDetails(
+    CruiseItineraryCatalogueEntry Entry,
+    CruiseDiscoveryCheck ConfirmingCheck);
+
+public sealed record CruiseFirstObservedItineraryDetailsListResult(
+    CruiseDiscoveryOperationStatus Status,
+    IReadOnlyList<CruiseFirstObservedItineraryDetails> Items,
+    string? Message);
+
 public sealed record CruiseItineraryPageCaptureRequest
 {
     public const int MaximumPagePayloadLength = 65_536;

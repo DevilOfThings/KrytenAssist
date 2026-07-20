@@ -16,6 +16,7 @@ public sealed class CruiseAlertItemViewModel
             CruiseAlertType.PriceDrop => "Price drop",
             CruiseAlertType.Promotion => "Promotion",
             CruiseAlertType.SavedCriteria => "Saved criteria",
+            CruiseAlertType.CabinAvailability => "Cabin availability",
             CruiseAlertType.NewItinerary => "New itinerary",
             _ => alert.Type.ToString()
         };
@@ -51,6 +52,7 @@ public sealed class CruiseAlertItemViewModel
         CruisePromotionAlertDetails details => $"New promotion: {details.CurrentSummary}",
         CruiseSavedCriteriaAlertDetails => "This shortlisted sailing met your supported saved criteria.",
         CruiseNewItineraryAlertDetails => "New itinerary observed. First observed by Kryten.",
+        CruiseCabinAvailabilityAlertDetails details => $"{details.CabinType} cabin {details.Direction.ToString().ToLowerInvariant()}.",
         _ => "Cruise alert"
     };
 
@@ -66,6 +68,8 @@ public sealed class CruiseAlertItemViewModel
             CruisePromotionAlertDetails details =>
                 $"{common}\nSource: {alert.Source!.Name}\nPrevious promotion: {details.PreviousSummary ?? "No previous promotion recorded"}\nCurrent promotion: {details.CurrentSummary}",
             CruiseSavedCriteriaAlertDetails details => SavedCriteriaDetail(common, details),
+            CruiseNewItineraryAlertDetails details => $"{common}\nSource: {alert.Source!.Name}\nFirst observed by Kryten on {details.FirstObservedAt.ToLocalTime():dd MMM yyyy HH:mm}\nScope fingerprint: {details.ScopeFingerprint}\nDiscovery check: {details.CheckEvidenceKey}\nThis does not prove when TUI published the itinerary or that it is currently available.",
+            CruiseCabinAvailabilityAlertDetails details => $"{common}\nSource: {alert.Source!.Name}\nCabin: {details.CabinType}\nTransition: {details.PreviousState} to {details.CurrentState}\nEvidence time: {details.EvidenceTime.ToLocalTime():dd MMM yyyy HH:mm}",
             _ => common
         };
     }

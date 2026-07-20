@@ -9,8 +9,7 @@
                 Margin="20,10,20,10"
                 Padding="10"
                 Classes="workspace-surface">
-            <StackPanel Orientation="Horizontal"
-                        Spacing="16">
+            <WrapPanel Orientation="Horizontal" ItemSpacing="16" LineSpacing="8">
                 <TextBlock Text="Cruises"
                            FontSize="18"
                            FontWeight="SemiBold"
@@ -27,7 +26,10 @@
                 <RadioButton Content="Cabin Availability"
                              GroupName="CruiseWorkspaceMode"
                              IsChecked="{Binding IsCabinAvailabilityMode}" />
-            </StackPanel>
+                <RadioButton Content="New Itineraries"
+                             GroupName="CruiseWorkspaceMode"
+                             IsChecked="{Binding IsNewItinerariesMode}" />
+            </WrapPanel>
         </Border>
         <ScrollViewer Grid.Row="0"
                       MaxHeight="220"
@@ -208,6 +210,10 @@
             <views:CruiseCabinAvailabilityView VerticalAlignment="Stretch"
                                                 HorizontalAlignment="Stretch"
                                                 DataContext="{Binding CabinAvailability}" />
+        </Grid>
+        <Grid Grid.Row="1" IsVisible="{Binding IsNewItinerariesMode}">
+            <views:CruiseNewItinerariesView VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
+                                             DataContext="{Binding NewItineraries}" />
         </Grid>
     </Grid>
 </UserControl>

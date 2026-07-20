@@ -37,6 +37,7 @@ public sealed class CruiseHistoryDesktopCompositionTests
             var configuration = new ConfigurationBuilder().Build();
             services.AddSingleton<IClock, FixedClock>();
 
+            services.AddShell();
             services.AddDesktopPersistence(configuration, databasePath);
             using var provider = services.BuildServiceProvider();
             using var scope = provider.CreateScope();
@@ -65,11 +66,15 @@ public sealed class CruiseHistoryDesktopCompositionTests
             var alertSettings = scope.ServiceProvider.GetRequiredService<CruiseAlertSettingsViewModel>();
             var alertCentre = scope.ServiceProvider.GetRequiredService<CruiseAlertCentreViewModel>();
             var cabinAvailability = scope.ServiceProvider.GetRequiredService<CruiseCabinAvailabilityViewModel>();
+            var newItineraries = scope.ServiceProvider.GetRequiredService<CruiseNewItinerariesViewModel>();
+            var itineraryReview = scope.ServiceProvider.GetRequiredService<CruiseItineraryCaptureReviewViewModel>();
             Assert.Same(editor, organiser.Evaluation);
             Assert.Same(preferences, organiser.Preferences);
             Assert.Same(alertSettings, alertCentre.Settings);
             Assert.Same(alertCoordinator, scope.ServiceProvider.GetRequiredService<CruiseAlertCoordinator>());
             Assert.NotNull(cabinAvailability);
+            Assert.NotNull(newItineraries);
+            Assert.NotNull(itineraryReview);
             Assert.True(File.Exists(databasePath));
         }
         finally

@@ -63,6 +63,7 @@ public static class DependencyInjection
         services.AddScoped<ListFirstObservedCruiseItineraries>();
         services.AddScoped<GetCruiseItineraryDiscovery>();
         services.AddScoped<ListCruiseDiscoveryChecks>();
+        services.AddScoped<ListFirstObservedCruiseItineraryDetails>();
 
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
 

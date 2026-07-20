@@ -96,6 +96,30 @@ public sealed class CruiseAlertCentreViewModelTests
         Assert.Equal(1, repository.SettingsSaveCalls);
     }
 
+    [Fact]
+    public async Task NewItineraryFilterAndSettings_UseTypedRouteEvidenceAndPreserveAllFlags()
+    {
+        var newAlert = NewItinerary();
+        var repository = new InMemoryRepository([PriceDrop(CruiseAlertStatus.Unread), newAlert]);
+        var viewModel = Create(repository);
+        await viewModel.ActivateAsync();
+
+        viewModel.IsNewItineraries = true;
+
+        Assert.Single(viewModel.Items);
+        Assert.Equal(CruiseAlertType.NewItinerary, viewModel.SelectedItem!.Type);
+        Assert.Contains("First observed by Kryten", viewModel.SelectedItem.DetailText);
+        Assert.DoesNotContain("currently available", viewModel.SelectedItem.Summary, StringComparison.OrdinalIgnoreCase);
+
+        await viewModel.Settings.ActivateAsync();
+        viewModel.Settings.CabinAvailabilityEnabled = false;
+        viewModel.Settings.NewItineraryEnabled = false;
+        await viewModel.Settings.SaveAsync();
+        Assert.False(repository.Settings.CabinAvailabilityEnabled);
+        Assert.False(repository.Settings.NewItineraryEnabled);
+        Assert.True(repository.Settings.PriceDropEnabled);
+    }
+
     private static CruiseAlertCentreViewModel Create(InMemoryRepository repository)
     {
         var coordinator = new CruiseAlertCoordinator(new CountUnread(repository));
@@ -121,6 +145,16 @@ public sealed class CruiseAlertCentreViewModelTests
         status,
         new CruiseSource("tui", "TUI"));
 
+    private static CruiseAlert NewItinerary()
+    {
+        var time = new DateTimeOffset(2026, 7, 20, 10, 0, 0, TimeSpan.Zero);
+        var source = new CruiseSource("tui", "TUI");
+        var occurrence = new CruiseItineraryOccurrence(new("marella", "ATL-01"), source, time, "provider-evidence", "Atlantic Islands");
+        var observed = new CruiseItineraryFirstObservedEvent(occurrence, new string('a', 64), new string('b', 64));
+        var candidate = new CruiseNewItineraryAlertDetector().Detect([observed], new()).Single();
+        return new CruiseAlert(Guid.NewGuid(), candidate, time.AddMinutes(1));
+    }
+
     private static CruiseAlert Create(CruiseAlertType type, CruiseAlertDetails details, CruiseAlertStatus status, CruiseSource source)
     {
         var key = new CruiseSailingKey("marella", type == CruiseAlertType.PriceDrop ? "Explorer" : "Discovery", new DateOnly(2027, 2, 3), 7);
@@ -143,6 +177,7 @@ public sealed class CruiseAlertCentreViewModelTests
         public bool FailSettingsSave { get; set; }
         public int UnreadCount => Alerts.Count(a => a.Status == CruiseAlertStatus.Unread);
         private CruiseAlertSettings _settings = new();
+        public CruiseAlertSettings Settings => _settings;
 
         public Task<CruiseAlert?> GetAsync(Guid id, CancellationToken token = default) => Task.FromResult(Alerts.FirstOrDefault(a => a.Id == id));
         public Task<IReadOnlyList<CruiseAlert>> ListAsync(AlertQuery query, CancellationToken token = default) { ListCalls++; return Task.FromResult<IReadOnlyList<CruiseAlert>>(Alerts.ToArray()); }

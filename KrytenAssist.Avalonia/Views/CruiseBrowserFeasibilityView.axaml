@@ -249,6 +249,52 @@
                                 </StackPanel>
                             </Border>
 
+                            <Border Classes="status-surface" Padding="10" DataContext="{Binding ItineraryReview}"
+                                    IsVisible="{Binding HasStatus}">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
+                                    <TextBlock Text="{Binding ErrorMessage}" Classes="error-text" TextWrapping="Wrap" IsVisible="{Binding HasError}" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Classes="workspace-surface" Padding="12"
+                                    DataContext="{Binding ItineraryReview}"
+                                    IsVisible="{Binding HasReview}">
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="Discovery check review" FontSize="16" FontWeight="SemiBold" />
+                                    <TextBlock Text="A discovery check records the whole comparable bounded capture. Ready routes are not individually selectable." Classes="secondary-text" TextWrapping="Wrap" />
+                                    <TextBlock Text="{Binding ScopeIdentityText}" />
+                                    <TextBlock Text="{Binding ObservedAtText, StringFormat='Observed: {0}'}" />
+                                    <TextBlock Text="{Binding ScopeSummary}" TextWrapping="Wrap" />
+                                    <TextBlock Text="{Binding BoundsText}" Classes="secondary-text" TextWrapping="Wrap" />
+                                    <TextBlock Text="{Binding EvidenceDisclaimer}" Classes="secondary-text" TextWrapping="Wrap" />
+                                    <WrapPanel Orientation="Horizontal" ItemSpacing="10" LineSpacing="6">
+                                        <TextBlock Text="{Binding ReadyCount, StringFormat='Ready: {0}'}" />
+                                        <TextBlock Text="{Binding RejectedCount, StringFormat='Rejected: {0}'}" />
+                                    </WrapPanel>
+                                    <ScrollViewer MaxHeight="280" VerticalScrollBarVisibility="Auto">
+                                        <ItemsControl ItemsSource="{Binding Items}"><ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="viewModels:CruiseItineraryCaptureReviewItemViewModel">
+                                                <Border Classes="status-surface" Padding="9" Margin="0,0,0,6"><StackPanel Spacing="3">
+                                                    <TextBlock Text="{Binding Label}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                                    <TextBlock Text="{Binding StatusText}" />
+                                                    <TextBlock Text="{Binding ProviderItineraryId, StringFormat='Provider itinerary id: {0}'}" IsVisible="{Binding IsReady}" />
+                                                    <TextBlock Text="{Binding EvidenceSummary}" IsVisible="{Binding HasEvidenceSummary}" TextWrapping="Wrap" />
+                                                    <TextBlock Text="{Binding Message}" Classes="secondary-text" TextWrapping="Wrap" />
+                                                    <TextBlock Text="{Binding MissingFieldsText, StringFormat='Missing: {0}'}" Classes="secondary-text" IsVisible="{Binding HasMissingFields}" />
+                                                </StackPanel></Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate></ItemsControl>
+                                    </ScrollViewer>
+                                    <WrapPanel Orientation="Horizontal" ItemSpacing="8" LineSpacing="8">
+                                        <Button Content="Record Discovery Check" Classes="primary" Command="{Binding RecordCommand}" />
+                                        <Button Content="Cancel Recording" Classes="secondary" Command="{Binding CancelRecordingCommand}" IsVisible="{Binding IsRecording}" />
+                                    </WrapPanel>
+                                    <TextBlock Text="{Binding Message}" Classes="secondary-text" TextWrapping="Wrap" />
+                                    <TextBlock Text="{Binding ErrorMessage}" Classes="error-text" TextWrapping="Wrap" IsVisible="{Binding HasError}" />
+                                </StackPanel>
+                            </Border>
+
                             <Border Classes="workspace-surface"
                                     Padding="12"
                                     IsVisible="{Binding HasCapturedObservation}">

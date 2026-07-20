@@ -86,6 +86,8 @@ public sealed class CruiseAlertCentreViewModel : INotifyPropertyChanged
     public bool IsPriceDrops { get => TypeFilter == CruiseAlertTypeFilter.PriceDrops; set { if (value) TypeFilter = CruiseAlertTypeFilter.PriceDrops; } }
     public bool IsPromotions { get => TypeFilter == CruiseAlertTypeFilter.Promotions; set { if (value) TypeFilter = CruiseAlertTypeFilter.Promotions; } }
     public bool IsSavedCriteria { get => TypeFilter == CruiseAlertTypeFilter.SavedCriteria; set { if (value) TypeFilter = CruiseAlertTypeFilter.SavedCriteria; } }
+    public bool IsCabinAvailability { get => TypeFilter == CruiseAlertTypeFilter.CabinAvailability; set { if (value) TypeFilter = CruiseAlertTypeFilter.CabinAvailability; } }
+    public bool IsNewItineraries { get => TypeFilter == CruiseAlertTypeFilter.NewItineraries; set { if (value) TypeFilter = CruiseAlertTypeFilter.NewItineraries; } }
     public bool IsActiveLifecycle { get => LifecycleFilter == CruiseAlertLifecycleFilter.Active; set { if (value) LifecycleFilter = CruiseAlertLifecycleFilter.Active; } }
     public bool IsUnreadLifecycle { get => LifecycleFilter == CruiseAlertLifecycleFilter.Unread; set { if (value) LifecycleFilter = CruiseAlertLifecycleFilter.Unread; } }
     public bool IsReadLifecycle { get => LifecycleFilter == CruiseAlertLifecycleFilter.Read; set { if (value) LifecycleFilter = CruiseAlertLifecycleFilter.Read; } }
@@ -230,6 +232,8 @@ public sealed class CruiseAlertCentreViewModel : INotifyPropertyChanged
             CruiseAlertTypeFilter.PriceDrops => item.Type == CruiseAlertType.PriceDrop,
             CruiseAlertTypeFilter.Promotions => item.Type == CruiseAlertType.Promotion,
             CruiseAlertTypeFilter.SavedCriteria => item.Type == CruiseAlertType.SavedCriteria,
+            CruiseAlertTypeFilter.CabinAvailability => item.Type == CruiseAlertType.CabinAvailability,
+            CruiseAlertTypeFilter.NewItineraries => item.Type == CruiseAlertType.NewItinerary,
             _ => true
         };
         var lifecycle = LifecycleFilter switch
@@ -246,7 +250,7 @@ public sealed class CruiseAlertCentreViewModel : INotifyPropertyChanged
     private void CoordinatorOnAlertsChanged(object? sender, EventArgs e) { if (_active) _ = RefreshAsync(); }
     private void NotifyFilterBooleans()
     {
-        Changed(nameof(IsAllTypes)); Changed(nameof(IsPriceDrops)); Changed(nameof(IsPromotions)); Changed(nameof(IsSavedCriteria));
+        Changed(nameof(IsAllTypes)); Changed(nameof(IsPriceDrops)); Changed(nameof(IsPromotions)); Changed(nameof(IsSavedCriteria)); Changed(nameof(IsCabinAvailability)); Changed(nameof(IsNewItineraries));
         Changed(nameof(IsActiveLifecycle)); Changed(nameof(IsUnreadLifecycle)); Changed(nameof(IsReadLifecycle)); Changed(nameof(IsDismissedLifecycle));
     }
     private void SelectionChanged() { Changed(nameof(HasSelection)); RaiseCommands(); }

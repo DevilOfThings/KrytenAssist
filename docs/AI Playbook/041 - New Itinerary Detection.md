@@ -332,8 +332,13 @@ discovery recording commits first, then independently evaluates deterministic
 typed New Itinerary alerts; retries repair missing derived alerts without
 duplicating them. Migration `20260720185813_AddNewItineraryAlertIntegration`
 preserves existing alerts/settings and adds route subjects, normalized typed
-details and the default-enabled setting. All 748 offline tests pass; Prompt
-041f is next.
+details and the default-enabled setting. Prompt 041f is also complete. The
+existing payload now feeds an independent itinerary review using one capture
+time, and the explicit whole-check action records every Ready route plus every
+controlled rejection. A fifth local New Itineraries workspace resolves
+retained scope/check evidence, supports policy-checked revisit and remains
+available after restart. Alert Centre filtering and settings now cover every
+typed alert. All 751 offline tests pass; Prompt 041g is next.
 
 ### Existing-System Findings
 
@@ -487,6 +492,53 @@ details and the default-enabled setting. All 748 offline tests pass; Prompt
   Itineraries presentation remain 041f work.
 - EF reports no pending model changes. The solution builds with zero errors;
   157 Core, 582 Avalonia/Application/Infrastructure and 9 API tests pass.
+
+### 041f Analysis
+
+- A discovery check represents the whole comparable bounded capture. The UI
+  must therefore record every Ready itinerary plus every controlled rejection;
+  candidate selection or scope editing would create a misleading baseline.
+- The current fixed payload can feed itinerary mapping alongside price and
+  cabin mapping with one capture time. Adapter outcomes remain independent, so
+  one evidence type cannot erase another successful review.
+- New Itineraries belongs as a fifth Cruise workspace mode rather than inside
+  price History or Alert Centre. It is factual local discovery history; alerts
+  remain a derived inbox with independent lifecycle/settings.
+- Catalogue entries contain first/latest route evidence, while retained checks
+  contain the confirming scope and truncation context. A focused Application
+  read projection may compose those existing repository queries and validate
+  the exact first-observed event without adding persistence or leaking EF.
+- Trusted revisit must use the existing source catalogue, host policy and
+  embedded Discovery navigation path. Selection/activation never navigates.
+- Alert Centre needs explicit New Itinerary filtering and settings. Exposing
+  the already-persisted Cabin Availability filter/setting at the same boundary
+  ensures every supported type is visible and existing settings saves preserve
+  all flags.
+- Prompt 041f owns MVVM composition and honest presentation only. Script/schema
+  changes, background monitoring and the Prompt 041g audit remain excluded.
+
+### 041f Results
+
+- The existing bounded payload is mapped independently for price, cabin and
+  itinerary evidence with one capture time. Mapping failure in one evidence
+  type does not erase another successful review.
+- Discovery review presents semantic Known/Unknown scope, bounds, truncation,
+  stable route identity and every controlled candidate outcome. One explicit
+  command constructs the complete check; itinerary candidates cannot be
+  selectively omitted or edited.
+- Factual baseline/no-new/first-observed/already-recorded outcomes remain
+  visibly separate from derived alert Disabled/Success/Cancelled/Failed
+  outcomes. Navigation and new capture cancel and invalidate stale work.
+- A validated Application projection resolves each first-observed catalogue
+  row to its exact retained confirming check. The new fifth workspace loads
+  this local evidence newest first, presents honest first/last-seen language and
+  revisits only addresses accepted by the existing trusted-host policy.
+- Alert Centre now filters Cabin Availability and New Itinerary explicitly,
+  renders typed route evidence without sailing dereferences and exposes both
+  persisted settings while preserving all other values.
+- No script, payload, schema or provider mapping changed. The solution builds
+  with zero errors; 157 Core, 585 Avalonia/Application/Infrastructure and 9 API
+  tests pass. Manual desktop verification remains for 041g/Robin.
 
 ### Agreed 041a Decisions
 

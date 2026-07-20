@@ -117,3 +117,48 @@ public sealed class ListCruiseDiscoveryChecks(ICruiseDiscoveryRepository reposit
         catch { return new(CruiseDiscoveryOperationStatus.Failed, [], "Discovery checks could not be loaded locally."); }
     }
 }
+
+public sealed class ListFirstObservedCruiseItineraryDetails(ICruiseDiscoveryRepository repository)
+{
+    public async Task<CruiseFirstObservedItineraryDetailsListResult> ExecuteAsync(CancellationToken token = default)
+    {
+        if (token.IsCancellationRequested)
+            return new(CruiseDiscoveryOperationStatus.Cancelled, [], "Loading new itinerary evidence was cancelled.");
+        try
+        {
+            var entries = await repository.ListFirstObservedAsync(token);
+            var checks = await repository.ListChecksAsync(token);
+            var items = entries.Select(entry => Resolve(entry, checks))
+                .OrderByDescending(item => item.Entry.FirstSeenAt.UtcTicks)
+                .ThenBy(item => item.Entry.FirstObservedEventKey, StringComparer.Ordinal)
+                .ThenBy(item => item.Entry.CatalogueKey.PersistenceKey, StringComparer.Ordinal)
+                .ToArray();
+            return new(CruiseDiscoveryOperationStatus.Success, Array.AsReadOnly(items), null);
+        }
+        catch (OperationCanceledException)
+        {
+            return new(CruiseDiscoveryOperationStatus.Cancelled, [], "Loading new itinerary evidence was cancelled.");
+        }
+        catch
+        {
+            return new(CruiseDiscoveryOperationStatus.Failed, [], "New itinerary evidence could not be loaded locally.");
+        }
+    }
+
+    private static CruiseFirstObservedItineraryDetails Resolve(
+        CruiseItineraryCatalogueEntry entry,
+        IReadOnlyList<CruiseDiscoveryCheck> checks)
+    {
+        if (entry.FirstObservedEventKey is null)
+            throw new InvalidDataException("First-observed itinerary evidence has no event identity.");
+        var matches = checks.SelectMany(check => check.Occurrences
+                .Where(occurrence => occurrence.CatalogueKey == entry.CatalogueKey)
+                .Select(occurrence => new { Check = check, Event = new CruiseItineraryFirstObservedEvent(occurrence, check.Scope.Fingerprint, check.EvidenceKey) }))
+            .Where(value => string.Equals(value.Event.EventKey, entry.FirstObservedEventKey, StringComparison.Ordinal))
+            .ToArray();
+        if (matches.Length != 1 || matches[0].Event.Occurrence.Fingerprint != entry.FirstOccurrence.Fingerprint ||
+            matches[0].Event.ObservedAt != entry.FirstSeenAt)
+            throw new InvalidDataException("First-observed itinerary evidence is incomplete or contradictory.");
+        return new(entry, matches[0].Check);
+    }
+}

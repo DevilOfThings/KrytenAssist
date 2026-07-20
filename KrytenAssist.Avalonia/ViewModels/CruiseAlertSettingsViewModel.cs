@@ -30,6 +30,8 @@ public sealed class CruiseAlertSettingsViewModel : INotifyPropertyChanged
     private bool _priceDropEnabled;
     private bool _promotionEnabled;
     private bool _savedCriteriaEnabled;
+    private bool _cabinAvailabilityEnabled;
+    private bool _newItineraryEnabled;
     private string _minimumPercentage = "0";
     private string? _validationError;
     private string? _message;
@@ -53,6 +55,8 @@ public sealed class CruiseAlertSettingsViewModel : INotifyPropertyChanged
     public bool PriceDropEnabled { get => _priceDropEnabled; set { if (Set(ref _priceDropEnabled, value)) DraftChanged(); } }
     public bool PromotionEnabled { get => _promotionEnabled; set { if (Set(ref _promotionEnabled, value)) DraftChanged(); } }
     public bool SavedCriteriaEnabled { get => _savedCriteriaEnabled; set { if (Set(ref _savedCriteriaEnabled, value)) DraftChanged(); } }
+    public bool CabinAvailabilityEnabled { get => _cabinAvailabilityEnabled; set { if (Set(ref _cabinAvailabilityEnabled, value)) DraftChanged(); } }
+    public bool NewItineraryEnabled { get => _newItineraryEnabled; set { if (Set(ref _newItineraryEnabled, value)) DraftChanged(); } }
     public string MinimumPriceDropPercentage { get => _minimumPercentage; set { if (Set(ref _minimumPercentage, value ?? string.Empty)) DraftChanged(); } }
     public string? ValidationError { get => _validationError; private set { if (Set(ref _validationError, value)) Changed(nameof(HasValidationError)); } }
     public bool HasValidationError => ValidationError is not null;
@@ -156,7 +160,7 @@ public sealed class CruiseAlertSettingsViewModel : INotifyPropertyChanged
         }
         if (validate) ValidationError = null;
         settings = new CruiseAlertSettings(PriceDropEnabled, PromotionEnabled, SavedCriteriaEnabled, percentage,
-            _confirmed?.CabinAvailabilityEnabled ?? true, _confirmed?.NewItineraryEnabled ?? true);
+            CabinAvailabilityEnabled, NewItineraryEnabled);
         return true;
     }
 
@@ -165,9 +169,11 @@ public sealed class CruiseAlertSettingsViewModel : INotifyPropertyChanged
         _priceDropEnabled = settings.PriceDropEnabled;
         _promotionEnabled = settings.PromotionEnabled;
         _savedCriteriaEnabled = settings.SavedCriteriaEnabled;
+        _cabinAvailabilityEnabled = settings.CabinAvailabilityEnabled;
+        _newItineraryEnabled = settings.NewItineraryEnabled;
         _minimumPercentage = settings.MinimumPriceDropPercentage.ToString("0.############################", CultureInfo.CurrentCulture);
         ValidationError = null;
-        Changed(nameof(PriceDropEnabled)); Changed(nameof(PromotionEnabled)); Changed(nameof(SavedCriteriaEnabled)); Changed(nameof(MinimumPriceDropPercentage));
+        Changed(nameof(PriceDropEnabled)); Changed(nameof(PromotionEnabled)); Changed(nameof(SavedCriteriaEnabled)); Changed(nameof(CabinAvailabilityEnabled)); Changed(nameof(NewItineraryEnabled)); Changed(nameof(MinimumPriceDropPercentage));
         DraftChanged(false);
     }
 
