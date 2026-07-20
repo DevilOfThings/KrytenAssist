@@ -25,6 +25,7 @@ public sealed class KrytenAssistDbContext : DbContext
     public DbSet<CruiseSavedCriteriaAlertDetailEntity> CruiseSavedCriteriaAlertDetails => Set<CruiseSavedCriteriaAlertDetailEntity>();
     public DbSet<CruiseSavedCriteriaAlertCabinEntity> CruiseSavedCriteriaAlertCabins => Set<CruiseSavedCriteriaAlertCabinEntity>();
     public DbSet<CruiseCabinAvailabilityAlertDetailEntity> CruiseCabinAvailabilityAlertDetails => Set<CruiseCabinAvailabilityAlertDetailEntity>();
+    public DbSet<CruiseNewItineraryAlertDetailEntity> CruiseNewItineraryAlertDetails => Set<CruiseNewItineraryAlertDetailEntity>();
     public DbSet<CruiseAlertSettingsEntity> CruiseAlertSettings => Set<CruiseAlertSettingsEntity>();
     public DbSet<SavedCruiseCriteriaEvaluationStateEntity> SavedCruiseCriteriaEvaluationStates => Set<SavedCruiseCriteriaEvaluationStateEntity>();
     public DbSet<CruiseCabinSeriesEntity> CruiseCabinSeries => Set<CruiseCabinSeriesEntity>();

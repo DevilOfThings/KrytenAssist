@@ -28,6 +28,12 @@ public sealed record CruiseDiscoveryRecordResult(
     public static CruiseDiscoveryRecordResult Failed() => new(CruiseDiscoveryOperationStatus.Failed, null, [], "Discovery evidence could not be recorded locally.");
 }
 
+public enum CruiseDiscoveryAlertEvaluationStatus { NotRequired, Disabled, Success, Cancelled, Failed }
+public sealed record CruiseDiscoveryRecordingAndAlertResult(
+    CruiseDiscoveryRecordResult Recording,
+    CruiseDiscoveryAlertEvaluationStatus AlertEvaluation,
+    CruiseAlertEvaluationResult? Alerts);
+
 public sealed record CruiseItineraryListResult(CruiseDiscoveryOperationStatus Status, IReadOnlyList<CruiseItineraryCatalogueEntry> Entries, string? Message);
 public sealed record CruiseItineraryQueryResult(CruiseDiscoveryOperationStatus Status, CruiseItineraryCatalogueEntry? Entry, string? Message);
 public sealed record CruiseDiscoveryCheckListResult(CruiseDiscoveryOperationStatus Status, IReadOnlyList<CruiseDiscoveryCheck> Checks, string? Message);

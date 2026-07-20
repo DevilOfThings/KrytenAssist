@@ -45,6 +45,7 @@ public sealed class CruisePersistenceSchemaAndMigrationTests
         Assert.Contains("CruiseCabinObservations", schema.Keys);
         Assert.Contains("CruiseCabinObservationStates", schema.Keys);
         Assert.Contains("CruiseCabinAvailabilityAlertDetails", schema.Keys);
+        Assert.Contains("CruiseNewItineraryAlertDetails", schema.Keys);
         Assert.Contains("CruiseSavedCriteriaAlertCabins", schema.Keys);
         Assert.Contains("CK_CruiseHistories_DurationNights", schema["CruiseHistories"]);
         Assert.Contains("CK_CruiseObservations_Fingerprint_Length", schema["CruiseObservations"]);
@@ -112,7 +113,7 @@ public sealed class CruisePersistenceSchemaAndMigrationTests
         await context.Database.MigrateAsync();
         var applied = await context.Database.GetAppliedMigrationsAsync();
 
-        Assert.Equal(7, applied.Count());
+        Assert.Equal(8, applied.Count());
         Assert.Contains(InitialMigration, applied);
         Assert.Contains(applied, migration => migration.EndsWith("_AddCruiseHistoryPersistence", StringComparison.Ordinal));
         Assert.Contains(applied, migration => migration.EndsWith("_HardenCruiseHistoryRecording", StringComparison.Ordinal));
@@ -120,6 +121,7 @@ public sealed class CruisePersistenceSchemaAndMigrationTests
         Assert.Contains(applied, migration => migration.EndsWith("_AddCruiseAlertPersistence", StringComparison.Ordinal));
         Assert.Contains(applied, migration => migration.EndsWith("_AddCruiseCabinPersistence", StringComparison.Ordinal));
         Assert.Contains(applied, migration => migration.EndsWith("_AddCruiseDiscoveryPersistence", StringComparison.Ordinal));
+        Assert.Contains(applied, migration => migration.EndsWith("_AddNewItineraryAlertIntegration", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -159,6 +161,7 @@ public sealed class CruisePersistenceSchemaAndMigrationTests
         await using var reopened = database.CreateContext();
         var settings = await new KrytenInfrastructure::KrytenAssist.Infrastructure.Persistence.SqliteCruiseAlertSettingsRepository(reopened).GetAsync();
         settings.Should().Be(new CruiseAlertSettings(false, true, false, 12.5m, true));
+        settings.NewItineraryEnabled.Should().BeTrue();
         var reconstructed = await new KrytenInfrastructure::KrytenAssist.Infrastructure.Persistence.SqliteCruiseAlertRepository(reopened).GetAsync(legacyAlert.Id);
         reconstructed.Should().BeEquivalentTo(legacyAlert);
         var reconstructedDetails = (CruiseSavedCriteriaAlertDetails)reconstructed!.Details;

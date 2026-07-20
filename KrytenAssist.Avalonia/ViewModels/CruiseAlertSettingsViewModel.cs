@@ -155,7 +155,8 @@ public sealed class CruiseAlertSettingsViewModel : INotifyPropertyChanged
             return false;
         }
         if (validate) ValidationError = null;
-        settings = new CruiseAlertSettings(PriceDropEnabled, PromotionEnabled, SavedCriteriaEnabled, percentage);
+        settings = new CruiseAlertSettings(PriceDropEnabled, PromotionEnabled, SavedCriteriaEnabled, percentage,
+            _confirmed?.CabinAvailabilityEnabled ?? true, _confirmed?.NewItineraryEnabled ?? true);
         return true;
     }
 

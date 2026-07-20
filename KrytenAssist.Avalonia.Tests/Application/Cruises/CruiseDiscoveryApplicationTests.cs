@@ -14,6 +14,12 @@ using ListItineraries = KrytenApplication::KrytenAssist.Application.Cruises.List
 using GetItinerary = KrytenApplication::KrytenAssist.Application.Cruises.GetCruiseItineraryDiscovery;
 using ListChecks = KrytenApplication::KrytenAssist.Application.Cruises.ListCruiseDiscoveryChecks;
 using CaptureCandidate = KrytenApplication::KrytenAssist.Application.Cruises.CruiseItineraryCaptureCandidateResult;
+using AlertRepository = KrytenApplication::KrytenAssist.Application.Abstractions.Persistence.ICruiseAlertRepository;
+using AlertSettingsRepository = KrytenApplication::KrytenAssist.Application.Abstractions.Persistence.ICruiseAlertSettingsRepository;
+using RecordAndAlert = KrytenApplication::KrytenAssist.Application.Cruises.RecordCruiseDiscoveryCheckAndEvaluateAlerts;
+using MaterializeAlerts = KrytenApplication::KrytenAssist.Application.Cruises.MaterializeCruiseAlertCandidates;
+using AlertQuery = KrytenApplication::KrytenAssist.Application.Cruises.CruiseAlertQuery;
+using AlertAddResult = KrytenApplication::KrytenAssist.Application.Cruises.CruiseAlertAddRepositoryResult;
 
 namespace KrytenAssist.Avalonia.Tests.Application.Cruises;
 
@@ -84,6 +90,41 @@ public sealed class CruiseDiscoveryApplicationTests
         services.Should().Contain(x => x.ServiceType == typeof(ListItineraries));
         services.Should().Contain(x => x.ServiceType == typeof(GetItinerary));
         services.Should().Contain(x => x.ServiceType == typeof(ListChecks));
+        services.Should().Contain(x => x.ServiceType == typeof(CruiseNewItineraryAlertDetector));
+        services.Should().Contain(x => x.ServiceType == typeof(RecordAndAlert));
+    }
+
+    [Fact]
+    public async Task RecordingOrchestration_CommitsFirstThenMaterializesAndRetriesIdempotently()
+    {
+        var check = Check("new");
+        var discovered = new CruiseItineraryFirstObservedEvent(check.Occurrences.Single(), check.Scope.Fingerprint, check.EvidenceKey);
+        var discovery = new FakeRepository { RecordResult = new(RepositoryState.RecordedWithFirstObserved, check, [discovered]) };
+        var alerts = new FakeAlertRepository();
+        var useCase = new RecordAndAlert(new RecordCheck(discovery), new FakeSettingsRepository(),
+            new CruiseNewItineraryAlertDetector(), new MaterializeAlerts(alerts));
+
+        var first = await useCase.ExecuteAsync(check, ObservedAt.AddMinutes(1));
+        var retry = await useCase.ExecuteAsync(check, ObservedAt.AddMinutes(2));
+
+        first.Recording.Status.Should().Be(OperationStatus.RecordedWithFirstObserved);
+        first.AlertEvaluation.Should().Be(KrytenApplication::KrytenAssist.Application.Cruises.CruiseDiscoveryAlertEvaluationStatus.Success);
+        first.Alerts!.CreatedAlerts.Should().ContainSingle();
+        retry.Alerts!.CreatedAlerts.Should().BeEmpty(); retry.Alerts!.ExistingCount.Should().Be(1);
+        alerts.Values.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task RecordingOrchestration_PreservesCommittedResultWhenAlertSettingsFail()
+    {
+        var check = Check("new");
+        var discovered = new CruiseItineraryFirstObservedEvent(check.Occurrences.Single(), check.Scope.Fingerprint, check.EvidenceKey);
+        var discovery = new FakeRepository { RecordResult = new(RepositoryState.AlreadyRecorded, check, [discovered]) };
+        var result = await new RecordAndAlert(new RecordCheck(discovery), new FakeSettingsRepository { Exception = new InvalidOperationException() },
+            new CruiseNewItineraryAlertDetector(), new MaterializeAlerts(new FakeAlertRepository())).ExecuteAsync(check, ObservedAt);
+
+        result.Recording.Status.Should().Be(OperationStatus.AlreadyRecorded);
+        result.AlertEvaluation.Should().Be(KrytenApplication::KrytenAssist.Application.Cruises.CruiseDiscoveryAlertEvaluationStatus.Failed);
     }
 
     private static CatalogueEntry Entry(string id, DateTimeOffset time)
@@ -117,5 +158,28 @@ public sealed class CruiseDiscoveryApplicationTests
             Exception is null ? Task.FromResult(GetResult) : Task.FromException<CatalogueEntry?>(Exception);
         public Task<IReadOnlyList<CruiseDiscoveryCheck>> ListChecksAsync(CancellationToken cancellationToken = default) =>
             Exception is null ? Task.FromResult(Checks) : Task.FromException<IReadOnlyList<CruiseDiscoveryCheck>>(Exception);
+    }
+
+    private sealed class FakeSettingsRepository : AlertSettingsRepository
+    {
+        public Exception? Exception { get; init; }
+        public Task<CruiseAlertSettings> GetAsync(CancellationToken cancellationToken = default) =>
+            Exception is null ? Task.FromResult(new CruiseAlertSettings()) : Task.FromException<CruiseAlertSettings>(Exception);
+        public Task SaveAsync(CruiseAlertSettings settings, CancellationToken cancellationToken = default) => Task.CompletedTask;
+    }
+
+    private sealed class FakeAlertRepository : AlertRepository
+    {
+        public List<CruiseAlert> Values { get; } = [];
+        public Task<CruiseAlert?> GetAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult(Values.SingleOrDefault(x => x.Id == id));
+        public Task<IReadOnlyList<CruiseAlert>> ListAsync(AlertQuery query, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<CruiseAlert>>(Values);
+        public Task<int> CountUnreadAsync(CancellationToken cancellationToken = default) => Task.FromResult(Values.Count);
+        public Task<AlertAddResult> AddIfAbsentAsync(CruiseAlert alert, CancellationToken cancellationToken = default)
+        {
+            var existing = Values.SingleOrDefault(x => x.EventKey == alert.EventKey);
+            if (existing is not null) return Task.FromResult(new AlertAddResult(false, existing));
+            Values.Add(alert); return Task.FromResult(new AlertAddResult(true, alert));
+        }
+        public Task<bool> UpdateStatusAsync(Guid id, CruiseAlertStatus status, CancellationToken cancellationToken = default) => Task.FromResult(false);
     }
 }

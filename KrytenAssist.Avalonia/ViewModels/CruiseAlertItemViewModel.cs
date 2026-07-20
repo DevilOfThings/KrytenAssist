@@ -16,6 +16,7 @@ public sealed class CruiseAlertItemViewModel
             CruiseAlertType.PriceDrop => "Price drop",
             CruiseAlertType.Promotion => "Promotion",
             CruiseAlertType.SavedCriteria => "Saved criteria",
+            CruiseAlertType.NewItinerary => "New itinerary",
             _ => alert.Type.ToString()
         };
         StatusLabel = alert.Status.ToString();
@@ -29,8 +30,10 @@ public sealed class CruiseAlertItemViewModel
     public CruiseAlertStatus Status => Alert.Status;
     public string TypeLabel { get; }
     public string StatusLabel { get; }
-    public string ShipName => Alert.SailingKey.ShipName;
-    public string SailingText => $"{ShipName} · {Alert.SailingKey.DepartureDate:dd MMM yyyy}";
+    public string ShipName => Alert.SailingKey?.ShipName ?? (Alert.Details as CruiseNewItineraryAlertDetails)?.ShipName ?? "Itinerary";
+    public string SailingText => Alert.SailingKey is { } sailing
+        ? $"{ShipName} · {sailing.DepartureDate:dd MMM yyyy}"
+        : $"{ShipName} · {Alert.ItineraryCatalogueKey!.ItineraryKey.ProviderItineraryId}";
     public string Summary { get; }
     public string DetailText { get; }
     public string EventTimeText => Alert.EventTime.ToLocalTime().ToString("dd MMM yyyy HH:mm", Culture);
@@ -47,12 +50,15 @@ public sealed class CruiseAlertItemViewModel
             $"Price dropped from {Price(details.PreviousPrice)} to {Price(details.CurrentPrice)} ({details.PercentageReduction.ToString("0.####", Culture)}%).",
         CruisePromotionAlertDetails details => $"New promotion: {details.CurrentSummary}",
         CruiseSavedCriteriaAlertDetails => "This shortlisted sailing met your supported saved criteria.",
+        CruiseNewItineraryAlertDetails => "New itinerary observed. First observed by Kryten.",
         _ => "Cruise alert"
     };
 
     private static string CreateDetail(CruiseAlert alert)
     {
-        var common = $"Operator: {alert.SailingKey.OperatorId}\nShip: {alert.SailingKey.ShipName}\nDeparture: {alert.SailingKey.DepartureDate:dd MMM yyyy}\nDuration: {alert.SailingKey.DurationNights} nights\nEvent: {alert.EventTime.ToLocalTime():dd MMM yyyy HH:mm}\nCreated: {alert.CreatedAt.ToLocalTime():dd MMM yyyy HH:mm}";
+        var common = alert.SailingKey is { } sailing
+            ? $"Operator: {sailing.OperatorId}\nShip: {sailing.ShipName}\nDeparture: {sailing.DepartureDate:dd MMM yyyy}\nDuration: {sailing.DurationNights} nights\nEvent: {alert.EventTime.ToLocalTime():dd MMM yyyy HH:mm}\nCreated: {alert.CreatedAt.ToLocalTime():dd MMM yyyy HH:mm}"
+            : $"Operator: {alert.ItineraryCatalogueKey!.ItineraryKey.OperatorId}\nItinerary: {alert.ItineraryCatalogueKey.ItineraryKey.ProviderItineraryId}\nEvent: {alert.EventTime.ToLocalTime():dd MMM yyyy HH:mm}\nCreated: {alert.CreatedAt.ToLocalTime():dd MMM yyyy HH:mm}";
         return alert.Details switch
         {
             CruisePriceDropAlertDetails details =>

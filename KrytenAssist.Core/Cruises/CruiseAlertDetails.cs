@@ -2,6 +2,49 @@ namespace KrytenAssist.Core.Cruises;
 
 public abstract record CruiseAlertDetails;
 
+public sealed record CruiseNewItineraryAlertDetails : CruiseAlertDetails
+{
+    public CruiseNewItineraryAlertDetails(CruiseItineraryKey itineraryKey, string scopeFingerprint,
+        string checkEvidenceKey, string occurrenceFingerprint, string providerEvidenceKey,
+        string firstObservedEventKey, DateTimeOffset firstObservedAt, string? title = null,
+        string? shipName = null, DateOnly? departureDate = null, int? durationNights = null,
+        string? departurePort = null, string? itinerarySummary = null, string? sourceReference = null)
+    {
+        ItineraryKey = itineraryKey ?? throw new ArgumentNullException(nameof(itineraryKey));
+        ScopeFingerprint = Hash(scopeFingerprint, nameof(scopeFingerprint));
+        CheckEvidenceKey = Hash(checkEvidenceKey, nameof(checkEvidenceKey));
+        OccurrenceFingerprint = Hash(occurrenceFingerprint, nameof(occurrenceFingerprint));
+        ProviderEvidenceKey = Required(providerEvidenceKey, CruiseItineraryOccurrence.MaximumSummaryLength, nameof(providerEvidenceKey), false);
+        FirstObservedEventKey = Hash(firstObservedEventKey, nameof(firstObservedEventKey));
+        if (durationNights is < 1 or > CruiseItineraryOccurrence.MaximumDurationNights) throw new ArgumentOutOfRangeException(nameof(durationNights));
+        FirstObservedAt = firstObservedAt; Title = Optional(title, CruiseItineraryOccurrence.MaximumDisplayLength, nameof(title));
+        ShipName = Optional(shipName, CruiseItineraryOccurrence.MaximumDisplayLength, nameof(shipName)); DepartureDate = departureDate;
+        DurationNights = durationNights; DeparturePort = Optional(departurePort, CruiseItineraryOccurrence.MaximumDisplayLength, nameof(departurePort));
+        ItinerarySummary = Optional(itinerarySummary, CruiseItineraryOccurrence.MaximumSummaryLength, nameof(itinerarySummary));
+        SourceReference = Optional(sourceReference, CruiseItineraryOccurrence.MaximumSourceReferenceLength, nameof(sourceReference), false);
+    }
+    public CruiseItineraryKey ItineraryKey { get; }
+    public string ScopeFingerprint { get; }
+    public string CheckEvidenceKey { get; }
+    public string OccurrenceFingerprint { get; }
+    public string ProviderEvidenceKey { get; }
+    public string FirstObservedEventKey { get; }
+    public DateTimeOffset FirstObservedAt { get; }
+    public string? Title { get; }
+    public string? ShipName { get; }
+    public DateOnly? DepartureDate { get; }
+    public int? DurationNights { get; }
+    public string? DeparturePort { get; }
+    public string? ItinerarySummary { get; }
+    public string? SourceReference { get; }
+    private static string Hash(string value, string name)
+    { var result = Required(value, 64, name, false); return result.Length == 64 && result.All(c => c is >= '0' and <= '9' or >= 'a' and <= 'f') ? result : throw new ArgumentException($"{name} must be a lowercase SHA-256 value.", name); }
+    private static string Required(string value, int maximum, string name, bool normalize = true)
+    { ArgumentException.ThrowIfNullOrWhiteSpace(value); var result = normalize ? CruiseHistoryText.NormalizeRequired(value, name) : value.Trim(); if (result.Length > maximum) throw new ArgumentException($"{name} is too long.", name); return result; }
+    private static string? Optional(string? value, int maximum, string name, bool normalize = true)
+    { if (string.IsNullOrWhiteSpace(value)) return null; return Required(value, maximum, name, normalize); }
+}
+
 public sealed record CruiseCabinAvailabilityAlertDetails : CruiseAlertDetails
 {
     public CruiseCabinAvailabilityAlertDetails(

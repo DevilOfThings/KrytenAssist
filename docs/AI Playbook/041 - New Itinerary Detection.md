@@ -325,8 +325,15 @@ The bounded read-only script now emits payload v3 with
 an explicit trusted provider itinerary id. A stateless TUI adapter maps the
 demonstrated package-page query to semantic scope criteria, validates route ids
 against trusted itinerary URLs and deduplicates multiple offers for one stable
-route. Price v1–v3 and cabin v2–v3 compatibility is preserved. All 743 offline
-tests pass; Prompt 041e is next.
+route. Price v1–v3 and cabin v2–v3 compatibility is preserved. Prompt 041e is
+also complete. Alerts now use a closed sailing-or-itinerary subject contract,
+so a confirmed route is never represented by a fabricated sailing. Explicit
+discovery recording commits first, then independently evaluates deterministic
+typed New Itinerary alerts; retries repair missing derived alerts without
+duplicating them. Migration `20260720185813_AddNewItineraryAlertIntegration`
+preserves existing alerts/settings and adds route subjects, normalized typed
+details and the default-enabled setting. All 748 offline tests pass; Prompt
+041f is next.
 
 ### Existing-System Findings
 
@@ -433,6 +440,53 @@ tests pass; Prompt 041e is next.
 - Stable-route deduplication is isolated from existing price offer handling.
 - TUI DI resolves price, cabin and itinerary adapters, and the complete suite
   passes with 743 offline tests.
+
+### 041e Analysis
+
+- Existing alerts are strictly sailing-based, but a New Itinerary event is a
+  stable route/source-catalogue fact. The alert aggregate therefore needs a
+  closed sailing-or-itinerary subject model; manufacturing a representative
+  ship, date or duration would contradict the accepted 041a contract.
+- The four existing sailing alert event keys must remain byte-for-byte stable.
+  New Itinerary receives a separate route-based canonical event-key path using
+  the confirmed discovery event key, so retries and concurrent materialization
+  remain safe without rewriting existing identities.
+- Discovery recording is the primary factual mutation and already returns the
+  events atomically confirmed by SQLite. Alert evaluation must happen only
+  after that commit and expose a separate outcome; alert/settings failure must
+  not make a committed check appear to have failed.
+- `AlreadyRecorded` must return and reevaluate its originally confirmed events.
+  This repairs a prior derived-alert failure safely while the alert repository's
+  unique event key prevents duplicates.
+- Alert SQLite storage needs one compatibility migration: preserve legacy rows,
+  represent exactly one complete sailing or itinerary subject, add typed New
+  Itinerary details and extend settings with a default-enabled future-evaluation
+  switch. No discovery-to-alert foreign key is appropriate.
+- Prompt 041e stops at Core/Application/Infrastructure integration. Avalonia
+  recording controls, New Itineraries/Alert Centre presentation and the visible
+  settings switch belong to 041f.
+
+### 041e Results
+
+- A closed alert subject hierarchy preserves sailing identity for the four
+  existing alert types and adds source-catalogue route identity for New
+  Itinerary without changing legacy event-key calculation.
+- Confirmed first-observed events map to bounded typed alert details and a
+  separate deterministic route event key. Exact-check replay safely repairs a
+  prior alert failure through existing unique-key materialization.
+- `RecordCruiseDiscoveryCheckAndEvaluateAlerts` exposes factual recording and
+  derived alert outcomes independently. Baseline/known-only checks do no alert
+  work, disabled settings are explicit, and alert failure cannot falsify a
+  committed discovery result.
+- SQLite stores exactly one sailing or itinerary subject, one matching typed
+  detail, and the new setting while retaining schema independence from factual
+  discovery evidence. Legacy migration coverage confirms alert event keys and
+  prior setting choices survive.
+- The current Alert Centre renders a safe minimal New Itinerary item and hidden
+  alert flags survive existing settings saves. Full controls, filters and New
+  Itineraries presentation remain 041f work.
+- EF reports no pending model changes. The solution builds with zero errors;
+  157 Core, 582 Avalonia/Application/Infrastructure and 9 API tests pass.
 
 ### Agreed 041a Decisions
 

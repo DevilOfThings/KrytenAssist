@@ -84,10 +84,34 @@ public sealed class CruiseAlertPersistenceTests
         {
             var repository = new SettingsRepository(context);
             (await repository.GetAsync()).Should().Be(new CruiseAlertSettings());
-            await repository.SaveAsync(new(false, true, false, 12.3456m, false));
+            await repository.SaveAsync(new(false, true, false, 12.3456m, false, false));
         }
         await using (var reopened = database.CreateContext())
-            (await new SettingsRepository(reopened).GetAsync()).Should().Be(new CruiseAlertSettings(false, true, false, 12.3456m, false));
+            (await new SettingsRepository(reopened).GetAsync()).Should().Be(new CruiseAlertSettings(false, true, false, 12.3456m, false, false));
+    }
+
+    [Fact]
+    public async Task NewItineraryAlert_RoundTripsRouteSubjectAndTypedEvidence()
+    {
+        await using var database = new CruisePersistenceTestDatabase(); await database.OpenAndMigrateAsync();
+        var time = new DateTimeOffset(2026, 7, 20, 16, 0, 0, TimeSpan.FromHours(1));
+        var source = new CruiseSource("tui", "TUI");
+        var occurrence = new CruiseItineraryOccurrence(new("marella", "ATL-01"), source, time,
+            "provider-evidence", "Atlantic Islands", "Explorer", new DateOnly(2027, 3, 4), 7,
+            "Barbados", "Bridgetown · Castries", "offer", "https://www.tui.co.uk/cruise/example");
+        var discovered = new CruiseItineraryFirstObservedEvent(occurrence, new string('a', 64), new string('b', 64));
+        var candidate = new CruiseNewItineraryAlertDetector().Detect([discovered], new()).Single();
+        var alert = new CruiseAlert(Guid.NewGuid(), candidate, time.AddMinutes(1));
+
+        await using (var context = database.CreateContext())
+            (await new AlertRepository(context).AddIfAbsentAsync(alert)).Created.Should().BeTrue();
+        await using (var reopened = database.CreateContext())
+        {
+            var stored = await new AlertRepository(reopened).GetAsync(alert.Id);
+            stored.Should().BeEquivalentTo(alert);
+            stored!.SailingKey.Should().BeNull();
+            stored.ItineraryCatalogueKey.Should().Be(occurrence.CatalogueKey);
+        }
     }
 
     [Fact]

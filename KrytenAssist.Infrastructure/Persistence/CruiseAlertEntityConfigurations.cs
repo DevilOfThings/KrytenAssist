@@ -11,20 +11,23 @@ public sealed class CruiseAlertEntityConfiguration : IEntityTypeConfiguration<Cr
         builder.ToTable("CruiseAlerts", table =>
         {
             table.HasCheckConstraint("CK_CruiseAlerts_EventKey", "length(\"EventKey\") = 64 AND \"EventKey\" NOT GLOB '*[^0-9a-f]*'");
-            table.HasCheckConstraint("CK_CruiseAlerts_Type", "\"Type\" BETWEEN 0 AND 3");
+            table.HasCheckConstraint("CK_CruiseAlerts_Type", "\"Type\" BETWEEN 0 AND 4");
             table.HasCheckConstraint("CK_CruiseAlerts_Status", "\"Status\" BETWEEN 0 AND 2");
-            table.HasCheckConstraint("CK_CruiseAlerts_Duration", "\"DurationNights\" > 0");
+            table.HasCheckConstraint("CK_CruiseAlerts_Subject", "(\"Type\" BETWEEN 0 AND 3 AND \"OperatorId\" IS NOT NULL AND \"ShipName\" IS NOT NULL AND \"DepartureDate\" IS NOT NULL AND \"DurationNights\" > 0 AND \"ItineraryOperatorId\" IS NULL AND \"ProviderItineraryId\" IS NULL) OR (\"Type\" = 4 AND \"OperatorId\" IS NULL AND \"ShipName\" IS NULL AND \"DepartureDate\" IS NULL AND \"DurationNights\" IS NULL AND \"ItineraryOperatorId\" IS NOT NULL AND \"ProviderItineraryId\" IS NOT NULL)");
             table.HasCheckConstraint("CK_CruiseAlerts_SourcePair", "(\"RetailSourceId\" IS NULL AND \"RetailSourceName\" IS NULL) OR (\"RetailSourceId\" IS NOT NULL AND \"RetailSourceName\" IS NOT NULL)");
-            table.HasCheckConstraint("CK_CruiseAlerts_TypeSource", "(\"Type\" IN (0, 1, 3) AND \"RetailSourceId\" IS NOT NULL) OR (\"Type\" = 2 AND \"RetailSourceId\" IS NULL)");
-            Length(table, "OperatorId", 200, false); Length(table, "ShipName", 500, false);
+            table.HasCheckConstraint("CK_CruiseAlerts_TypeSource", "(\"Type\" IN (0, 1, 3, 4) AND \"RetailSourceId\" IS NOT NULL) OR (\"Type\" = 2 AND \"RetailSourceId\" IS NULL)");
+            Length(table, "OperatorId", 200, true); Length(table, "ShipName", 500, true);
+            Length(table, "ItineraryOperatorId", 200, true); Length(table, "ProviderItineraryId", CruiseItineraryKey.MaximumProviderItineraryIdLength, true);
             Length(table, "RetailSourceId", SavedCruiseSnapshot.MaximumRetailSourceIdLength, true);
             Length(table, "RetailSourceName", SavedCruiseSnapshot.MaximumRetailSourceNameLength, true);
         });
         builder.HasKey(x => x.Id);
         builder.Property(x => x.EventKey).HasMaxLength(64).IsRequired();
-        builder.Property(x => x.OperatorId).HasMaxLength(200).IsRequired();
-        builder.Property(x => x.ShipName).HasMaxLength(500).IsRequired();
-        builder.Property(x => x.DepartureDate).HasConversion(CruisePersistenceConversions.DateOnly).HasMaxLength(10).IsRequired();
+        builder.Property(x => x.OperatorId).HasMaxLength(200);
+        builder.Property(x => x.ShipName).HasMaxLength(500);
+        builder.Property(x => x.DepartureDate).HasConversion(CruisePersistenceConversions.NullableDateOnly).HasMaxLength(10);
+        builder.Property(x => x.ItineraryOperatorId).HasMaxLength(200);
+        builder.Property(x => x.ProviderItineraryId).HasMaxLength(CruiseItineraryKey.MaximumProviderItineraryIdLength);
         builder.Property(x => x.RetailSourceId).HasMaxLength(SavedCruiseSnapshot.MaximumRetailSourceIdLength);
         builder.Property(x => x.RetailSourceName).HasMaxLength(SavedCruiseSnapshot.MaximumRetailSourceNameLength);
         builder.Property(x => x.EventTime).HasConversion(CruisePersistenceConversions.DateTimeOffset).HasMaxLength(35).IsRequired();
@@ -146,6 +149,34 @@ public sealed class CruiseCabinAvailabilityAlertDetailEntityConfiguration : IEnt
     }
 }
 
+public sealed class CruiseNewItineraryAlertDetailEntityConfiguration : IEntityTypeConfiguration<CruiseNewItineraryAlertDetailEntity>
+{
+    public void Configure(EntityTypeBuilder<CruiseNewItineraryAlertDetailEntity> builder)
+    {
+        builder.ToTable("CruiseNewItineraryAlertDetails", table =>
+        {
+            table.HasCheckConstraint("CK_CruiseNewItineraryDetails_Hashes", "length(\"ScopeFingerprint\") = 64 AND \"ScopeFingerprint\" NOT GLOB '*[^0-9a-f]*' AND length(\"CheckEvidenceKey\") = 64 AND \"CheckEvidenceKey\" NOT GLOB '*[^0-9a-f]*' AND length(\"OccurrenceFingerprint\") = 64 AND \"OccurrenceFingerprint\" NOT GLOB '*[^0-9a-f]*' AND length(\"FirstObservedEventKey\") = 64 AND \"FirstObservedEventKey\" NOT GLOB '*[^0-9a-f]*'");
+            table.HasCheckConstraint("CK_CruiseNewItineraryDetails_Duration", "\"DurationNights\" IS NULL OR \"DurationNights\" BETWEEN 1 AND 365");
+            Length(table, "OperatorId", 200, false); Length(table, "ProviderItineraryId", CruiseItineraryKey.MaximumProviderItineraryIdLength, false);
+            Length(table, "ProviderEvidenceKey", CruiseItineraryOccurrence.MaximumSummaryLength, false);
+            Length(table, "Title", CruiseItineraryOccurrence.MaximumDisplayLength, true); Length(table, "ShipName", CruiseItineraryOccurrence.MaximumDisplayLength, true);
+            Length(table, "DeparturePort", CruiseItineraryOccurrence.MaximumDisplayLength, true); Length(table, "ItinerarySummary", CruiseItineraryOccurrence.MaximumSummaryLength, true);
+            Length(table, "SourceReference", CruiseItineraryOccurrence.MaximumSourceReferenceLength, true);
+        });
+        builder.HasKey(x => x.CruiseAlertId);
+        builder.Property(x => x.OperatorId).HasMaxLength(200).IsRequired(); builder.Property(x => x.ProviderItineraryId).HasMaxLength(CruiseItineraryKey.MaximumProviderItineraryIdLength).IsRequired();
+        builder.Property(x => x.ScopeFingerprint).HasMaxLength(64).IsRequired(); builder.Property(x => x.CheckEvidenceKey).HasMaxLength(64).IsRequired();
+        builder.Property(x => x.OccurrenceFingerprint).HasMaxLength(64).IsRequired(); builder.Property(x => x.ProviderEvidenceKey).HasMaxLength(CruiseItineraryOccurrence.MaximumSummaryLength).IsRequired();
+        builder.Property(x => x.FirstObservedEventKey).HasMaxLength(64).IsRequired(); builder.Property(x => x.FirstObservedAt).HasConversion(CruisePersistenceConversions.DateTimeOffset).HasMaxLength(35).IsRequired();
+        builder.Property(x => x.Title).HasMaxLength(CruiseItineraryOccurrence.MaximumDisplayLength); builder.Property(x => x.ShipName).HasMaxLength(CruiseItineraryOccurrence.MaximumDisplayLength);
+        builder.Property(x => x.DepartureDate).HasConversion(CruisePersistenceConversions.NullableDateOnly).HasMaxLength(10); builder.Property(x => x.DeparturePort).HasMaxLength(CruiseItineraryOccurrence.MaximumDisplayLength);
+        builder.Property(x => x.ItinerarySummary).HasMaxLength(CruiseItineraryOccurrence.MaximumSummaryLength); builder.Property(x => x.SourceReference).HasMaxLength(CruiseItineraryOccurrence.MaximumSourceReferenceLength);
+        builder.HasOne(x => x.Alert).WithOne(x => x.NewItineraryDetails).HasForeignKey<CruiseNewItineraryAlertDetailEntity>(x => x.CruiseAlertId).OnDelete(DeleteBehavior.Cascade);
+    }
+    private static void Length(TableBuilder<CruiseNewItineraryAlertDetailEntity> table, string column, int maximum, bool optional) =>
+        table.HasCheckConstraint($"CK_CruiseNewItineraryDetails_{column}_Length", optional ? $"\"{column}\" IS NULL OR length(\"{column}\") BETWEEN 1 AND {maximum}" : $"length(\"{column}\") BETWEEN 1 AND {maximum}");
+}
+
 public sealed class CruiseAlertSettingsEntityConfiguration : IEntityTypeConfiguration<CruiseAlertSettingsEntity>
 {
     public void Configure(EntityTypeBuilder<CruiseAlertSettingsEntity> builder)
@@ -153,11 +184,12 @@ public sealed class CruiseAlertSettingsEntityConfiguration : IEntityTypeConfigur
         builder.ToTable("CruiseAlertSettings", table =>
         {
             table.HasCheckConstraint("CK_CruiseAlertSettings_Singleton", "\"Id\" = 1");
-            table.HasCheckConstraint("CK_CruiseAlertSettings_Booleans", "\"PriceDropEnabled\" IN (0,1) AND \"PromotionEnabled\" IN (0,1) AND \"SavedCriteriaEnabled\" IN (0,1) AND \"CabinAvailabilityEnabled\" IN (0,1)");
+            table.HasCheckConstraint("CK_CruiseAlertSettings_Booleans", "\"PriceDropEnabled\" IN (0,1) AND \"PromotionEnabled\" IN (0,1) AND \"SavedCriteriaEnabled\" IN (0,1) AND \"CabinAvailabilityEnabled\" IN (0,1) AND \"NewItineraryEnabled\" IN (0,1)");
             table.HasCheckConstraint("CK_CruiseAlertSettings_Percentage", "CAST(\"MinimumPriceDropPercentage\" AS REAL) BETWEEN 0 AND 100");
         });
         builder.HasKey(x => x.Id);
         builder.Property(x => x.CabinAvailabilityEnabled).HasDefaultValue(true);
+        builder.Property(x => x.NewItineraryEnabled).HasDefaultValue(true);
         builder.Property(x => x.MinimumPriceDropPercentage).HasConversion(CruisePersistenceConversions.Decimal).HasMaxLength(64).IsRequired();
     }
 }

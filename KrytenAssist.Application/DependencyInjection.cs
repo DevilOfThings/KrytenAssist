@@ -57,7 +57,9 @@ public static class DependencyInjection
         services.AddScoped<EvaluateRecordedCruiseCabinAlerts>();
         services.AddScoped<RecordCruiseCabinObservationAndEvaluateAlerts>();
         services.AddSingleton<CruiseNewItineraryDetector>();
+        services.AddSingleton<CruiseNewItineraryAlertDetector>();
         services.AddScoped<RecordCruiseDiscoveryCheck>();
+        services.AddScoped<RecordCruiseDiscoveryCheckAndEvaluateAlerts>();
         services.AddScoped<ListFirstObservedCruiseItineraries>();
         services.AddScoped<GetCruiseItineraryDiscovery>();
         services.AddScoped<ListCruiseDiscoveryChecks>();

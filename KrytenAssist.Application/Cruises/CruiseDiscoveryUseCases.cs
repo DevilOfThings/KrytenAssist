@@ -1,4 +1,5 @@
 using KrytenAssist.Application.Abstractions.Persistence;
+using KrytenAssist.Core.Cruises;
 
 namespace KrytenAssist.Application.Cruises;
 
@@ -23,6 +24,49 @@ public sealed class RecordCruiseDiscoveryCheck(ICruiseDiscoveryRepository reposi
         }
         catch (OperationCanceledException) { return CruiseDiscoveryRecordResult.Cancelled(); }
         catch { return CruiseDiscoveryRecordResult.Failed(); }
+    }
+}
+
+public sealed class RecordCruiseDiscoveryCheckAndEvaluateAlerts(
+    RecordCruiseDiscoveryCheck record,
+    ICruiseAlertSettingsRepository settings,
+    CruiseNewItineraryAlertDetector detector,
+    MaterializeCruiseAlertCandidates materialize)
+{
+    public async Task<CruiseDiscoveryRecordingAndAlertResult> ExecuteAsync(
+        Core.Cruises.CruiseDiscoveryCheck check, DateTimeOffset createdAt, CancellationToken token = default)
+    {
+        ArgumentNullException.ThrowIfNull(check);
+        var recording = await record.ExecuteAsync(check, token);
+        if (recording.Status is CruiseDiscoveryOperationStatus.Cancelled or CruiseDiscoveryOperationStatus.Failed)
+            return new(recording, CruiseDiscoveryAlertEvaluationStatus.NotRequired, null);
+        if (recording.Status is CruiseDiscoveryOperationStatus.BaselineSeeded or CruiseDiscoveryOperationStatus.RecordedNoNewItineraries ||
+            recording.FirstObservedEvents.Count == 0)
+            return new(recording, CruiseDiscoveryAlertEvaluationStatus.NotRequired, null);
+
+        try
+        {
+            var currentSettings = await settings.GetAsync(token);
+            if (!currentSettings.NewItineraryEnabled)
+                return new(recording, CruiseDiscoveryAlertEvaluationStatus.Disabled, null);
+            var candidates = detector.Detect(recording.FirstObservedEvents, currentSettings);
+            var alerts = await materialize.ExecuteAsync(candidates, createdAt, token);
+            var status = alerts.Status switch
+            {
+                CruiseAlertOperationStatus.Success => CruiseDiscoveryAlertEvaluationStatus.Success,
+                CruiseAlertOperationStatus.Cancelled => CruiseDiscoveryAlertEvaluationStatus.Cancelled,
+                _ => CruiseDiscoveryAlertEvaluationStatus.Failed
+            };
+            return new(recording, status, alerts);
+        }
+        catch (OperationCanceledException)
+        {
+            return new(recording, CruiseDiscoveryAlertEvaluationStatus.Cancelled, null);
+        }
+        catch
+        {
+            return new(recording, CruiseDiscoveryAlertEvaluationStatus.Failed, null);
+        }
     }
 }
 

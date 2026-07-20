@@ -10,7 +10,7 @@ Phase 7 – Cruise Assistant
 
 Current Prompt
 --------------
-Prompt 041e – Recording and Alert Integration (next; unstarted)
+Prompt 041f – New Itineraries Presentation (next; unstarted)
 
 Prompt 037 – Cruise History and Price Tracking, including its 037h Multiple
 Cruise Deals extension, is complete. Kryten can explicitly capture currently

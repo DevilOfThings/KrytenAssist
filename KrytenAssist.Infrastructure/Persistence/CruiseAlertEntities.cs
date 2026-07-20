@@ -6,10 +6,12 @@ public sealed class CruiseAlertEntity
     public string EventKey { get; set; } = string.Empty;
     public int Type { get; set; }
     public int Status { get; set; }
-    public string OperatorId { get; set; } = string.Empty;
-    public string ShipName { get; set; } = string.Empty;
-    public DateOnly DepartureDate { get; set; }
-    public int DurationNights { get; set; }
+    public string? OperatorId { get; set; }
+    public string? ShipName { get; set; }
+    public DateOnly? DepartureDate { get; set; }
+    public int? DurationNights { get; set; }
+    public string? ItineraryOperatorId { get; set; }
+    public string? ProviderItineraryId { get; set; }
     public string? RetailSourceId { get; set; }
     public string? RetailSourceName { get; set; }
     public DateTimeOffset EventTime { get; set; }
@@ -20,6 +22,28 @@ public sealed class CruiseAlertEntity
     public CruisePromotionAlertDetailEntity? PromotionDetails { get; set; }
     public CruiseSavedCriteriaAlertDetailEntity? SavedCriteriaDetails { get; set; }
     public CruiseCabinAvailabilityAlertDetailEntity? CabinAvailabilityDetails { get; set; }
+    public CruiseNewItineraryAlertDetailEntity? NewItineraryDetails { get; set; }
+}
+
+public sealed class CruiseNewItineraryAlertDetailEntity
+{
+    public Guid CruiseAlertId { get; set; }
+    public CruiseAlertEntity Alert { get; set; } = null!;
+    public string OperatorId { get; set; } = string.Empty;
+    public string ProviderItineraryId { get; set; } = string.Empty;
+    public string ScopeFingerprint { get; set; } = string.Empty;
+    public string CheckEvidenceKey { get; set; } = string.Empty;
+    public string OccurrenceFingerprint { get; set; } = string.Empty;
+    public string ProviderEvidenceKey { get; set; } = string.Empty;
+    public string FirstObservedEventKey { get; set; } = string.Empty;
+    public DateTimeOffset FirstObservedAt { get; set; }
+    public string? Title { get; set; }
+    public string? ShipName { get; set; }
+    public DateOnly? DepartureDate { get; set; }
+    public int? DurationNights { get; set; }
+    public string? DeparturePort { get; set; }
+    public string? ItinerarySummary { get; set; }
+    public string? SourceReference { get; set; }
 }
 
 public sealed class CruisePriceDropAlertDetailEntity
@@ -101,6 +125,7 @@ public sealed class CruiseAlertSettingsEntity
     public bool SavedCriteriaEnabled { get; set; }
     public decimal MinimumPriceDropPercentage { get; set; }
     public bool CabinAvailabilityEnabled { get; set; }
+    public bool NewItineraryEnabled { get; set; }
 }
 
 public sealed class SavedCruiseCriteriaEvaluationStateEntity

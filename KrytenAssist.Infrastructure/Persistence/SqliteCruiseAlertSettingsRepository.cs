@@ -11,19 +11,19 @@ public sealed class SqliteCruiseAlertSettingsRepository(KrytenAssistDbContext db
     {
         cancellationToken.ThrowIfCancellationRequested();
         var value = await dbContext.CruiseAlertSettings.AsNoTracking().SingleOrDefaultAsync(x => x.Id == ProfileId, cancellationToken);
-        return value is null ? new() : new(value.PriceDropEnabled, value.PromotionEnabled, value.SavedCriteriaEnabled, value.MinimumPriceDropPercentage, value.CabinAvailabilityEnabled);
+        return value is null ? new() : new(value.PriceDropEnabled, value.PromotionEnabled, value.SavedCriteriaEnabled, value.MinimumPriceDropPercentage, value.CabinAvailabilityEnabled, value.NewItineraryEnabled);
     }
 
     public async Task SaveAsync(CruiseAlertSettings settings, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(settings); cancellationToken.ThrowIfCancellationRequested();
         await dbContext.Database.ExecuteSqlInterpolatedAsync($"""
-            INSERT INTO "CruiseAlertSettings" ("Id", "PriceDropEnabled", "PromotionEnabled", "SavedCriteriaEnabled", "MinimumPriceDropPercentage", "CabinAvailabilityEnabled")
-            VALUES ({ProfileId}, {settings.PriceDropEnabled}, {settings.PromotionEnabled}, {settings.SavedCriteriaEnabled}, {settings.MinimumPriceDropPercentage.ToString("G29", System.Globalization.CultureInfo.InvariantCulture)}, {settings.CabinAvailabilityEnabled})
+            INSERT INTO "CruiseAlertSettings" ("Id", "PriceDropEnabled", "PromotionEnabled", "SavedCriteriaEnabled", "MinimumPriceDropPercentage", "CabinAvailabilityEnabled", "NewItineraryEnabled")
+            VALUES ({ProfileId}, {settings.PriceDropEnabled}, {settings.PromotionEnabled}, {settings.SavedCriteriaEnabled}, {settings.MinimumPriceDropPercentage.ToString("G29", System.Globalization.CultureInfo.InvariantCulture)}, {settings.CabinAvailabilityEnabled}, {settings.NewItineraryEnabled})
             ON CONFLICT("Id") DO UPDATE SET
               "PriceDropEnabled" = excluded."PriceDropEnabled", "PromotionEnabled" = excluded."PromotionEnabled",
               "SavedCriteriaEnabled" = excluded."SavedCriteriaEnabled", "MinimumPriceDropPercentage" = excluded."MinimumPriceDropPercentage",
-              "CabinAvailabilityEnabled" = excluded."CabinAvailabilityEnabled"
+              "CabinAvailabilityEnabled" = excluded."CabinAvailabilityEnabled", "NewItineraryEnabled" = excluded."NewItineraryEnabled"
             """, cancellationToken);
     }
 }

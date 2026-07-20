@@ -81,6 +81,39 @@ public sealed class CruiseAlertTests
     }
 
     [Fact]
+    public void NewItineraryAlert_UsesRouteSubjectAndConfirmedEvidenceIdentity()
+    {
+        var time = new DateTimeOffset(2026, 7, 20, 12, 0, 0, TimeSpan.FromHours(1));
+        var source = new CruiseSource("tui", "TUI");
+        var occurrence = new CruiseItineraryOccurrence(new("marella", "ATL-01"), source, time,
+            "provider-evidence", "Atlantic Islands", "Marella Explorer", sourceReference: "https://www.tui.co.uk/cruise/example");
+        var discovered = new CruiseItineraryFirstObservedEvent(occurrence, new string('a', 64), new string('b', 64));
+
+        var candidate = new CruiseNewItineraryAlertDetector().Detect([discovered], new()).Single();
+
+        candidate.Type.Should().Be(CruiseAlertType.NewItinerary);
+        candidate.SailingKey.Should().BeNull();
+        candidate.ItineraryCatalogueKey.Should().Be(occurrence.CatalogueKey);
+        candidate.EventKey.Should().Be(CruiseAlertEventKey.CreateNewItinerary(occurrence.CatalogueKey, discovered.EventKey));
+        candidate.Details.Should().BeOfType<CruiseNewItineraryAlertDetails>()
+            .Which.FirstObservedEventKey.Should().Be(discovered.EventKey);
+        new CruiseNewItineraryAlertDetector().Detect([discovered], new(newItineraryEnabled: false)).Should().BeEmpty();
+    }
+
+    [Fact]
+    public void AlertSubjects_RejectTypeAndIdentityMismatches()
+    {
+        var time = DateTimeOffset.UtcNow; var source = new CruiseSource("tui", "TUI");
+        var occurrence = new CruiseItineraryOccurrence(new("marella", "one"), source, time, "evidence");
+        var discovered = new CruiseItineraryFirstObservedEvent(occurrence, new string('a', 64), new string('b', 64));
+        var details = (CruiseNewItineraryAlertDetails)new CruiseNewItineraryAlertDetector().Detect([discovered], new()).Single().Details;
+        FluentActions.Invoking(() => new CruiseAlertCandidate(CruiseAlertType.NewItinerary,
+            CruiseSailingKey.From(CruiseHistoryTestData.Observation()), source, details, time, discovered.EventKey)).Should().Throw<ArgumentException>();
+        FluentActions.Invoking(() => new CruiseAlertCandidate(CruiseAlertType.NewItinerary,
+            new CruiseItineraryAlertSubject(new(source, new("marella", "other"))), source, details, time, discovered.EventKey)).Should().Throw<ArgumentException>();
+    }
+
+    [Fact]
     public void ObservationDetector_CreatesPriceAndPromotionAtThreshold()
     {
         var previous = CruiseHistoryTestData.Observation(perPersonPrice: 1000m, promotion: "Old offer");

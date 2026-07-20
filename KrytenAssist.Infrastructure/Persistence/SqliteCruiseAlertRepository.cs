@@ -69,7 +69,7 @@ public sealed class SqliteCruiseAlertRepository(KrytenAssistDbContext dbContext)
     private IQueryable<CruiseAlertEntity> CompleteQuery() => dbContext.CruiseAlerts.AsNoTracking()
         .Include(x => x.PriceDropDetails).Include(x => x.PromotionDetails)
         .Include(x => x.SavedCriteriaDetails).ThenInclude(x => x!.Cabins)
-        .Include(x => x.CabinAvailabilityDetails);
+        .Include(x => x.CabinAvailabilityDetails).Include(x => x.NewItineraryDetails);
 
     private async Task<CruiseAlert?> FindByEventKeyAsync(string eventKey, CancellationToken token)
     {
@@ -82,12 +82,22 @@ public sealed class SqliteCruiseAlertRepository(KrytenAssistDbContext dbContext)
         var entity = new CruiseAlertEntity
         {
             Id = alert.Id, EventKey = alert.EventKey, Type = (int)alert.Type, Status = (int)alert.Status,
-            OperatorId = alert.SailingKey.OperatorId, ShipName = alert.SailingKey.ShipName,
-            DepartureDate = alert.SailingKey.DepartureDate, DurationNights = alert.SailingKey.DurationNights,
             RetailSourceId = alert.Source?.Id, RetailSourceName = alert.Source?.Name,
             EventTime = alert.EventTime, EventTimeUtcTicks = alert.EventTime.UtcTicks,
             CreatedAt = alert.CreatedAt, CreatedAtUtcTicks = alert.CreatedAt.UtcTicks
         };
+        switch (alert.Subject)
+        {
+            case CruiseSailingAlertSubject sailing:
+                entity.OperatorId = sailing.SailingKey.OperatorId; entity.ShipName = sailing.SailingKey.ShipName;
+                entity.DepartureDate = sailing.SailingKey.DepartureDate; entity.DurationNights = sailing.SailingKey.DurationNights;
+                break;
+            case CruiseItineraryAlertSubject itinerary:
+                entity.ItineraryOperatorId = itinerary.CatalogueKey.ItineraryKey.OperatorId;
+                entity.ProviderItineraryId = itinerary.CatalogueKey.ItineraryKey.ProviderItineraryId;
+                break;
+            default: throw new InvalidOperationException("Unsupported alert subject.");
+        }
         switch (alert.Details)
         {
             case CruisePriceDropAlertDetails detail:
@@ -130,6 +140,18 @@ public sealed class SqliteCruiseAlertRepository(KrytenAssistDbContext dbContext)
                     EvidenceTime = detail.EvidenceTime
                 };
                 break;
+            case CruiseNewItineraryAlertDetails detail:
+                entity.NewItineraryDetails = new CruiseNewItineraryAlertDetailEntity
+                {
+                    OperatorId = detail.ItineraryKey.OperatorId, ProviderItineraryId = detail.ItineraryKey.ProviderItineraryId,
+                    ScopeFingerprint = detail.ScopeFingerprint, CheckEvidenceKey = detail.CheckEvidenceKey,
+                    OccurrenceFingerprint = detail.OccurrenceFingerprint, ProviderEvidenceKey = detail.ProviderEvidenceKey,
+                    FirstObservedEventKey = detail.FirstObservedEventKey, FirstObservedAt = detail.FirstObservedAt,
+                    Title = detail.Title, ShipName = detail.ShipName, DepartureDate = detail.DepartureDate,
+                    DurationNights = detail.DurationNights, DeparturePort = detail.DeparturePort,
+                    ItinerarySummary = detail.ItinerarySummary, SourceReference = detail.SourceReference
+                };
+                break;
             default: throw new InvalidOperationException("Unsupported alert details.");
         }
         return entity;
@@ -137,19 +159,24 @@ public sealed class SqliteCruiseAlertRepository(KrytenAssistDbContext dbContext)
 
     private static CruiseAlert Map(CruiseAlertEntity entity)
     {
-        var key = new CruiseSailingKey(entity.OperatorId, entity.ShipName, entity.DepartureDate, entity.DurationNights);
         var source = entity.RetailSourceId is null ? null : new CruiseSource(entity.RetailSourceId, entity.RetailSourceName!);
+        var detailCount = new object?[] { entity.PriceDropDetails, entity.PromotionDetails, entity.SavedCriteriaDetails, entity.CabinAvailabilityDetails, entity.NewItineraryDetails }.Count(value => value is not null);
+        if (detailCount != 1) throw new InvalidDataException("Persisted alert must have exactly one typed detail payload.");
         CruiseAlertDetails details = (CruiseAlertType)entity.Type switch
         {
-            CruiseAlertType.PriceDrop when entity.PriceDropDetails is not null && entity.PromotionDetails is null && entity.SavedCriteriaDetails is null && entity.CabinAvailabilityDetails is null => MapPriceDrop(entity.PriceDropDetails),
-            CruiseAlertType.Promotion when entity.PromotionDetails is not null && entity.PriceDropDetails is null && entity.SavedCriteriaDetails is null && entity.CabinAvailabilityDetails is null => MapPromotion(entity.PromotionDetails),
-            CruiseAlertType.SavedCriteria when entity.SavedCriteriaDetails is not null && entity.PriceDropDetails is null && entity.PromotionDetails is null && entity.CabinAvailabilityDetails is null => MapCriteria(entity.SavedCriteriaDetails),
-            CruiseAlertType.CabinAvailability when entity.CabinAvailabilityDetails is not null && entity.PriceDropDetails is null && entity.PromotionDetails is null && entity.SavedCriteriaDetails is null => MapCabinAvailability(entity.CabinAvailabilityDetails),
+            CruiseAlertType.PriceDrop when entity.PriceDropDetails is not null => MapPriceDrop(entity.PriceDropDetails),
+            CruiseAlertType.Promotion when entity.PromotionDetails is not null => MapPromotion(entity.PromotionDetails),
+            CruiseAlertType.SavedCriteria when entity.SavedCriteriaDetails is not null => MapCriteria(entity.SavedCriteriaDetails),
+            CruiseAlertType.CabinAvailability when entity.CabinAvailabilityDetails is not null => MapCabinAvailability(entity.CabinAvailabilityDetails),
+            CruiseAlertType.NewItinerary when entity.NewItineraryDetails is not null => MapNewItinerary(entity.NewItineraryDetails),
             _ => throw new InvalidDataException("Persisted alert has an invalid typed detail payload.")
         };
-        var evidenceKey = details switch { CruisePriceDropAlertDetails x => x.EvidenceKey, CruisePromotionAlertDetails x => x.EvidenceKey, CruiseSavedCriteriaAlertDetails x => x.EvidenceKey, CruiseCabinAvailabilityAlertDetails x => $"{x.StateFingerprint}:{(int)x.CabinType}", _ => throw new InvalidOperationException() };
+        CruiseAlertSubject subject = (CruiseAlertType)entity.Type == CruiseAlertType.NewItinerary
+            ? new CruiseItineraryAlertSubject(new CruiseItineraryCatalogueKey(source!, new CruiseItineraryKey(entity.ItineraryOperatorId!, entity.ProviderItineraryId!)))
+            : new CruiseSailingAlertSubject(new CruiseSailingKey(entity.OperatorId!, entity.ShipName!, entity.DepartureDate!.Value, entity.DurationNights!.Value));
+        var evidenceKey = details switch { CruisePriceDropAlertDetails x => x.EvidenceKey, CruisePromotionAlertDetails x => x.EvidenceKey, CruiseSavedCriteriaAlertDetails x => x.EvidenceKey, CruiseCabinAvailabilityAlertDetails x => $"{x.StateFingerprint}:{(int)x.CabinType}", CruiseNewItineraryAlertDetails x => x.FirstObservedEventKey, _ => throw new InvalidOperationException() };
         var criteria = (details as CruiseSavedCriteriaAlertDetails)?.CriteriaFingerprint;
-        var candidate = new CruiseAlertCandidate((CruiseAlertType)entity.Type, key, source, details, entity.EventTime, evidenceKey, criteria);
+        var candidate = new CruiseAlertCandidate((CruiseAlertType)entity.Type, subject, source, details, entity.EventTime, evidenceKey, criteria);
         if (!string.Equals(candidate.EventKey, entity.EventKey, StringComparison.Ordinal)) throw new InvalidDataException("Persisted alert event identity is inconsistent.");
         return new CruiseAlert(entity.Id, candidate, entity.CreatedAt, (CruiseAlertStatus)entity.Status);
     }
@@ -183,5 +210,10 @@ public sealed class SqliteCruiseAlertRepository(KrytenAssistDbContext dbContext)
             throw new InvalidDataException("Persisted Cabin Availability direction is inconsistent.");
         return details;
     }
+    private static CruiseNewItineraryAlertDetails MapNewItinerary(CruiseNewItineraryAlertDetailEntity entity) =>
+        new(new CruiseItineraryKey(entity.OperatorId, entity.ProviderItineraryId), entity.ScopeFingerprint,
+            entity.CheckEvidenceKey, entity.OccurrenceFingerprint, entity.ProviderEvidenceKey,
+            entity.FirstObservedEventKey, entity.FirstObservedAt, entity.Title, entity.ShipName,
+            entity.DepartureDate, entity.DurationNights, entity.DeparturePort, entity.ItinerarySummary, entity.SourceReference);
     private static bool IsUniqueConstraint(DbUpdateException exception) => exception.InnerException is SqliteException { SqliteErrorCode: 19 };
 }
